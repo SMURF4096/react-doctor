@@ -2,10 +2,12 @@ import {
   ANIMATION_CALLBACK_NAMES,
   BLUR_VALUE_PATTERN,
   EFFECT_HOOK_NAMES,
+  EXECUTABLE_SCRIPT_TYPES,
   LARGE_BLUR_THRESHOLD_PX,
   LAYOUT_PROPERTIES,
   LOADING_STATE_PATTERN,
   MOTION_ANIMATE_PROPS,
+  SCRIPT_LOADING_ATTRIBUTES,
 } from "../constants.js";
 import {
   getEffectCallback,
@@ -417,6 +419,49 @@ export const renderingHydrationNoFlicker: Rule = {
           node,
           message:
             "useEffect(setState, []) on mount causes a flash — consider useSyncExternalStore or suppressHydrationWarning",
+        });
+      }
+    },
+  }),
+};
+
+export const renderingScriptDeferAsync: Rule = {
+  create: (context: RuleContext) => ({
+    JSXOpeningElement(node: EsTreeNode) {
+      if (node.name?.type !== "JSXIdentifier" || node.name.name !== "script") return;
+
+      const attributes = node.attributes ?? [];
+      const hasSrc = attributes.some(
+        (attr: EsTreeNode) =>
+          attr.type === "JSXAttribute" &&
+          attr.name?.type === "JSXIdentifier" &&
+          attr.name.name === "src",
+      );
+
+      if (!hasSrc) return;
+
+      const typeAttribute = attributes.find(
+        (attr: EsTreeNode) =>
+          attr.type === "JSXAttribute" &&
+          attr.name?.type === "JSXIdentifier" &&
+          attr.name.name === "type",
+      );
+      const typeValue = typeAttribute?.value?.type === "Literal" ? typeAttribute.value.value : null;
+      if (typeof typeValue === "string" && !EXECUTABLE_SCRIPT_TYPES.has(typeValue)) return;
+      if (typeValue === "module") return;
+
+      const hasLoadingStrategy = attributes.some(
+        (attr: EsTreeNode) =>
+          attr.type === "JSXAttribute" &&
+          attr.name?.type === "JSXIdentifier" &&
+          SCRIPT_LOADING_ATTRIBUTES.has(attr.name.name),
+      );
+
+      if (!hasLoadingStrategy) {
+        context.report({
+          node,
+          message:
+            "<script src> without defer or async — blocks HTML parsing and delays First Contentful Paint. Add defer for DOM-dependent scripts or async for independent ones",
         });
       }
     },

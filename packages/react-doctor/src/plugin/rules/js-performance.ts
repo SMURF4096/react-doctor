@@ -29,6 +29,18 @@ export const jsCombineIterations: Rule = {
       const innerMethod = innerCall.callee.property.name;
       if (!CHAINABLE_ITERATION_METHODS.has(innerMethod)) return;
 
+      if (innerMethod === "map" && outerMethod === "filter") {
+        const filterArgument = node.arguments?.[0];
+        const isBooleanOrIdentityFilter =
+          (filterArgument?.type === "Identifier" && filterArgument.name === "Boolean") ||
+          (filterArgument?.type === "ArrowFunctionExpression" &&
+            filterArgument.params?.length === 1 &&
+            filterArgument.body?.type === "Identifier" &&
+            filterArgument.params[0]?.type === "Identifier" &&
+            filterArgument.body.name === filterArgument.params[0].name);
+        if (isBooleanOrIdentityFilter) return;
+      }
+
       context.report({
         node,
         message: `.${innerMethod}().${outerMethod}() iterates the array twice — combine into a single loop with .reduce() or for...of`,
@@ -278,4 +290,49 @@ const reportIfIndependent = (statements: EsTreeNode[], context: RuleContext): vo
     node: statements[0],
     message: `${statements.length} sequential await statements that appear independent — use Promise.all() for parallel execution`,
   });
+};
+
+export const jsFlatmapFilter: Rule = {
+  create: (context: RuleContext) => ({
+    CallExpression(node: EsTreeNode) {
+      if (node.callee?.type !== "MemberExpression" || node.callee.property?.type !== "Identifier")
+        return;
+
+      const outerMethod = node.callee.property.name;
+      if (outerMethod !== "filter") return;
+
+      const filterArgument = node.arguments?.[0];
+      if (!filterArgument) return;
+
+      const isIdentityArrow =
+        filterArgument.type === "ArrowFunctionExpression" &&
+        filterArgument.params?.length === 1 &&
+        filterArgument.body?.type === "Identifier" &&
+        filterArgument.params[0]?.type === "Identifier" &&
+        filterArgument.body.name === filterArgument.params[0].name;
+
+      const isFilterBoolean =
+        (filterArgument.type === "Identifier" && filterArgument.name === "Boolean") ||
+        isIdentityArrow;
+
+      if (!isFilterBoolean) return;
+
+      const innerCall = node.callee.object;
+      if (
+        innerCall?.type !== "CallExpression" ||
+        innerCall.callee?.type !== "MemberExpression" ||
+        innerCall.callee.property?.type !== "Identifier"
+      )
+        return;
+
+      const innerMethod = innerCall.callee.property.name;
+      if (innerMethod !== "map") return;
+
+      context.report({
+        node,
+        message:
+          ".map().filter(Boolean) iterates twice — use .flatMap() to transform and filter in a single pass",
+      });
+    },
+  }),
 };

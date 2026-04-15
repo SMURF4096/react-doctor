@@ -6,6 +6,7 @@ import { runOxlint } from "../src/utils/run-oxlint.js";
 const FIXTURES_DIRECTORY = path.resolve(import.meta.dirname, "fixtures");
 const BASIC_REACT_DIRECTORY = path.join(FIXTURES_DIRECTORY, "basic-react");
 const NEXTJS_APP_DIRECTORY = path.join(FIXTURES_DIRECTORY, "nextjs-app");
+const TANSTACK_START_APP_DIRECTORY = path.join(FIXTURES_DIRECTORY, "tanstack-start-app");
 
 const findDiagnosticsByRule = (diagnostics: Diagnostic[], rule: string): Diagnostic[] =>
   diagnostics.filter((diagnostic) => diagnostic.rule === rule);
@@ -36,6 +37,7 @@ const describeRules = (
 
 let basicReactDiagnostics: Diagnostic[];
 let nextjsDiagnostics: Diagnostic[];
+let tanstackStartDiagnostics: Diagnostic[];
 
 describe("runOxlint", () => {
   it("loads basic-react diagnostics", async () => {
@@ -46,6 +48,16 @@ describe("runOxlint", () => {
   it("loads nextjs diagnostics", async () => {
     nextjsDiagnostics = await runOxlint(NEXTJS_APP_DIRECTORY, true, "nextjs", false);
     expect(nextjsDiagnostics.length).toBeGreaterThan(0);
+  });
+
+  it("loads tanstack-start diagnostics", async () => {
+    tanstackStartDiagnostics = await runOxlint(
+      TANSTACK_START_APP_DIRECTORY,
+      true,
+      "tanstack-start",
+      false,
+    );
+    expect(tanstackStartDiagnostics.length).toBeGreaterThan(0);
   });
 
   it("returns diagnostics with required fields", () => {
@@ -196,6 +208,11 @@ describe("runOxlint", () => {
         fixture: "client-issues.tsx",
         ruleSource: "rules/client.ts",
       },
+      "rendering-script-defer-async": {
+        fixture: "performance-issues.tsx",
+        ruleSource: "rules/performance.ts",
+        category: "Performance",
+      },
     },
     () => basicReactDiagnostics,
   );
@@ -206,6 +223,11 @@ describe("runOxlint", () => {
       "async-parallel": {
         fixture: "js-performance-issues.tsx",
         ruleSource: "rules/js-performance.ts",
+      },
+      "js-flatmap-filter": {
+        fixture: "js-performance-issues.tsx",
+        ruleSource: "rules/js-performance.ts",
+        category: "Performance",
       },
     },
     () => basicReactDiagnostics,
@@ -356,6 +378,164 @@ describe("runOxlint", () => {
     },
     () => nextjsDiagnostics,
   );
+
+  describeRules(
+    "tanstack-query rules",
+    {
+      "query-stable-query-client": {
+        fixture: "src/query-issues.tsx",
+        ruleSource: "rules/tanstack-query.ts",
+        severity: "error",
+        category: "TanStack Query",
+      },
+      "query-no-rest-destructuring": {
+        fixture: "src/query-issues.tsx",
+        ruleSource: "rules/tanstack-query.ts",
+        category: "TanStack Query",
+      },
+      "query-no-void-query-fn": {
+        fixture: "src/query-issues.tsx",
+        ruleSource: "rules/tanstack-query.ts",
+        category: "TanStack Query",
+      },
+      "query-no-query-in-effect": {
+        fixture: "src/query-issues.tsx",
+        ruleSource: "rules/tanstack-query.ts",
+        category: "TanStack Query",
+      },
+      "query-mutation-missing-invalidation": {
+        fixture: "src/query-issues.tsx",
+        ruleSource: "rules/tanstack-query.ts",
+        category: "TanStack Query",
+      },
+      "query-no-usequery-for-mutation": {
+        fixture: "src/query-issues.tsx",
+        ruleSource: "rules/tanstack-query.ts",
+        category: "TanStack Query",
+      },
+    },
+    () => basicReactDiagnostics,
+  );
+
+  describeRules(
+    "tanstack-start rules",
+    {
+      "tanstack-start-route-property-order": {
+        fixture: "src/routes/route-issues.tsx",
+        ruleSource: "rules/tanstack-start.ts",
+        severity: "error",
+        category: "TanStack Start",
+      },
+      "tanstack-start-no-direct-fetch-in-loader": {
+        fixture: "src/routes/route-issues.tsx",
+        ruleSource: "rules/tanstack-start.ts",
+        category: "TanStack Start",
+      },
+      "tanstack-start-no-useeffect-fetch": {
+        fixture: "src/routes/route-issues.tsx",
+        ruleSource: "rules/tanstack-start.ts",
+        category: "TanStack Start",
+      },
+      "tanstack-start-no-anchor-element": {
+        fixture: "src/routes/route-issues.tsx",
+        ruleSource: "rules/tanstack-start.ts",
+        category: "TanStack Start",
+      },
+      "tanstack-start-no-navigate-in-render": {
+        fixture: "src/routes/route-issues.tsx",
+        ruleSource: "rules/tanstack-start.ts",
+        category: "TanStack Start",
+      },
+      "tanstack-start-no-secrets-in-loader": {
+        fixture: "src/routes/route-issues.tsx",
+        ruleSource: "rules/tanstack-start.ts",
+        severity: "error",
+        category: "Security",
+      },
+      "tanstack-start-redirect-in-try-catch": {
+        fixture: "src/routes/route-issues.tsx",
+        ruleSource: "rules/tanstack-start.ts",
+        category: "TanStack Start",
+      },
+      "tanstack-start-loader-parallel-fetch": {
+        fixture: "src/routes/route-issues.tsx",
+        ruleSource: "rules/tanstack-start.ts",
+        category: "Performance",
+      },
+      "tanstack-start-missing-head-content": {
+        fixture: "src/routes/__root.tsx",
+        ruleSource: "rules/tanstack-start.ts",
+        category: "TanStack Start",
+      },
+      "tanstack-start-server-fn-method-order": {
+        fixture: "src/routes/server-fn-issues.tsx",
+        ruleSource: "rules/tanstack-start.ts",
+        severity: "error",
+        category: "TanStack Start",
+      },
+      "tanstack-start-server-fn-validate-input": {
+        fixture: "src/routes/server-fn-issues.tsx",
+        ruleSource: "rules/tanstack-start.ts",
+        category: "TanStack Start",
+      },
+      "tanstack-start-no-use-server-in-handler": {
+        fixture: "src/routes/server-fn-issues.tsx",
+        ruleSource: "rules/tanstack-start.ts",
+        severity: "error",
+        category: "TanStack Start",
+      },
+      "tanstack-start-get-mutation": {
+        fixture: "src/routes/server-fn-issues.tsx",
+        ruleSource: "rules/tanstack-start.ts",
+        category: "Security",
+      },
+      "tanstack-start-no-dynamic-server-fn-import": {
+        fixture: "src/routes/server-fn-issues.tsx",
+        ruleSource: "rules/tanstack-start.ts",
+        severity: "error",
+        category: "TanStack Start",
+      },
+    },
+    () => tanstackStartDiagnostics,
+  );
+
+  describe("tanstack-start edge cases (false positive freedom)", () => {
+    it("does not flag correct property order in createFileRoute", () => {
+      const propertyOrderIssues = tanstackStartDiagnostics.filter(
+        (diagnostic) =>
+          diagnostic.rule === "tanstack-start-route-property-order" &&
+          diagnostic.filePath.includes("edge-cases"),
+      );
+      expect(propertyOrderIssues).toHaveLength(0);
+    });
+
+    it("does not flag createServerFn with PUT or DELETE method as get-mutation", () => {
+      const getMutationIssues = tanstackStartDiagnostics.filter(
+        (diagnostic) =>
+          diagnostic.rule === "tanstack-start-get-mutation" &&
+          diagnostic.filePath.includes("edge-cases"),
+      );
+      expect(getMutationIssues).toHaveLength(0);
+    });
+
+    it("does not flag server function with inputValidator as missing validation", () => {
+      const validationIssues = tanstackStartDiagnostics.filter(
+        (diagnostic) =>
+          diagnostic.rule === "tanstack-start-server-fn-validate-input" &&
+          diagnostic.filePath.includes("edge-cases"),
+      );
+      expect(validationIssues).toHaveLength(0);
+    });
+
+    it("does not flag script with type=application/ld+json", () => {
+      const scriptIssues = tanstackStartDiagnostics.filter(
+        (diagnostic) =>
+          diagnostic.rule === "rendering-script-defer-async" &&
+          diagnostic.filePath.includes("edge-cases"),
+      );
+      expect(scriptIssues).toHaveLength(0);
+    });
+  });
 
   describe("customRulesOnly mode", () => {
     it("excludes builtin react/ and jsx-a11y/ rules when customRulesOnly is true", async () => {

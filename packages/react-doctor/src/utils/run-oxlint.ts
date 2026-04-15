@@ -46,6 +46,7 @@ const RULE_CATEGORY_MAP: Record<string, string> = {
   "react-doctor/rendering-animate-svg-wrapper": "Performance",
   "react-doctor/rendering-usetransition-loading": "Performance",
   "react-doctor/rendering-hydration-no-flicker": "Performance",
+  "react-doctor/rendering-script-defer-async": "Performance",
 
   "react-doctor/no-transition-all": "Performance",
   "react-doctor/no-global-css-variable-animation": "Performance",
@@ -87,6 +88,15 @@ const RULE_CATEGORY_MAP: Record<string, string> = {
 
   "react-doctor/client-passive-event-listeners": "Performance",
 
+  "react-doctor/query-stable-query-client": "TanStack Query",
+  "react-doctor/query-no-rest-destructuring": "TanStack Query",
+  "react-doctor/query-no-void-query-fn": "TanStack Query",
+  "react-doctor/query-no-query-in-effect": "TanStack Query",
+  "react-doctor/query-mutation-missing-invalidation": "TanStack Query",
+  "react-doctor/query-no-usequery-for-mutation": "TanStack Query",
+
+  "react-doctor/js-flatmap-filter": "Performance",
+
   "react-doctor/async-parallel": "Performance",
 
   "react-doctor/rn-no-raw-text": "React Native",
@@ -97,6 +107,21 @@ const RULE_CATEGORY_MAP: Record<string, string> = {
   "react-doctor/rn-no-legacy-shadow-styles": "React Native",
   "react-doctor/rn-prefer-reanimated": "React Native",
   "react-doctor/rn-no-single-element-style-array": "React Native",
+
+  "react-doctor/tanstack-start-route-property-order": "TanStack Start",
+  "react-doctor/tanstack-start-no-direct-fetch-in-loader": "TanStack Start",
+  "react-doctor/tanstack-start-server-fn-validate-input": "TanStack Start",
+  "react-doctor/tanstack-start-no-useeffect-fetch": "TanStack Start",
+  "react-doctor/tanstack-start-missing-head-content": "TanStack Start",
+  "react-doctor/tanstack-start-no-anchor-element": "TanStack Start",
+  "react-doctor/tanstack-start-server-fn-method-order": "TanStack Start",
+  "react-doctor/tanstack-start-no-navigate-in-render": "TanStack Start",
+  "react-doctor/tanstack-start-no-dynamic-server-fn-import": "TanStack Start",
+  "react-doctor/tanstack-start-no-use-server-in-handler": "TanStack Start",
+  "react-doctor/tanstack-start-no-secrets-in-loader": "Security",
+  "react-doctor/tanstack-start-get-mutation": "Security",
+  "react-doctor/tanstack-start-redirect-in-try-catch": "TanStack Start",
+  "react-doctor/tanstack-start-loader-parallel-fetch": "Performance",
 };
 
 const RULE_HELP_MAP: Record<string, string> = {
@@ -140,6 +165,8 @@ const RULE_HELP_MAP: Record<string, string> = {
     "Replace with `const [isPending, startTransition] = useTransition()` — avoids a re-render for the loading state",
   "rendering-hydration-no-flicker":
     "Use `useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)` or add `suppressHydrationWarning` to the element",
+  "rendering-script-defer-async":
+    'Add `defer` for DOM-dependent scripts or `async` for independent ones (analytics). In Next.js, use `<Script strategy="afterInteractive" />` instead',
 
   "no-transition-all":
     'List specific properties: `transition: "opacity 200ms, transform 200ms"` — or in Tailwind use `transition-colors`, `transition-opacity`, or `transition-transform`',
@@ -216,6 +243,22 @@ const RULE_HELP_MAP: Record<string, string> = {
   "client-passive-event-listeners":
     "Add `{ passive: true }` as the third argument: `addEventListener('scroll', handler, { passive: true })`",
 
+  "query-stable-query-client":
+    "Move `new QueryClient()` to module scope or wrap in `useState(() => new QueryClient())` — recreating it on every render resets the entire cache",
+  "query-no-rest-destructuring":
+    "Destructure only the fields you need: `const { data, isLoading } = useQuery(...)` — rest destructuring subscribes to all fields and causes extra re-renders",
+  "query-no-void-query-fn":
+    "queryFn must return a value for the cache. Use the `enabled` option to conditionally disable the query instead of returning undefined",
+  "query-no-query-in-effect":
+    "React Query manages refetching automatically via queryKey dependencies and the `enabled` option — manual refetch() in useEffect is usually unnecessary",
+  "query-mutation-missing-invalidation":
+    "Add `onSuccess: () => queryClient.invalidateQueries({ queryKey: ['...'] })` so cached data stays in sync after the mutation",
+  "query-no-usequery-for-mutation":
+    "Use `useMutation()` for POST/PUT/DELETE — it provides onSuccess/onError callbacks, doesn't auto-refetch, and correctly models write operations",
+
+  "js-flatmap-filter":
+    "Use `.flatMap(item => condition ? [value] : [])` — transforms and filters in a single pass instead of creating an intermediate array",
+
   "async-parallel":
     "Use `const [a, b] = await Promise.all([fetchA(), fetchB()])` to run independent operations concurrently",
 
@@ -235,6 +278,35 @@ const RULE_HELP_MAP: Record<string, string> = {
     "Use `import Animated from 'react-native-reanimated'` — animations run on the UI thread instead of the JS thread",
   "rn-no-single-element-style-array":
     "Use `style={value}` instead of `style={[value]}` — single-element arrays add unnecessary allocation",
+
+  "tanstack-start-route-property-order":
+    "Follow the order: params/validateSearch → loaderDeps → context → beforeLoad → loader → head. See https://tanstack.com/router/latest/docs/eslint/create-route-property-order",
+  "tanstack-start-no-direct-fetch-in-loader":
+    "Use `createServerFn()` from @tanstack/react-start — provides type-safe RPC, input validation, and proper server/client code splitting",
+  "tanstack-start-server-fn-validate-input":
+    "Add `.inputValidator(schema)` before `.handler()` — data crosses a network boundary and must be validated at runtime",
+  "tanstack-start-no-useeffect-fetch":
+    "Fetch data in the route `loader` instead — the router coordinates loading before rendering to avoid waterfalls",
+  "tanstack-start-missing-head-content":
+    "Add `<HeadContent />` inside `<head>` in your __root route — without it, route `head()` meta tags are silently dropped",
+  "tanstack-start-no-anchor-element":
+    "`import { Link } from '@tanstack/react-router'` — enables type-safe routes, preloading via `preload=\"intent\"`, and client-side navigation",
+  "tanstack-start-server-fn-method-order":
+    "Chain methods in order: .middleware() → .inputValidator() → .client() → .server() → .handler() — types depend on this sequence",
+  "tanstack-start-no-navigate-in-render":
+    "Use `throw redirect({ to: '/path' })` in `beforeLoad` or `loader` instead — navigate() during render causes hydration issues",
+  "tanstack-start-no-dynamic-server-fn-import":
+    "Use `import { myFn } from '~/utils/my.functions'` — the bundler replaces server code with RPC stubs only for static imports",
+  "tanstack-start-no-use-server-in-handler":
+    'TanStack Start handles server boundaries automatically via the Vite plugin — "use server" inside createServerFn causes compilation errors',
+  "tanstack-start-no-secrets-in-loader":
+    "Loaders are isomorphic (run on both server and client). Wrap secret access in `createServerFn()` so it stays server-only",
+  "tanstack-start-get-mutation":
+    "Use `createServerFn({ method: 'POST' })` for data modifications — GET requests can be triggered by prefetching and are vulnerable to CSRF",
+  "tanstack-start-redirect-in-try-catch":
+    "TanStack Router's `redirect()` and `notFound()` throw special errors caught by the router. Move them outside the try block or re-throw in the catch",
+  "tanstack-start-loader-parallel-fetch":
+    "Use `const [a, b] = await Promise.all([fetchA(), fetchB()])` to avoid request waterfalls in route loaders",
 };
 
 const FILEPATH_WITH_LOCATION_PATTERN = /\S+\.\w+:\d+:\d+[\s\S]*$/;

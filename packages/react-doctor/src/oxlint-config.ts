@@ -33,6 +33,23 @@ const REACT_NATIVE_RULES: Record<string, string> = {
   "react-doctor/rn-no-single-element-style-array": "warn",
 };
 
+const TANSTACK_START_RULES: Record<string, string> = {
+  "react-doctor/tanstack-start-route-property-order": "error",
+  "react-doctor/tanstack-start-no-direct-fetch-in-loader": "warn",
+  "react-doctor/tanstack-start-server-fn-validate-input": "warn",
+  "react-doctor/tanstack-start-no-useeffect-fetch": "warn",
+  "react-doctor/tanstack-start-missing-head-content": "warn",
+  "react-doctor/tanstack-start-no-anchor-element": "warn",
+  "react-doctor/tanstack-start-server-fn-method-order": "error",
+  "react-doctor/tanstack-start-no-navigate-in-render": "warn",
+  "react-doctor/tanstack-start-no-dynamic-server-fn-import": "error",
+  "react-doctor/tanstack-start-no-use-server-in-handler": "error",
+  "react-doctor/tanstack-start-no-secrets-in-loader": "error",
+  "react-doctor/tanstack-start-get-mutation": "warn",
+  "react-doctor/tanstack-start-redirect-in-try-catch": "warn",
+  "react-doctor/tanstack-start-loader-parallel-fetch": "warn",
+};
+
 const REACT_COMPILER_RULES: Record<string, string> = {
   "react-hooks-js/set-state-in-render": "error",
   "react-hooks-js/immutability": "error",
@@ -138,6 +155,7 @@ export const createOxlintConfig = ({
     "react-doctor/rendering-animate-svg-wrapper": "warn",
     "react-doctor/no-inline-prop-on-memo-component": "warn",
     "react-doctor/rendering-hydration-no-flicker": "warn",
+    "react-doctor/rendering-script-defer-async": "warn",
 
     "react-doctor/no-transition-all": "warn",
     "react-doctor/no-global-css-variable-animation": "error",
@@ -146,6 +164,8 @@ export const createOxlintConfig = ({
     "react-doctor/no-permanent-will-change": "warn",
 
     "react-doctor/no-secrets-in-client-code": "error",
+
+    "react-doctor/js-flatmap-filter": "warn",
 
     "react-doctor/no-barrel-import": "warn",
     "react-doctor/no-full-lodash-import": "warn",
@@ -163,8 +183,16 @@ export const createOxlintConfig = ({
 
     "react-doctor/client-passive-event-listeners": "warn",
 
+    "react-doctor/query-stable-query-client": "error",
+    "react-doctor/query-no-rest-destructuring": "warn",
+    "react-doctor/query-no-void-query-fn": "warn",
+    "react-doctor/query-no-query-in-effect": "warn",
+    "react-doctor/query-mutation-missing-invalidation": "warn",
+    "react-doctor/query-no-usequery-for-mutation": "warn",
+
     "react-doctor/async-parallel": "warn",
     ...(framework === "nextjs" ? NEXTJS_RULES : {}),
     ...(framework === "expo" || framework === "react-native" ? REACT_NATIVE_RULES : {}),
+    ...(framework === "tanstack-start" ? TANSTACK_START_RULES : {}),
   },
 });

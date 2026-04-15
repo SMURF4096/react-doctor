@@ -28,6 +28,7 @@ import {
   jsMinMaxLoop,
   jsSetMapLookups,
   jsTosortedImmutable,
+  jsFlatmapFilter,
 } from "./rules/js-performance.js";
 import {
   nextjsAsyncClientComponent,
@@ -58,6 +59,7 @@ import {
   renderingAnimateSvgWrapper,
   noInlinePropOnMemoComponent,
   renderingHydrationNoFlicker,
+  renderingScriptDeferAsync,
   rerenderMemoWithDefaultValue,
 } from "./rules/performance.js";
 import {
@@ -70,8 +72,32 @@ import {
   rnPreferReanimated,
   rnNoSingleElementStyleArray,
 } from "./rules/react-native.js";
+import {
+  queryMutationMissingInvalidation,
+  queryNoQueryInEffect,
+  queryNoRestDestructuring,
+  queryNoUseQueryForMutation,
+  queryNoVoidQueryFn,
+  queryStableQueryClient,
+} from "./rules/tanstack-query.js";
 import { noEval, noSecretsInClientCode } from "./rules/security.js";
 import { serverAfterNonblocking, serverAuthActions } from "./rules/server.js";
+import {
+  tanstackStartGetMutation,
+  tanstackStartLoaderParallelFetch,
+  tanstackStartMissingHeadContent,
+  tanstackStartNoAnchorElement,
+  tanstackStartNoDirectFetchInLoader,
+  tanstackStartNoDynamicServerFnImport,
+  tanstackStartNoNavigateInRender,
+  tanstackStartNoSecretsInLoader,
+  tanstackStartNoUseEffectFetch,
+  tanstackStartNoUseServerInHandler,
+  tanstackStartRedirectInTryCatch,
+  tanstackStartRoutePropertyOrder,
+  tanstackStartServerFnMethodOrder,
+  tanstackStartServerFnValidateInput,
+} from "./rules/tanstack-start.js";
 import {
   noCascadingSetState,
   noDerivedStateEffect,
@@ -108,6 +134,7 @@ const plugin: RulePlugin = {
     "rendering-animate-svg-wrapper": renderingAnimateSvgWrapper,
     "no-inline-prop-on-memo-component": noInlinePropOnMemoComponent,
     "rendering-hydration-no-flicker": renderingHydrationNoFlicker,
+    "rendering-script-defer-async": renderingScriptDeferAsync,
 
     "no-transition-all": noTransitionAll,
     "no-global-css-variable-animation": noGlobalCssVariableAnimation,
@@ -160,6 +187,7 @@ const plugin: RulePlugin = {
     "js-index-maps": jsIndexMaps,
     "js-cache-storage": jsCacheStorage,
     "js-early-exit": jsEarlyExit,
+    "js-flatmap-filter": jsFlatmapFilter,
     "async-parallel": asyncParallel,
 
     "rn-no-raw-text": rnNoRawText,
@@ -170,6 +198,28 @@ const plugin: RulePlugin = {
     "rn-no-legacy-shadow-styles": rnNoLegacyShadowStyles,
     "rn-prefer-reanimated": rnPreferReanimated,
     "rn-no-single-element-style-array": rnNoSingleElementStyleArray,
+
+    "tanstack-start-route-property-order": tanstackStartRoutePropertyOrder,
+    "tanstack-start-no-direct-fetch-in-loader": tanstackStartNoDirectFetchInLoader,
+    "tanstack-start-server-fn-validate-input": tanstackStartServerFnValidateInput,
+    "tanstack-start-no-useeffect-fetch": tanstackStartNoUseEffectFetch,
+    "tanstack-start-missing-head-content": tanstackStartMissingHeadContent,
+    "tanstack-start-no-anchor-element": tanstackStartNoAnchorElement,
+    "tanstack-start-server-fn-method-order": tanstackStartServerFnMethodOrder,
+    "tanstack-start-no-navigate-in-render": tanstackStartNoNavigateInRender,
+    "tanstack-start-no-dynamic-server-fn-import": tanstackStartNoDynamicServerFnImport,
+    "tanstack-start-no-use-server-in-handler": tanstackStartNoUseServerInHandler,
+    "tanstack-start-no-secrets-in-loader": tanstackStartNoSecretsInLoader,
+    "tanstack-start-get-mutation": tanstackStartGetMutation,
+    "tanstack-start-redirect-in-try-catch": tanstackStartRedirectInTryCatch,
+    "tanstack-start-loader-parallel-fetch": tanstackStartLoaderParallelFetch,
+
+    "query-stable-query-client": queryStableQueryClient,
+    "query-no-rest-destructuring": queryNoRestDestructuring,
+    "query-no-void-query-fn": queryNoVoidQueryFn,
+    "query-no-query-in-effect": queryNoQueryInEffect,
+    "query-mutation-missing-invalidation": queryMutationMissingInvalidation,
+    "query-no-usequery-for-mutation": queryNoUseQueryForMutation,
   },
 };
 
