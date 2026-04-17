@@ -49,9 +49,7 @@ const isCommandAvailable = (command: string): boolean => {
 };
 
 export const detectAvailableAgents = (): SupportedAgent[] =>
-  ALL_SUPPORTED_AGENTS.filter((agent) =>
-    SUPPORTED_AGENTS[agent].binaries.some(isCommandAvailable),
-  );
+  ALL_SUPPORTED_AGENTS.filter((agent) => SUPPORTED_AGENTS[agent].binaries.some(isCommandAvailable));
 
 export const toDisplayName = (agent: SupportedAgent): string => SUPPORTED_AGENTS[agent].displayName;
 

@@ -36,7 +36,9 @@ export const runInstallSkill = async (options: InstallSkillOptions = {}): Promis
   const detectedAgents = detectAvailableAgents();
   if (detectedAgents.length === 0) {
     logger.error("No supported coding agents detected on your PATH.");
-    logger.dim("  Supported: Claude Code, Codex, GitHub Copilot, Gemini CLI, Cursor, OpenCode, Factory Droid, Pi.");
+    logger.dim(
+      "  Supported: Claude Code, Codex, GitHub Copilot, Gemini CLI, Cursor, OpenCode, Factory Droid, Pi.",
+    );
     process.exitCode = 1;
     return;
   }
