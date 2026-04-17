@@ -121,18 +121,18 @@ If both exist, `react-doctor.config.json` takes precedence.
 
 ### Config options
 
-| Key               | Type                              | Default   | Description                                                                                                                         |
-| ----------------- | --------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `ignore.rules`    | `string[]`                        | `[]`      | Rules to suppress, using the `plugin/rule` format shown in diagnostic output (e.g. `react/no-danger`, `knip/exports`, `knip/types`) |
-| `ignore.files`    | `string[]`                        | `[]`      | File paths to exclude, supports glob patterns (`src/generated/**`, `**/*.test.tsx`)                                                 |
-| `lint`            | `boolean`                         | `true`    | Enable/disable lint checks (same as `--no-lint`)                                                                                    |
-| `deadCode`        | `boolean`                         | `true`    | Enable/disable dead code detection (same as `--no-dead-code`)                                                                       |
-| `verbose`         | `boolean`                         | `false`   | Show file details per rule (same as `--verbose`)                                                                                    |
-| `diff`            | `boolean \| string`               | —         | Force diff mode (`true`) or pin a base branch (`"main"`). Set to `false` to disable auto-detection.                                 |
-| `failOn`          | `"error" \| "warning" \| "none"`  | `"none"`  | Exit with error code on diagnostics of the given severity or above                                                                  |
-| `customRulesOnly` | `boolean`                         | `false`   | Disable built-in react/jsx-a11y/compiler rules, keeping only `react-doctor/*` plugin rules                                          |
-| `share`           | `boolean`                         | `true`    | Show the share-your-results URL after scanning                                                                                      |
-| `textComponents`  | `string[]`                        | `[]`      | React Native only. Component names whose children should not trigger `rn-no-raw-text` (e.g. `["MyText", "Label.Bold"]`)             |
+| Key               | Type                             | Default  | Description                                                                                                                         |
+| ----------------- | -------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `ignore.rules`    | `string[]`                       | `[]`     | Rules to suppress, using the `plugin/rule` format shown in diagnostic output (e.g. `react/no-danger`, `knip/exports`, `knip/types`) |
+| `ignore.files`    | `string[]`                       | `[]`     | File paths to exclude, supports glob patterns (`src/generated/**`, `**/*.test.tsx`)                                                 |
+| `lint`            | `boolean`                        | `true`   | Enable/disable lint checks (same as `--no-lint`)                                                                                    |
+| `deadCode`        | `boolean`                        | `true`   | Enable/disable dead code detection (same as `--no-dead-code`)                                                                       |
+| `verbose`         | `boolean`                        | `false`  | Show file details per rule (same as `--verbose`)                                                                                    |
+| `diff`            | `boolean \| string`              | —        | Force diff mode (`true`) or pin a base branch (`"main"`). Set to `false` to disable auto-detection.                                 |
+| `failOn`          | `"error" \| "warning" \| "none"` | `"none"` | Exit with error code on diagnostics of the given severity or above                                                                  |
+| `customRulesOnly` | `boolean`                        | `false`  | Disable built-in react/jsx-a11y/compiler rules, keeping only `react-doctor/*` plugin rules                                          |
+| `share`           | `boolean`                        | `true`   | Show the share-your-results URL after scanning                                                                                      |
+| `textComponents`  | `string[]`                       | `[]`     | React Native only. Component names whose children should not trigger `rn-no-raw-text` (e.g. `["MyText", "Label.Bold"]`)             |
 
 CLI flags always override config values.
 
