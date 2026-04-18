@@ -1,6 +1,5 @@
 import type { Diagnostic, ReactDoctorConfig, ScoreResult } from "../../types.js";
-import { calculateScore } from "../../utils/calculate-score.js";
-import { mergeAndFilterDiagnostics } from "../../utils/merge-and-filter-diagnostics.js";
+import { buildDiagnoseTimedResult } from "../../core/build-result.js";
 import { createBrowserReadFileLinesSync } from "./create-browser-read-file-lines.js";
 
 export interface ProcessBrowserDiagnosticsInput {
@@ -21,12 +20,13 @@ export const processBrowserDiagnostics = async (
 ): Promise<ProcessBrowserDiagnosticsResult> => {
   const readFileLinesSync = createBrowserReadFileLinesSync(input.rootDirectory, input.projectFiles);
   const userConfig = input.userConfig ?? null;
-  const diagnostics = mergeAndFilterDiagnostics(
-    input.diagnostics,
-    input.rootDirectory,
+  const timed = await buildDiagnoseTimedResult({
+    mergedDiagnostics: input.diagnostics,
+    rootDirectory: input.rootDirectory,
     userConfig,
     readFileLinesSync,
-  );
-  const score = input.score !== undefined ? input.score : await calculateScore(diagnostics);
-  return { diagnostics, score };
+    startTime: globalThis.performance.now(),
+    score: input.score,
+  });
+  return { diagnostics: timed.diagnostics, score: timed.score };
 };

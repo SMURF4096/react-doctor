@@ -1,7 +1,6 @@
 import type { Diagnostic, ProjectInfo, ReactDoctorConfig, ScoreResult } from "../types.js";
-import { calculateScore } from "../utils/calculate-score.js";
+import { buildDiagnoseTimedResult } from "./build-result.js";
 import { computeJsxIncludePaths } from "../utils/jsx-include-paths.js";
-import { mergeAndFilterDiagnostics } from "../utils/merge-and-filter-diagnostics.js";
 
 export interface DiagnoseCoreOptions {
   lint?: boolean;
@@ -89,20 +88,18 @@ export const diagnoseCore = async (
   const [lintDiagnostics, deadCodeDiagnostics] = await Promise.all([lintPromise, deadCodePromise]);
   const environmentDiagnostics = deps.getExtraDiagnostics?.() ?? [];
   const mergedDiagnostics = [...lintDiagnostics, ...deadCodeDiagnostics, ...environmentDiagnostics];
-  const diagnostics = mergeAndFilterDiagnostics(
+  const timed = await buildDiagnoseTimedResult({
     mergedDiagnostics,
-    resolvedDirectory,
+    rootDirectory: resolvedDirectory,
     userConfig,
-    deps.readFileLinesSync,
-  );
-
-  const elapsedMilliseconds = globalThis.performance.now() - startTime;
-  const score = await calculateScore(diagnostics);
+    readFileLinesSync: deps.readFileLinesSync,
+    startTime,
+  });
 
   return {
-    diagnostics,
-    score,
+    diagnostics: timed.diagnostics,
+    score: timed.score,
     project: projectInfo,
-    elapsedMilliseconds,
+    elapsedMilliseconds: timed.elapsedMilliseconds,
   };
 };
