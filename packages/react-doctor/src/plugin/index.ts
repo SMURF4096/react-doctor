@@ -1,4 +1,5 @@
 import {
+  noGenericHandlerNames,
   noGiantComponent,
   noNestedComponentDefinition,
   noRenderInRender,
@@ -77,6 +78,7 @@ import {
   noInlinePropOnMemoComponent,
   renderingHydrationNoFlicker,
   renderingScriptDeferAsync,
+  renderingUsetransitionLoading,
   rerenderMemoWithDefaultValue,
 } from "./rules/performance.js";
 import {
@@ -141,6 +143,7 @@ const plugin: RulePlugin = {
     "rerender-functional-setstate": rerenderFunctionalSetstate,
     "rerender-dependencies": rerenderDependencies,
 
+    "no-generic-handler-names": noGenericHandlerNames,
     "no-giant-component": noGiantComponent,
     "no-render-in-render": noRenderInRender,
     "no-nested-component-definition": noNestedComponentDefinition,
@@ -152,6 +155,7 @@ const plugin: RulePlugin = {
     "no-inline-prop-on-memo-component": noInlinePropOnMemoComponent,
     "rendering-hydration-no-flicker": renderingHydrationNoFlicker,
     "rendering-script-defer-async": renderingScriptDeferAsync,
+    "rendering-usetransition-loading": renderingUsetransitionLoading,
 
     "no-transition-all": noTransitionAll,
     "no-global-css-variable-animation": noGlobalCssVariableAnimation,

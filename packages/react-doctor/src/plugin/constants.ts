@@ -256,8 +256,6 @@ export const TEST_FILE_PATTERN = /\.(?:test|spec|stories)\.[tj]sx?$/;
 export const OG_ROUTE_PATTERN = /\/og\b/i;
 
 export const PAGES_DIRECTORY_PATTERN = /\/pages\//;
-export const SERVER_ACTION_FILE_PATTERN = /actions?\.(tsx?|jsx?)$/;
-export const SERVER_ACTION_DIRECTORY_PATTERN = /\/actions\//;
 
 export const NEXTJS_NAVIGATION_FUNCTIONS = new Set([
   "redirect",

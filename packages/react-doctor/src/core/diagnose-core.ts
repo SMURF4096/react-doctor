@@ -17,7 +17,7 @@ export interface DiagnoseCoreResult {
   elapsedMilliseconds: number;
 }
 
-export interface DiagnoseRunnerContext {
+interface DiagnoseRunnerContext {
   resolvedDirectory: string;
   projectInfo: ProjectInfo;
   userConfig: ReactDoctorConfig | null;
@@ -25,7 +25,7 @@ export interface DiagnoseRunnerContext {
   isDiffMode: boolean;
 }
 
-export interface DiagnoseCoreDeps {
+interface DiagnoseCoreDeps {
   rootDirectory: string;
   readFileLinesSync: (filePath: string) => string[] | null;
   loadUserConfig: () => ReactDoctorConfig | null;

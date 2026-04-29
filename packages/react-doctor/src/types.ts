@@ -21,19 +21,19 @@ export interface ProjectInfo {
   sourceFileCount: number;
 }
 
-export interface OxlintSpan {
+interface OxlintSpan {
   offset: number;
   length: number;
   line: number;
   column: number;
 }
 
-export interface OxlintLabel {
+interface OxlintLabel {
   label: string;
   span: OxlintSpan;
 }
 
-export interface OxlintDiagnostic {
+interface OxlintDiagnostic {
   message: string;
   code: string;
   severity: "warning" | "error";
@@ -77,7 +77,7 @@ export interface DependencyInfo {
   framework: Framework;
 }
 
-export interface KnipIssue {
+interface KnipIssue {
   filePath: string;
   symbol: string;
   type: string;
@@ -157,7 +157,7 @@ export interface CleanedDiagnostic {
   help: string;
 }
 
-export interface ReactDoctorIgnoreConfig {
+interface ReactDoctorIgnoreConfig {
   rules?: string[];
   files?: string[];
 }

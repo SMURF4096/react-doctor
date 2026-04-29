@@ -1,4 +1,4 @@
-export interface ReportDescriptor {
+interface ReportDescriptor {
   node: EsTreeNode;
   message: string;
 }

@@ -3,7 +3,6 @@ import { checkReducedMotion } from "./check-reduced-motion.js";
 import { createNodeReadFileLinesSync } from "./read-file-lines-node.js";
 import { mergeAndFilterDiagnostics } from "./merge-and-filter-diagnostics.js";
 
-export { mergeAndFilterDiagnostics } from "./merge-and-filter-diagnostics.js";
 export { computeJsxIncludePaths } from "./jsx-include-paths.js";
 
 export const combineDiagnostics = (
