@@ -44,6 +44,17 @@ export const WARNING_RULE_PENALTY = 0.75;
 
 export const MAX_KNIP_RETRIES = 5;
 
+export const KNIP_CONFIG_LOCATIONS = [
+  "knip.json",
+  "knip.jsonc",
+  ".knip.json",
+  ".knip.jsonc",
+  "knip.ts",
+  "knip.js",
+  "knip.config.ts",
+  "knip.config.js",
+];
+
 export const OXLINT_NODE_REQUIREMENT = "^20.19.0 || >=22.12.0";
 
 export const OXLINT_RECOMMENDED_NODE_MAJOR = 24;
