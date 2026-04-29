@@ -45,9 +45,7 @@ describe("installSkillForAgent", () => {
 
     installSkillForAgent(projectRoot, "copilot", skillSourceDirectory, SKILL_NAME);
 
-    expect(existsSync(path.join(projectRoot, ".github/copilot/skills/react-doctor/SKILL.md"))).toBe(
-      true,
-    );
+    expect(existsSync(path.join(projectRoot, ".agents/skills/react-doctor/SKILL.md"))).toBe(true);
   });
 
   it("overwrites an existing skill installation", () => {
@@ -73,6 +71,29 @@ describe("installSkillForAgent", () => {
     installSkillForAgent(projectRoot, "cursor", skillSourceDirectory, SKILL_NAME);
 
     expect(existsSync(path.join(projectRoot, ".claude/skills/react-doctor/SKILL.md"))).toBe(true);
-    expect(existsSync(path.join(projectRoot, ".cursor/skills/react-doctor/SKILL.md"))).toBe(true);
+    expect(existsSync(path.join(projectRoot, ".agents/skills/react-doctor/SKILL.md"))).toBe(true);
+  });
+
+  it("shares a single .agents/skills install across agents that support the standard", () => {
+    const projectRoot = path.join(workspaceRoot, "shared-agents-dir");
+    mkdirSync(projectRoot, { recursive: true });
+
+    const codexDirectory = installSkillForAgent(
+      projectRoot,
+      "codex",
+      skillSourceDirectory,
+      SKILL_NAME,
+    );
+    const cursorDirectory = installSkillForAgent(
+      projectRoot,
+      "cursor",
+      skillSourceDirectory,
+      SKILL_NAME,
+      new Set([codexDirectory]),
+    );
+
+    expect(codexDirectory).toBe(path.join(projectRoot, ".agents/skills/react-doctor"));
+    expect(cursorDirectory).toBe(codexDirectory);
+    expect(existsSync(path.join(codexDirectory, "SKILL.md"))).toBe(true);
   });
 });

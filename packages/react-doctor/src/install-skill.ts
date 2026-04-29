@@ -65,8 +65,16 @@ export const runInstallSkill = async (options: InstallSkillOptions = {}): Promis
   if (selectedAgents.length === 0) return;
 
   const installSpinner = spinner(`Installing ${SKILL_NAME} skill...`).start();
+  const installedDirectories = new Set<string>();
   for (const agent of selectedAgents) {
-    installSkillForAgent(projectRoot, agent, sourceDir, SKILL_NAME);
+    const installedDirectory = installSkillForAgent(
+      projectRoot,
+      agent,
+      sourceDir,
+      SKILL_NAME,
+      installedDirectories,
+    );
+    installedDirectories.add(installedDirectory);
   }
   installSpinner.succeed(
     `${SKILL_NAME} skill installed for ${selectedAgents.map(toDisplayName).join(", ")}.`,

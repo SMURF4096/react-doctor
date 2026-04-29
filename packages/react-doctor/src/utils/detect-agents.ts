@@ -17,19 +17,17 @@ interface AgentMeta {
   readonly skillDir: string;
 }
 
+const AGENTS_SKILL_DIR = ".agents/skills";
+
 const SUPPORTED_AGENTS: Record<SupportedAgent, AgentMeta> = {
   claude: { binaries: ["claude"], displayName: "Claude Code", skillDir: ".claude/skills" },
-  codex: { binaries: ["codex"], displayName: "Codex", skillDir: ".codex/skills" },
-  copilot: {
-    binaries: ["copilot"],
-    displayName: "GitHub Copilot",
-    skillDir: ".github/copilot/skills",
-  },
-  gemini: { binaries: ["gemini"], displayName: "Gemini CLI", skillDir: ".gemini/skills" },
-  cursor: { binaries: ["cursor", "agent"], displayName: "Cursor", skillDir: ".cursor/skills" },
-  opencode: { binaries: ["opencode"], displayName: "OpenCode", skillDir: ".opencode/skills" },
-  droid: { binaries: ["droid"], displayName: "Factory Droid", skillDir: ".droid/skills" },
-  pi: { binaries: ["pi", "omegon"], displayName: "Pi", skillDir: ".pi/skills" },
+  codex: { binaries: ["codex"], displayName: "Codex", skillDir: AGENTS_SKILL_DIR },
+  copilot: { binaries: ["copilot"], displayName: "GitHub Copilot", skillDir: AGENTS_SKILL_DIR },
+  gemini: { binaries: ["gemini"], displayName: "Gemini CLI", skillDir: AGENTS_SKILL_DIR },
+  cursor: { binaries: ["cursor", "agent"], displayName: "Cursor", skillDir: AGENTS_SKILL_DIR },
+  opencode: { binaries: ["opencode"], displayName: "OpenCode", skillDir: AGENTS_SKILL_DIR },
+  droid: { binaries: ["droid"], displayName: "Factory Droid", skillDir: ".factory/skills" },
+  pi: { binaries: ["pi", "omegon"], displayName: "Pi", skillDir: AGENTS_SKILL_DIR },
 };
 
 export const ALL_SUPPORTED_AGENTS = Object.keys(SUPPORTED_AGENTS) as SupportedAgent[];

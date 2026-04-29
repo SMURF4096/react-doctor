@@ -33,10 +33,18 @@ describe("toDisplayName", () => {
 });
 
 describe("toSkillDir", () => {
-  it("returns the agent's skill directory path", () => {
+  it("uses .agents/skills for agents that support the standard", () => {
+    expect(toSkillDir("codex")).toBe(".agents/skills");
+    expect(toSkillDir("copilot")).toBe(".agents/skills");
+    expect(toSkillDir("gemini")).toBe(".agents/skills");
+    expect(toSkillDir("cursor")).toBe(".agents/skills");
+    expect(toSkillDir("opencode")).toBe(".agents/skills");
+    expect(toSkillDir("pi")).toBe(".agents/skills");
+  });
+
+  it("uses vendor-specific paths for agents without .agents/skills support", () => {
     expect(toSkillDir("claude")).toBe(".claude/skills");
-    expect(toSkillDir("copilot")).toBe(".github/copilot/skills");
-    expect(toSkillDir("opencode")).toBe(".opencode/skills");
+    expect(toSkillDir("droid")).toBe(".factory/skills");
   });
 });
 

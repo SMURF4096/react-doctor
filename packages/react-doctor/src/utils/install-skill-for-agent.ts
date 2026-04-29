@@ -7,8 +7,12 @@ export const installSkillForAgent = (
   agent: SupportedAgent,
   skillSourceDirectory: string,
   skillName: string,
+  alreadyInstalledDirectories?: ReadonlySet<string>,
 ): string => {
   const installedSkillDirectory = path.join(projectRoot, toSkillDir(agent), skillName);
+  if (alreadyInstalledDirectories?.has(installedSkillDirectory)) {
+    return installedSkillDirectory;
+  }
   rmSync(installedSkillDirectory, { recursive: true, force: true });
   mkdirSync(path.dirname(installedSkillDirectory), { recursive: true });
   cpSync(skillSourceDirectory, installedSkillDirectory, { recursive: true });
