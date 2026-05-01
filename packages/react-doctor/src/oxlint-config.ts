@@ -95,15 +95,20 @@ interface OxlintConfigOptions {
   customRulesOnly?: boolean;
 }
 
+interface ReactHooksJsPluginEntry {
+  name: string;
+  specifier: string;
+}
+
 const resolveReactHooksJsPlugin = (
   hasReactCompiler: boolean,
   customRulesOnly: boolean,
-): Array<{ name: string; specifier: string }> => {
-  if (!hasReactCompiler || customRulesOnly) return [];
+): ReactHooksJsPluginEntry | null => {
+  if (!hasReactCompiler || customRulesOnly) return null;
   try {
-    return [{ name: "react-hooks-js", specifier: esmRequire.resolve("eslint-plugin-react-hooks") }];
+    return { name: "react-hooks-js", specifier: esmRequire.resolve("eslint-plugin-react-hooks") };
   } catch {
-    return [];
+    return null;
   }
 };
 
@@ -279,26 +284,36 @@ export const createOxlintConfig = ({
   hasReactCompiler,
   hasTanStackQuery,
   customRulesOnly = false,
-}: OxlintConfigOptions) => ({
-  categories: {
-    correctness: "off",
-    suspicious: "off",
-    pedantic: "off",
-    perf: "off",
-    restriction: "off",
-    style: "off",
-    nursery: "off",
-  },
-  plugins: customRulesOnly ? [] : ["react", "jsx-a11y"],
-  jsPlugins: [...resolveReactHooksJsPlugin(hasReactCompiler, customRulesOnly), pluginPath],
-  rules: {
-    ...(customRulesOnly ? {} : BUILTIN_REACT_RULES),
-    ...(customRulesOnly ? {} : BUILTIN_A11Y_RULES),
-    ...(hasReactCompiler && !customRulesOnly ? REACT_COMPILER_RULES : {}),
-    ...GLOBAL_REACT_DOCTOR_RULES,
-    ...(framework === "nextjs" ? NEXTJS_RULES : {}),
-    ...(framework === "expo" || framework === "react-native" ? REACT_NATIVE_RULES : {}),
-    ...(framework === "tanstack-start" ? TANSTACK_START_RULES : {}),
-    ...(hasTanStackQuery ? TANSTACK_QUERY_RULES : {}),
-  },
-});
+}: OxlintConfigOptions) => {
+  // HACK: REACT_COMPILER_RULES live under the `react-hooks-js` plugin
+  // namespace, which is provided by the (optional peer) eslint-plugin-react-hooks
+  // package. If the user has React Compiler in their project but hasn't
+  // installed eslint-plugin-react-hooks, oxlint would error with
+  // "react-hooks-js not found" because the rules reference an unloaded
+  // plugin. Gate the rules on successful plugin resolution so a missing
+  // optional peer just silently skips the React Compiler rule set.
+  const reactHooksJsPlugin = resolveReactHooksJsPlugin(hasReactCompiler, customRulesOnly);
+  return {
+    categories: {
+      correctness: "off",
+      suspicious: "off",
+      pedantic: "off",
+      perf: "off",
+      restriction: "off",
+      style: "off",
+      nursery: "off",
+    },
+    plugins: customRulesOnly ? [] : ["react", "jsx-a11y"],
+    jsPlugins: reactHooksJsPlugin ? [reactHooksJsPlugin, pluginPath] : [pluginPath],
+    rules: {
+      ...(customRulesOnly ? {} : BUILTIN_REACT_RULES),
+      ...(customRulesOnly ? {} : BUILTIN_A11Y_RULES),
+      ...(reactHooksJsPlugin ? REACT_COMPILER_RULES : {}),
+      ...GLOBAL_REACT_DOCTOR_RULES,
+      ...(framework === "nextjs" ? NEXTJS_RULES : {}),
+      ...(framework === "expo" || framework === "react-native" ? REACT_NATIVE_RULES : {}),
+      ...(framework === "tanstack-start" ? TANSTACK_START_RULES : {}),
+      ...(hasTanStackQuery ? TANSTACK_QUERY_RULES : {}),
+    },
+  };
+};

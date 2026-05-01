@@ -14,6 +14,10 @@
  *   #89  — `--offline` calculates the score locally (no network round trip)
  *   #115 — `--staged` snapshots git INDEX content (not working tree) so
  *          partially-staged hunks behave correctly
+ *   #141 — REACT_COMPILER_RULES must not be enabled in the oxlint config
+ *          unless the `react-hooks-js` plugin (eslint-plugin-react-hooks,
+ *          an optional peer) actually resolved — otherwise oxlint errors
+ *          with "react-hooks-js not found"
  */
 
 import { spawnSync } from "node:child_process";
@@ -24,6 +28,7 @@ import { afterAll, describe, expect, it } from "vite-plus/test";
 
 import { OXLINT_MAX_FILES_PER_BATCH, SPAWN_ARGS_MAX_LENGTH_CHARS } from "../../src/constants.js";
 import { calculateScoreLocally } from "../../src/core/calculate-score-locally.js";
+import { createOxlintConfig } from "../../src/oxlint-config.js";
 import { batchIncludePaths } from "../../src/utils/batch-include-paths.js";
 import { discoverProject } from "../../src/utils/discover-project.js";
 import { extractFailedPluginName } from "../../src/utils/extract-failed-plugin-name.js";
@@ -207,5 +212,106 @@ describe("issue #115: --staged uses git INDEX content, not working tree", () => 
     writeJson(path.join(repoDir, "package.json"), { name: "empty-staged" });
     initGitRepo(repoDir);
     expect(getStagedSourceFiles(repoDir)).toEqual([]);
+  });
+});
+
+describe("issue #141: oxlint config must not reference unloaded plugins", () => {
+  // HACK: the bug only fires when eslint-plugin-react-hooks is missing
+  // AND React Compiler is detected — so REACT_COMPILER_RULES (under the
+  // `react-hooks-js` namespace) gets injected without the plugin
+  // entry, and oxlint errors out with "react-hooks-js not found".
+  // We assert the invariant directly on the produced config: every
+  // plugin namespace referenced in `rules` must be loaded as a builtin
+  // plugin (in `plugins`) or as a JS plugin (in `jsPlugins`).
+  const collectReferencedPluginNames = (rules: Record<string, unknown>): Set<string> => {
+    const pluginNames = new Set<string>();
+    for (const ruleKey of Object.keys(rules)) {
+      const slashIndex = ruleKey.indexOf("/");
+      if (slashIndex <= 0) continue;
+      pluginNames.add(ruleKey.slice(0, slashIndex));
+    }
+    return pluginNames;
+  };
+
+  // The `react-doctor` plugin itself is loaded by file path (jsPlugins
+  // entry is a string); oxlint reads the plugin's self-declared
+  // `meta.name` at load time. Treat it as always loaded for this check.
+  const PLUGIN_NAMES_LOADED_BY_FILE_PATH = new Set<string>(["react-doctor"]);
+
+  const collectLoadedPluginNames = (config: ReturnType<typeof createOxlintConfig>): Set<string> => {
+    const loaded = new Set<string>(config.plugins);
+    for (const pluginName of PLUGIN_NAMES_LOADED_BY_FILE_PATH) loaded.add(pluginName);
+    for (const jsPlugin of config.jsPlugins) {
+      if (typeof jsPlugin === "string") continue;
+      loaded.add(jsPlugin.name);
+    }
+    return loaded;
+  };
+
+  it("rules never reference a plugin that isn't in plugins or jsPlugins", () => {
+    const allCombinations = [
+      { hasReactCompiler: true, hasTanStackQuery: true, framework: "nextjs" as const },
+      { hasReactCompiler: true, hasTanStackQuery: false, framework: "expo" as const },
+      { hasReactCompiler: false, hasTanStackQuery: true, framework: "tanstack-start" as const },
+      { hasReactCompiler: false, hasTanStackQuery: false, framework: "unknown" as const },
+    ];
+    for (const combination of allCombinations) {
+      const config = createOxlintConfig({
+        pluginPath: "/tmp/react-doctor-plugin.js",
+        ...combination,
+      });
+      const referencedPluginNames = collectReferencedPluginNames(config.rules);
+      const loadedPluginNames = collectLoadedPluginNames(config);
+      const unloadedReferenced = [...referencedPluginNames].filter(
+        (pluginName) => !loadedPluginNames.has(pluginName),
+      );
+      expect(unloadedReferenced).toEqual([]);
+    }
+  });
+
+  it("REACT_COMPILER_RULES are gated on react-hooks-js plugin resolution", () => {
+    // When eslint-plugin-react-hooks IS resolvable in the workspace
+    // (true here — it's a devDependency), REACT_COMPILER_RULES should
+    // appear AND `react-hooks-js` must be in jsPlugins by name.
+    const config = createOxlintConfig({
+      pluginPath: "/tmp/react-doctor-plugin.js",
+      framework: "unknown",
+      hasReactCompiler: true,
+      hasTanStackQuery: false,
+    });
+
+    const reactHooksJsRuleKeys = Object.keys(config.rules).filter((ruleKey) =>
+      ruleKey.startsWith("react-hooks-js/"),
+    );
+    const hasReactHooksJsPluginEntry = config.jsPlugins.some(
+      (jsPlugin) => typeof jsPlugin === "object" && jsPlugin.name === "react-hooks-js",
+    );
+
+    expect(hasReactHooksJsPluginEntry).toBe(true);
+    expect(reactHooksJsRuleKeys.length).toBeGreaterThan(0);
+  });
+
+  it("emits no react-hooks-js rules when customRulesOnly skips the plugin", () => {
+    // customRulesOnly forces resolveReactHooksJsPlugin to return null
+    // even when the package is installed. The same code path executes
+    // when the optional peer is genuinely missing, so this case proves
+    // the gating works without uninstalling a workspace dep.
+    const config = createOxlintConfig({
+      pluginPath: "/tmp/react-doctor-plugin.js",
+      framework: "unknown",
+      hasReactCompiler: true,
+      hasTanStackQuery: false,
+      customRulesOnly: true,
+    });
+
+    const reactHooksJsRuleKeys = Object.keys(config.rules).filter((ruleKey) =>
+      ruleKey.startsWith("react-hooks-js/"),
+    );
+    const hasReactHooksJsPluginEntry = config.jsPlugins.some(
+      (jsPlugin) => typeof jsPlugin === "object" && jsPlugin.name === "react-hooks-js",
+    );
+
+    expect(reactHooksJsRuleKeys).toHaveLength(0);
+    expect(hasReactHooksJsPluginEntry).toBe(false);
   });
 });
