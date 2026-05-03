@@ -6,6 +6,7 @@ import {
   TRIVIAL_INITIALIZER_NAMES,
 } from "../constants.js";
 import {
+  collectPatternNames,
   containsFetchCall,
   countSetStateCalls,
   extractDestructuredPropNames,
@@ -643,13 +644,80 @@ const walkInsideStatementBlocks = (
   }
 };
 
-const expressionReadsName = (expression: EsTreeNode, name: string): boolean => {
-  let didRead = false;
+const collectIdentifierNames = (expression: EsTreeNode): Set<string> => {
+  const names = new Set<string>();
   walkAst(expression, (child: EsTreeNode) => {
-    if (didRead) return;
-    if (child.type === "Identifier" && child.name === name) didRead = true;
+    if (child.type === "Identifier") names.add(child.name);
   });
-  return didRead;
+  return names;
+};
+
+// Build a "name -> identifiers it transitively depends on" graph for
+// every top-level VariableDeclarator in the component body. Includes
+// names referenced anywhere inside the initializer (deps arrays, nested
+// callbacks, member access — we deliberately over-approximate here so
+// that `useMemo(() => derive(state), [state])` propagates `state` into
+// the dependency set of the resulting variable).
+const buildLocalDependencyGraph = (componentBody: EsTreeNode): Map<string, Set<string>> => {
+  const graph = new Map<string, Set<string>>();
+  if (componentBody?.type !== "BlockStatement") return graph;
+  const declaredNames = new Set<string>();
+  for (const statement of componentBody.body ?? []) {
+    if (statement.type !== "VariableDeclaration") continue;
+    for (const declarator of statement.declarations ?? []) {
+      if (!declarator.init) continue;
+      const dependencyNames = collectIdentifierNames(declarator.init);
+      declaredNames.clear();
+      collectPatternNames(declarator.id, declaredNames);
+      for (const declaredName of declaredNames) {
+        const existing = graph.get(declaredName);
+        if (existing === undefined) {
+          graph.set(declaredName, new Set(dependencyNames));
+        } else {
+          for (const dependencyName of dependencyNames) existing.add(dependencyName);
+        }
+      }
+    }
+  }
+  return graph;
+};
+
+// "Read in render" = any identifier (`Identifier`, NOT `JSXIdentifier`)
+// that appears anywhere inside a return expression — JSX text content,
+// `{expression}` containers, attribute values like
+// `<MyContext value={value}>` (the React Context case from #146),
+// `style={…}`, `className={…}`, props passed to children, conditional
+// chains, the lot. JSX element/tag names are `JSXIdentifier`, which we
+// deliberately do not track — referring to a component by name does
+// not "read" any value.
+const collectRenderReachableNames = (returnExpressions: EsTreeNode[]): Set<string> => {
+  const names = new Set<string>();
+  for (const expression of returnExpressions) {
+    walkAst(expression, (child: EsTreeNode) => {
+      if (child.type === "Identifier") names.add(child.name);
+    });
+  }
+  return names;
+};
+
+const expandTransitiveDependencies = (
+  seedNames: Set<string>,
+  dependencyGraph: Map<string, Set<string>>,
+): Set<string> => {
+  const reachable = new Set(seedNames);
+  const queue: string[] = Array.from(seedNames);
+  while (queue.length > 0) {
+    const currentName = queue.pop();
+    if (currentName === undefined) continue;
+    const dependencyNames = dependencyGraph.get(currentName);
+    if (!dependencyNames) continue;
+    for (const dependencyName of dependencyNames) {
+      if (reachable.has(dependencyName)) continue;
+      reachable.add(dependencyName);
+      queue.push(dependencyName);
+    }
+  }
+  return reachable;
 };
 
 export const rerenderStateOnlyInHandlers: Rule = {
@@ -662,11 +730,12 @@ export const rerenderStateOnlyInHandlers: Rule = {
       const returnExpressions = collectReturnExpressions(componentBody);
       if (returnExpressions.length === 0) return;
 
+      const dependencyGraph = buildLocalDependencyGraph(componentBody);
+      const directRenderNames = collectRenderReachableNames(returnExpressions);
+      const renderReachableNames = expandTransitiveDependencies(directRenderNames, dependencyGraph);
+
       for (const binding of bindings) {
-        const isReadInReturn = returnExpressions.some((expression) =>
-          expressionReadsName(expression, binding.valueName),
-        );
-        if (isReadInReturn) continue;
+        if (renderReachableNames.has(binding.valueName)) continue;
 
         let setterCalled = false;
         walkAst(componentBody, (child: EsTreeNode) => {
