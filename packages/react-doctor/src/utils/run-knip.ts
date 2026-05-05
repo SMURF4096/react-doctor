@@ -10,6 +10,7 @@ import { findMonorepoRoot } from "./find-monorepo-root.js";
 import { hasKnipConfig } from "./has-knip-config.js";
 import { isFile } from "./is-file.js";
 import { readPackageJson } from "./read-package-json.js";
+import { sanitizeKnipConfigPatterns } from "./sanitize-knip-config-patterns.js";
 
 interface KnipIssueDescriptor {
   category: string;
@@ -117,6 +118,7 @@ const runKnipWithOptions = async (
   );
 
   const parsedConfig = options.parsedConfig as Record<string, unknown>;
+  sanitizeKnipConfigPatterns(parsedConfig);
   const disabledPlugins = new Set<string>();
   let lastKnipError: unknown;
 

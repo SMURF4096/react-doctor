@@ -220,6 +220,22 @@ describe("runKnip", () => {
       expect(mockKnipState.mainCallCount).toBe(1);
     });
 
+    it("strips empty pattern strings from parsedConfig before calling knip (issue #149)", async () => {
+      mockKnipState.parsedConfig = {
+        entry: ["src/index.ts", "", "src/main.ts"],
+        ignore: "",
+        vite: { config: ["", "vite.config.ts"] },
+      };
+
+      await runKnip(standaloneRoot);
+
+      expect(mockKnipState.parsedConfig).toEqual({
+        entry: ["src/index.ts", "src/main.ts"],
+        vite: { config: ["vite.config.ts"] },
+      });
+      expect(mockKnipState.mainCallCount).toBe(1);
+    });
+
     it("rethrows the most recent error after exhausting retries instead of `Unreachable`", async () => {
       const sequencedErrors = [
         new Error("Error loading /repo/vite.config.ts"),
