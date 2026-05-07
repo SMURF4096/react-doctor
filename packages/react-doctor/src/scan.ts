@@ -43,6 +43,7 @@ import {
 } from "./utils/resolve-compatible-node.js";
 import { resolveLintIncludePaths } from "./utils/resolve-lint-include-paths.js";
 import { runKnip } from "./utils/run-knip.js";
+import { parseReactMajor } from "./utils/parse-react-major.js";
 import { runOxlint } from "./utils/run-oxlint.js";
 import { isSpinnerSilent, setSpinnerSilent, spinner } from "./utils/spinner.js";
 
@@ -550,6 +551,7 @@ const runScan = async (
             framework: projectInfo.framework,
             hasReactCompiler: projectInfo.hasReactCompiler,
             hasTanStackQuery: projectInfo.hasTanStackQuery,
+            reactMajorVersion: parseReactMajor(projectInfo.reactVersion),
             includePaths: lintIncludePaths,
             nodeBinaryPath: resolvedNodeBinaryPath,
             customRulesOnly: options.customRulesOnly,

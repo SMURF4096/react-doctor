@@ -1,4 +1,5 @@
 import { createRequire } from "node:module";
+import { REACT_19_DEPRECATION_MIN_MAJOR, REACT_DOM_LEGACY_API_MIN_MAJOR } from "./constants.js";
 import type { Framework } from "./types.js";
 
 const esmRequire = createRequire(import.meta.url);
@@ -93,6 +94,13 @@ interface OxlintConfigOptions {
   hasReactCompiler: boolean;
   hasTanStackQuery: boolean;
   customRulesOnly?: boolean;
+  /**
+   * Major version of React detected for the project (e.g. 17, 18, 19).
+   * `null` means the version couldn't be parsed (workspace tags, missing
+   * dep, exotic spec) — treat as "unknown, leave React-19-deprecation
+   * rules enabled" to err on the side of surfacing the migration nudge.
+   */
+  reactMajorVersion?: number | null;
   /**
    * Absolute paths to extra configs that should be merged into the
    * generated oxlint config via the `extends` field. Used to fold the
@@ -244,6 +252,10 @@ export const GLOBAL_REACT_DOCTOR_RULES: Record<string, RuleSeverity> = {
   "react-doctor/no-render-prop-children": "warn",
   "react-doctor/no-nested-component-definition": "error",
   "react-doctor/react-compiler-destructure-method": "warn",
+  "react-doctor/no-legacy-class-lifecycles": "error",
+  "react-doctor/no-legacy-context-api": "error",
+  "react-doctor/no-default-props": "warn",
+  "react-doctor/no-react-dom-deprecated-apis": "warn",
 
   "react-doctor/no-usememo-simple-expression": "warn",
   "react-doctor/no-layout-property-animation": "error",
@@ -356,12 +368,36 @@ export const ALL_REACT_DOCTOR_RULE_KEYS: ReadonlySet<string> = new Set([
   ...Object.keys(TANSTACK_QUERY_RULES),
 ]);
 
+// HACK: single source of truth for which rules are gated behind the
+// project's detected React major. Adding a new version-gated rule means
+// touching just this map. `null` reactMajorVersion (couldn't detect)
+// keeps every rule enabled so we never silently swallow real findings.
+const VERSION_GATED_RULE_IDS: ReadonlyMap<string, number> = new Map([
+  ["react-doctor/no-react19-deprecated-apis", REACT_19_DEPRECATION_MIN_MAJOR],
+  ["react-doctor/no-default-props", REACT_19_DEPRECATION_MIN_MAJOR],
+  ["react-doctor/no-react-dom-deprecated-apis", REACT_DOM_LEGACY_API_MIN_MAJOR],
+]);
+
+const filterRulesByReactMajor = (
+  rules: Record<string, RuleSeverity>,
+  reactMajorVersion: number | null,
+): Record<string, RuleSeverity> => {
+  if (reactMajorVersion === null) return rules;
+  return Object.fromEntries(
+    Object.entries(rules).filter(([ruleKey]) => {
+      const minMajor = VERSION_GATED_RULE_IDS.get(ruleKey);
+      return minMajor === undefined || reactMajorVersion >= minMajor;
+    }),
+  );
+};
+
 export const createOxlintConfig = ({
   pluginPath,
   framework,
   hasReactCompiler,
   hasTanStackQuery,
   customRulesOnly = false,
+  reactMajorVersion = null,
   extendsPaths = [],
 }: OxlintConfigOptions) => {
   // HACK: REACT_COMPILER_RULES live under the `react-hooks-js` plugin
@@ -409,7 +445,7 @@ export const createOxlintConfig = ({
       ...(customRulesOnly ? {} : BUILTIN_REACT_RULES),
       ...(customRulesOnly ? {} : BUILTIN_A11Y_RULES),
       ...reactCompilerRules,
-      ...GLOBAL_REACT_DOCTOR_RULES,
+      ...filterRulesByReactMajor(GLOBAL_REACT_DOCTOR_RULES, reactMajorVersion),
       ...(framework === "nextjs" ? NEXTJS_RULES : {}),
       ...(framework === "expo" || framework === "react-native" ? REACT_NATIVE_RULES : {}),
       ...(framework === "tanstack-start" ? TANSTACK_START_RULES : {}),

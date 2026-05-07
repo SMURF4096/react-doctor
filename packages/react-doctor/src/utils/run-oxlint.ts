@@ -68,6 +68,10 @@ const RULE_CATEGORY_MAP: Record<string, string> = {
   "react-doctor/no-render-in-render": "Architecture",
   "react-doctor/no-nested-component-definition": "Correctness",
   "react-doctor/react-compiler-destructure-method": "Architecture",
+  "react-doctor/no-legacy-class-lifecycles": "Correctness",
+  "react-doctor/no-legacy-context-api": "Correctness",
+  "react-doctor/no-default-props": "Architecture",
+  "react-doctor/no-react-dom-deprecated-apis": "Architecture",
 
   "react-doctor/no-usememo-simple-expression": "Performance",
   "react-doctor/no-layout-property-animation": "Performance",
@@ -264,7 +268,15 @@ const RULE_HELP_MAP: Record<string, string> = {
   "no-many-boolean-props":
     "Split into compound components or named variants: `<Button.Primary />`, `<DialogConfirm />` instead of stacking `isPrimary`, `isConfirm` flags",
   "no-react19-deprecated-apis":
-    "Pass `ref` as a regular prop on function components — `forwardRef` is no longer needed in React 19+. Replace `useContext(X)` with `use(X)` for branch-aware context reads.",
+    "Pass `ref` as a regular prop on function components — `forwardRef` is no longer needed in React 19+. Replace `useContext(X)` with `use(X)` for branch-aware context reads. Only enabled on projects detected as React 19+.",
+  "no-legacy-class-lifecycles":
+    "Move side effects in `componentWillMount` to `componentDidMount`; replace `componentWillReceiveProps` with `componentDidUpdate` (compare prevProps) or the static `getDerivedStateFromProps` for pure state derivation; replace `componentWillUpdate` with `getSnapshotBeforeUpdate` paired with `componentDidUpdate`. The `UNSAFE_` prefix only silences the warning — React 19 removes both forms.",
+  "no-legacy-context-api":
+    "Replace `childContextTypes` + `getChildContext` with `const MyContext = createContext(...)` + `<MyContext.Provider value={...}>`; replace `contextTypes` with `static contextType = MyContext` (single context) or `useContext()` / `use()` from a function component. The provider and every consumer must migrate together — partial migrations leave consumers reading the wrong context.",
+  "no-default-props":
+    'React 19 removes `Component.defaultProps` for function components. Move the defaults into the destructured props parameter: `function Foo({ size = "md", variant = "primary" })` instead of `Foo.defaultProps = { size: "md", variant: "primary" }`.',
+  "no-react-dom-deprecated-apis":
+    "Switch the legacy `react-dom` root API (`render` / `hydrate` / `unmountComponentAtNode`) to `createRoot` / `hydrateRoot` / `root.unmount()` from `react-dom/client`. Replace `findDOMNode` with a ref. The whole `react-dom/test-utils` entry point is removed in React 19 — use `act` from `react` and `fireEvent` / `render` from `@testing-library/react`. Only enabled on projects detected as React 18+.",
   "no-render-prop-children":
     "Replace `renderXxx` props with compound subcomponents (e.g. `<Modal.Header>`) or `children` so the parent doesn't dictate every customization point",
   "no-render-in-render":
@@ -813,6 +825,13 @@ interface RunOxlintOptions {
   framework: Framework;
   hasReactCompiler: boolean;
   hasTanStackQuery: boolean;
+  /**
+   * Major version of React detected for the project. Forwarded to
+   * `createOxlintConfig` so React-19-deprecation rules only fire on
+   * projects where they actually apply. `null` means "unknown — leave
+   * those rules enabled".
+   */
+  reactMajorVersion?: number | null;
   includePaths?: string[];
   nodeBinaryPath?: string;
   customRulesOnly?: boolean;
@@ -871,6 +890,7 @@ export const runOxlint = async (options: RunOxlintOptions): Promise<Diagnostic[]
     framework,
     hasReactCompiler,
     hasTanStackQuery,
+    reactMajorVersion = null,
     includePaths,
     nodeBinaryPath = process.execPath,
     customRulesOnly = false,
@@ -906,6 +926,7 @@ export const runOxlint = async (options: RunOxlintOptions): Promise<Diagnostic[]
     hasReactCompiler,
     hasTanStackQuery,
     customRulesOnly,
+    reactMajorVersion,
     extendsPaths,
   });
   // HACK: only neutralize disable comments in audit mode. Default
@@ -989,6 +1010,7 @@ export const runOxlint = async (options: RunOxlintOptions): Promise<Diagnostic[]
         hasReactCompiler,
         hasTanStackQuery,
         customRulesOnly,
+        reactMajorVersion,
         extendsPaths: [],
       });
       writeOxlintConfig(fallbackConfig);

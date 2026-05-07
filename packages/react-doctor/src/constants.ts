@@ -78,3 +78,13 @@ export const PROXY_OUTPUT_MAX_BYTES = 50 * 1024 * 1024;
 
 export const buildNoReactDependencyError = (directory: string): string =>
   `No React dependency found in ${directory}/package.json. Add "react" to dependencies (or peerDependencies) and re-run.`;
+
+// HACK: minimum React major versions for the deprecation rule gates in
+// `oxlint-config.ts`. React-19-deprecated APIs (forwardRef, useContext,
+// Foo.defaultProps) shouldn't fire on 17/18 codebases — those are still
+// the current surface there. The legacy react-dom root API
+// (render/hydrate/unmountComponentAtNode/findDOMNode) was deprecated
+// in 18, so we light those up one major earlier.
+export const REACT_19_DEPRECATION_MIN_MAJOR = 19;
+
+export const REACT_DOM_LEGACY_API_MIN_MAJOR = 18;
