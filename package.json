@@ -42,6 +42,9 @@
       "@parcel/watcher",
       "esbuild",
       "unrs-resolver"
-    ]
+    ],
+    "overrides": {
+      "oxlint-tsgolint": "^0.22.1"
+    }
   }
 }

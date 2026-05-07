@@ -6,9 +6,6 @@ import { runOxlint } from "../src/utils/run-oxlint.js";
 const FIXTURES_DIRECTORY = path.resolve(import.meta.dirname, "fixtures");
 const BASIC_REACT_DIRECTORY = path.join(FIXTURES_DIRECTORY, "basic-react");
 
-const findDiagnosticsByRule = (diagnostics: Diagnostic[], rule: string): Diagnostic[] =>
-  diagnostics.filter((diagnostic) => diagnostic.rule === rule);
-
 const findDiagnosticsInFile = (
   diagnostics: Diagnostic[],
   rule: string,

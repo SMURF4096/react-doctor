@@ -5,7 +5,13 @@ export default defineConfig({
     "*.{js,ts,tsx}": "vp check --fix",
   },
   lint: {
-    ignorePatterns: [".turbo", "dist", "build", "node_modules"],
+    ignorePatterns: [
+      ".turbo",
+      "dist",
+      "build",
+      "node_modules",
+      "packages/react-doctor/tests/fixtures/**",
+    ],
     plugins: ["typescript", "react", "import"],
     rules: {},
   },

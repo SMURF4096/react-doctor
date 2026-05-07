@@ -53,6 +53,13 @@ export const KNIP_CONFIG_LOCATIONS = [
   "knip.config.js",
 ];
 
+// JSON-format oxlint / eslint configs react-doctor can fold into the
+// scan via oxlint's `extends` field. JS / TS configs need a runtime
+// to evaluate and aren't supported by oxlint's `extends`. Listed in
+// detection priority order — oxlint native first, eslint legacy as a
+// compatibility fallback. Also used by tests as the source of truth.
+export const ADOPTABLE_LINT_CONFIG_FILENAMES = [".oxlintrc.json", ".eslintrc.json"];
+
 export const OXLINT_NODE_REQUIREMENT = "^20.19.0 || >=22.12.0";
 
 export const OXLINT_RECOMMENDED_NODE_MAJOR = 24;
@@ -68,22 +75,6 @@ export const SKILL_NAME = "react-doctor";
 export const KNIP_TOTAL_ATTEMPTS = 6;
 
 export const PROXY_OUTPUT_MAX_BYTES = 50 * 1024 * 1024;
-
-export const CDP_CONNECT_TIMEOUT_MS = 10_000;
-
-export const SNAPSHOT_TIMEOUT_DEFAULT_MS = 30_000;
-
-export const DEFAULT_VIEWPORT_WIDTH_PX = 1280;
-
-export const DEFAULT_VIEWPORT_HEIGHT_PX = 720;
-
-export const SIGTERM_GRACE_PERIOD_MS = 2_000;
-
-export const SIGTERM_POLL_INTERVAL_MS = 50;
-
-export const SESSION_DIR_NAME = ".react-doctor";
-
-export const SESSION_FILE_NAME = "browser.json";
 
 export const buildNoReactDependencyError = (directory: string): string =>
   `No React dependency found in ${directory}/package.json. Add "react" to dependencies (or peerDependencies) and re-run.`;

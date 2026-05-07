@@ -3,9 +3,9 @@ import type { Framework } from "./types.js";
 
 const esmRequire = createRequire(import.meta.url);
 
-type RuleSeverity = "error" | "warn" | "off";
+export type RuleSeverity = "error" | "warn" | "off";
 
-const NEXTJS_RULES: Record<string, RuleSeverity> = {
+export const NEXTJS_RULES: Record<string, RuleSeverity> = {
   "react-doctor/nextjs-no-img-element": "warn",
   "react-doctor/nextjs-async-client-component": "error",
   "react-doctor/nextjs-no-a-element": "warn",
@@ -24,7 +24,7 @@ const NEXTJS_RULES: Record<string, RuleSeverity> = {
   "react-doctor/nextjs-no-side-effect-in-get-handler": "error",
 };
 
-const REACT_NATIVE_RULES: Record<string, RuleSeverity> = {
+export const REACT_NATIVE_RULES: Record<string, RuleSeverity> = {
   "react-doctor/rn-no-raw-text": "error",
   "react-doctor/rn-no-deprecated-modules": "error",
   "react-doctor/rn-no-legacy-expo-packages": "warn",
@@ -51,7 +51,7 @@ const REACT_NATIVE_RULES: Record<string, RuleSeverity> = {
   "react-doctor/rn-style-prefer-boxshadow": "warn",
 };
 
-const TANSTACK_START_RULES: Record<string, RuleSeverity> = {
+export const TANSTACK_START_RULES: Record<string, RuleSeverity> = {
   "react-doctor/tanstack-start-route-property-order": "error",
   "react-doctor/tanstack-start-no-direct-fetch-in-loader": "warn",
   "react-doctor/tanstack-start-server-fn-validate-input": "warn",
@@ -93,6 +93,13 @@ interface OxlintConfigOptions {
   hasReactCompiler: boolean;
   hasTanStackQuery: boolean;
   customRulesOnly?: boolean;
+  /**
+   * Absolute paths to extra configs that should be merged into the
+   * generated oxlint config via the `extends` field. Used to fold the
+   * user's existing `.oxlintrc.json` / `.eslintrc.json` rules into the
+   * same scan so those diagnostics factor into the react-doctor score.
+   */
+  extendsPaths?: string[];
 }
 
 interface ReactHooksJsPluginEntry {
@@ -171,7 +178,7 @@ const filterRulesToAvailable = (
   return filtered;
 };
 
-const TANSTACK_QUERY_RULES: Record<string, RuleSeverity> = {
+export const TANSTACK_QUERY_RULES: Record<string, RuleSeverity> = {
   "react-doctor/query-stable-query-client": "warn",
   "react-doctor/query-no-rest-destructuring": "warn",
   "react-doctor/query-no-void-query-fn": "warn",
@@ -212,7 +219,7 @@ const BUILTIN_A11Y_RULES: Record<string, RuleSeverity> = {
   "jsx-a11y/iframe-has-title": "warn",
 };
 
-const GLOBAL_REACT_DOCTOR_RULES: Record<string, RuleSeverity> = {
+export const GLOBAL_REACT_DOCTOR_RULES: Record<string, RuleSeverity> = {
   "react-doctor/no-derived-state-effect": "warn",
   "react-doctor/no-fetch-in-effect": "warn",
   "react-doctor/no-cascading-set-state": "warn",
@@ -355,6 +362,7 @@ export const createOxlintConfig = ({
   hasReactCompiler,
   hasTanStackQuery,
   customRulesOnly = false,
+  extendsPaths = [],
 }: OxlintConfigOptions) => {
   // HACK: REACT_COMPILER_RULES live under the `react-hooks-js` plugin
   // namespace, which is provided by the (optional peer) eslint-plugin-react-hooks
@@ -375,7 +383,17 @@ export const createOxlintConfig = ({
         reactHooksJsPlugin.availableRuleNames,
       )
     : {};
+  // HACK: oxlint merges configs from first to last, with later entries
+  // overriding earlier ones — and the local config always overrides
+  // every entry in `extends`. So adding the user's existing oxlintrc
+  // path to `extends` adds their `rules` to the union without letting
+  // their config silence anything react-doctor explicitly configures.
+  // Categories the user enables in their own config are blocked by our
+  // local `categories: { ... "off" }` block; that's intentional, since
+  // mass-enabling oxlint categories would balloon the rule set far
+  // beyond the curated react-doctor surface.
   return {
+    ...(extendsPaths.length > 0 ? { extends: extendsPaths } : {}),
     categories: {
       correctness: "off",
       suspicious: "off",

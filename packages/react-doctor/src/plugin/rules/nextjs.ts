@@ -22,7 +22,6 @@ import {
   hasJsxAttribute,
   isComponentAssignment,
   isHookCall,
-  isMemberProperty,
   isUppercaseName,
   walkAst,
 } from "../helpers.js";

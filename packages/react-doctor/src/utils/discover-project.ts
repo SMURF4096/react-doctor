@@ -543,12 +543,6 @@ const hasCompilerPackage = (packageJson: PackageJson): boolean => {
   );
 };
 
-const fileContainsPattern = (filePath: string, pattern: RegExp): boolean => {
-  if (!isFile(filePath)) return false;
-  const content = fs.readFileSync(filePath, "utf-8");
-  return pattern.test(content);
-};
-
 const hasCompilerInConfigFile = (filePath: string): boolean => {
   if (!isFile(filePath)) return false;
   const content = fs.readFileSync(filePath, "utf-8");

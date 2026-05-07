@@ -67,7 +67,6 @@ describe("discoverProject", () => {
   });
 
   it("resolves React version when only in peerDependencies with catalog reference", () => {
-    const projectDirectory = path.join(tempDirectory, "peer-deps-catalog");
     const monorepoRoot = path.join(tempDirectory, "peer-deps-catalog-root");
     fs.mkdirSync(path.join(monorepoRoot, "packages", "ui"), { recursive: true });
     fs.writeFileSync(
