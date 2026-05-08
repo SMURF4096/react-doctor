@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { runOxlint } from "../../src/utils/run-oxlint.js";
 import type { Diagnostic } from "../../src/types.js";
 
 export const writeFile = (filePath: string, contents: string): void => {
@@ -81,4 +82,52 @@ export const setupReactProject = (
     writeFile(path.join(projectDir, relativePath), content);
   }
   return projectDir;
+};
+
+export interface CollectRuleHitsOptions {
+  /** React major to forward to runOxlint (default: 19). Pass null to test the unresolvable-version path. */
+  reactMajorVersion?: number | null;
+  /** Project framework hint (default: "unknown"). Set to "react-native" for RN-only rules. */
+  framework?: "unknown" | "react-native";
+  hasReactCompiler?: boolean;
+  hasTanStackQuery?: boolean;
+}
+
+export interface RuleHit {
+  filePath: string;
+  message: string;
+}
+
+// Replaces the five near-identical `collectRuleHits` helpers that each
+// regression suite previously declared at the top of the file. Defaults
+// match the most common shape (React 19, framework="unknown"); pass an
+// options bag to override per-test.
+//
+// HACK: distinguish "caller didn't pass `reactMajorVersion`" (omit → 19,
+// the synthetic project's actual React version) from "caller explicitly
+// passed `null`" (testing the unresolvable-version code path). A naive
+// `options.reactMajorVersion ?? 19` collapses both into 19 and silently
+// changes what null-version tests are testing.
+export const collectRuleHits = async (
+  projectDir: string,
+  ruleId: string,
+  options: CollectRuleHitsOptions = {},
+): Promise<RuleHit[]> => {
+  const reactMajorVersion = Object.hasOwn(options, "reactMajorVersion")
+    ? options.reactMajorVersion
+    : 19;
+  const diagnostics = await runOxlint({
+    rootDirectory: projectDir,
+    hasTypeScript: true,
+    framework: options.framework ?? "unknown",
+    hasReactCompiler: options.hasReactCompiler ?? false,
+    hasTanStackQuery: options.hasTanStackQuery ?? false,
+    reactMajorVersion,
+  });
+  return diagnostics
+    .filter((diagnostic) => diagnostic.rule === ruleId)
+    .map((diagnostic) => ({
+      filePath: diagnostic.filePath,
+      message: diagnostic.message,
+    }));
 };

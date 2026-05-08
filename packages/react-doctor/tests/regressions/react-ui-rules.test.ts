@@ -3,33 +3,13 @@ import os from "node:os";
 import path from "node:path";
 import { afterAll, describe, expect, it } from "vite-plus/test";
 
-import { runOxlint } from "../../src/utils/run-oxlint.js";
-import { setupReactProject } from "./_helpers.js";
+import { collectRuleHits, setupReactProject } from "./_helpers.js";
 
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "rd-react-ui-rules-"));
 
 afterAll(() => {
   fs.rmSync(tempRoot, { recursive: true, force: true });
 });
-
-const collectRuleHits = async (
-  projectDir: string,
-  ruleId: string,
-): Promise<Array<{ filePath: string; message: string }>> => {
-  const diagnostics = await runOxlint({
-    rootDirectory: projectDir,
-    hasTypeScript: true,
-    framework: "unknown",
-    hasReactCompiler: false,
-    hasTanStackQuery: false,
-  });
-  return diagnostics
-    .filter((diagnostic) => diagnostic.rule === ruleId)
-    .map((diagnostic) => ({
-      filePath: diagnostic.filePath,
-      message: diagnostic.message,
-    }));
-};
 
 describe("design-no-bold-heading", () => {
   it("flags font-bold on headings and inline fontWeight ≥ 700", async () => {
@@ -306,6 +286,29 @@ describe("design-no-default-tailwind-palette", () => {
     <button className="bg-zinc-900 text-white">Sign up</button>
     <p className="text-neutral-700">Free for 30 days.</p>
     <div className="bg-stone-50" />
+  </div>
+);
+`,
+      },
+    });
+
+    const hits = await collectRuleHits(projectDir, "design-no-default-tailwind-palette");
+    expect(hits).toHaveLength(0);
+  });
+
+  // HACK: regression for the over-broad `\d{2,3}` stop pattern. Radix
+  // Colors (and similar custom themes) re-purpose Tailwind utility
+  // prefixes for a 1..12 step scale (`text-gray-11`, `bg-slate-2`),
+  // which is NOT the Tailwind template default and must not be flagged.
+  it("does not flag custom-scale stops outside the canonical Tailwind palette (Radix Colors style)", async () => {
+    const projectDir = setupReactProject(tempRoot, "no-default-palette-radix", {
+      files: {
+        "src/Card.tsx": `export const Card = () => (
+  <div>
+    <p className="text-gray-11">caption</p>
+    <p className="text-gray-12">heading</p>
+    <div className="bg-slate-2 border border-slate-6" />
+    <span className="text-indigo-1">accent</span>
   </div>
 );
 `,

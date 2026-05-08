@@ -3,35 +3,13 @@ import os from "node:os";
 import path from "node:path";
 import { afterAll, describe, expect, it } from "vite-plus/test";
 
-import { runOxlint } from "../../src/utils/run-oxlint.js";
-import { setupReactProject } from "./_helpers.js";
+import { collectRuleHits, setupReactProject } from "./_helpers.js";
 
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "rd-react19-migration-"));
 
 afterAll(() => {
   fs.rmSync(tempRoot, { recursive: true, force: true });
 });
-
-const collectRuleHits = async (
-  projectDir: string,
-  ruleId: string,
-  reactMajorVersion: number | null = null,
-): Promise<Array<{ filePath: string; message: string }>> => {
-  const diagnostics = await runOxlint({
-    rootDirectory: projectDir,
-    hasTypeScript: true,
-    framework: "unknown",
-    hasReactCompiler: false,
-    hasTanStackQuery: false,
-    reactMajorVersion,
-  });
-  return diagnostics
-    .filter((diagnostic) => diagnostic.rule === ruleId)
-    .map((diagnostic) => ({
-      filePath: diagnostic.filePath,
-      message: diagnostic.message,
-    }));
-};
 
 describe("no-react-dom-deprecated-apis", () => {
   it("flags react-dom legacy root and rendering APIs imported by name", async () => {
@@ -184,6 +162,51 @@ export function componentWillReceiveProps() {}
     const hits = await collectRuleHits(projectDir, "no-legacy-class-lifecycles");
     expect(hits).toHaveLength(0);
   });
+
+  // HACK: regression for the prototype-pollution false positive.
+  // Plain-object lookups (`messages["constructor"]`) inherit from
+  // `Object.prototype`, so `replacement` was the native Object function
+  // (truthy). Every Lexical/MobX/Three.js/etc. class with a `constructor`
+  // fired with a message ending in `function Object() { [native code] }`.
+  it("does not flag a plain `constructor` (Lexical-style class with no React lifecycles)", async () => {
+    const projectDir = setupReactProject(tempRoot, "no-legacy-class-lifecycles-ctor", {
+      files: {
+        "src/lexical-node.ts": `import { TextNode } from "lexical";
+
+export class AutocompleteSuggestionNode extends TextNode {
+  __suggestion: string;
+
+  constructor(suggestion: string, key?: string) {
+    super(suggestion, key);
+    this.__suggestion = suggestion;
+  }
+}
+`,
+      },
+    });
+
+    const hits = await collectRuleHits(projectDir, "no-legacy-class-lifecycles");
+    expect(hits).toHaveLength(0);
+  });
+
+  it("does not flag class members named after Object.prototype properties (toString, hasOwnProperty, etc.)", async () => {
+    const projectDir = setupReactProject(tempRoot, "no-legacy-class-lifecycles-proto-names", {
+      files: {
+        "src/Custom.tsx": `import React from "react";
+
+export class Custom extends React.Component<{}, {}> {
+  toString() { return "Custom"; }
+  hasOwnProperty(key: string) { return key === "x"; }
+  valueOf() { return 0; }
+  render() { return null; }
+}
+`,
+      },
+    });
+
+    const hits = await collectRuleHits(projectDir, "no-legacy-class-lifecycles");
+    expect(hits).toHaveLength(0);
+  });
 });
 
 describe("no-legacy-context-api", () => {
@@ -324,7 +347,13 @@ export { config };
 });
 
 describe("version gating", () => {
-  it("does NOT flag forwardRef on React 18 projects", async () => {
+  // HACK: deprecation-warning rules fire on every detected React major.
+  // The audience that benefits MOST is the version that still allows
+  // the pattern (R18 users planning the React 19 upgrade) — silencing
+  // the rule on R17/18 lost ~1.1k diagnostics on real projects between
+  // 0.0.47 and HEAD. The rule's message names the breaking version so
+  // users on older Reacts can prioritize the warning appropriately.
+  it("DOES flag forwardRef on React 18 projects (deprecation-warning, fail open)", async () => {
     const projectDir = setupReactProject(tempRoot, "gating-r18-forwardRef", {
       reactVersion: "^18.3.1",
       files: {
@@ -337,8 +366,10 @@ export const Button = forwardRef<HTMLButtonElement>((_props, ref) => (
       },
     });
 
-    const hits = await collectRuleHits(projectDir, "no-react19-deprecated-apis", 18);
-    expect(hits).toHaveLength(0);
+    const hits = await collectRuleHits(projectDir, "no-react19-deprecated-apis", {
+      reactMajorVersion: 18,
+    });
+    expect(hits.length).toBeGreaterThanOrEqual(1);
   });
 
   it("DOES flag forwardRef on React 19 projects", async () => {
@@ -353,11 +384,34 @@ export const Button = forwardRef<HTMLButtonElement>((_props, ref) => (
       },
     });
 
-    const hits = await collectRuleHits(projectDir, "no-react19-deprecated-apis", 19);
+    const hits = await collectRuleHits(projectDir, "no-react19-deprecated-apis", {
+      reactMajorVersion: 19,
+    });
     expect(hits.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("does NOT flag Foo.defaultProps on React 18 projects", async () => {
+  // HACK: regression for the prototype-pollution sibling of the
+  // `constructor` FP. `messages[importedName]` previously fell through
+  // to `Object.prototype.toString` etc. when the user imported (or member-
+  // accessed) a name shared with a base Object property.
+  it("does NOT flag React.toString() / React.hasOwnProperty (prototype-name member access)", async () => {
+    const projectDir = setupReactProject(tempRoot, "deprecated-apis-proto-names", {
+      files: {
+        "src/index.tsx": `import React from "react";
+
+export const debug = (): string => React.toString();
+export const has = (key: string): boolean => React.hasOwnProperty(key);
+`,
+      },
+    });
+
+    const hits = await collectRuleHits(projectDir, "no-react19-deprecated-apis", {
+      reactMajorVersion: 19,
+    });
+    expect(hits).toHaveLength(0);
+  });
+
+  it("DOES flag Foo.defaultProps on React 18 projects (deprecation-warning, fail open)", async () => {
     const projectDir = setupReactProject(tempRoot, "gating-r18-defaultProps", {
       reactVersion: "^18.3.1",
       files: {
@@ -367,11 +421,11 @@ Button.defaultProps = { size: "md" };
       },
     });
 
-    const hits = await collectRuleHits(projectDir, "no-default-props", 18);
-    expect(hits).toHaveLength(0);
+    const hits = await collectRuleHits(projectDir, "no-default-props", { reactMajorVersion: 18 });
+    expect(hits.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("does NOT flag react-dom render on React 17 projects", async () => {
+  it("DOES flag react-dom render on React 17 projects (deprecation-warning, fail open)", async () => {
     const projectDir = setupReactProject(tempRoot, "gating-r17-render", {
       reactVersion: "^17.0.2",
       files: {
@@ -382,8 +436,10 @@ void render;
       },
     });
 
-    const hits = await collectRuleHits(projectDir, "no-react-dom-deprecated-apis", 17);
-    expect(hits).toHaveLength(0);
+    const hits = await collectRuleHits(projectDir, "no-react-dom-deprecated-apis", {
+      reactMajorVersion: 17,
+    });
+    expect(hits.length).toBeGreaterThanOrEqual(1);
   });
 
   it("DOES flag react-dom render on React 18 projects (deprecated since 18)", async () => {
@@ -397,7 +453,9 @@ void render;
       },
     });
 
-    const hits = await collectRuleHits(projectDir, "no-react-dom-deprecated-apis", 18);
+    const hits = await collectRuleHits(projectDir, "no-react-dom-deprecated-apis", {
+      reactMajorVersion: 18,
+    });
     expect(hits.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -415,11 +473,13 @@ export class Legacy extends React.Component<{}, {}> {
       },
     });
 
-    const hits = await collectRuleHits(projectDir, "no-legacy-class-lifecycles", 17);
+    const hits = await collectRuleHits(projectDir, "no-legacy-class-lifecycles", {
+      reactMajorVersion: 17,
+    });
     expect(hits.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("leaves all rules enabled when the React version is unknown (null)", async () => {
+  it("leaves all rules enabled when the React version is unknown (null) — assumes latest", async () => {
     const projectDir = setupReactProject(tempRoot, "gating-null-defaultProps", {
       reactVersion: "*",
       files: {
@@ -429,7 +489,36 @@ Button.defaultProps = { size: "md" };
       },
     });
 
-    const hits = await collectRuleHits(projectDir, "no-default-props", null);
+    const hits = await collectRuleHits(projectDir, "no-default-props", { reactMajorVersion: null });
+    expect(hits.length).toBeGreaterThanOrEqual(1);
+  });
+
+  // HACK: complement to the deprecation-warning case — `prefer-newer-api`
+  // rules ALSO run when version detection fails, on the assumption that
+  // the user is on the latest React major. Custom resolvers, monorepo
+  // overrides, and `workspace:*` references commonly produce `null`, and
+  // hiding the suggestion silently degrades the scan in those setups.
+  it("DOES flag prefer-use-effect-event when the React version is unknown (null) — assumes latest", async () => {
+    const projectDir = setupReactProject(tempRoot, "gating-null-prefer-use-effect-event", {
+      reactVersion: "*",
+      files: {
+        "src/Search.tsx": `import { useEffect, useState } from "react";
+
+export const Search = ({ onChange }: { onChange: (value: string) => void }) => {
+  const [text, setText] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => onChange(text), 300);
+    return () => clearTimeout(id);
+  }, [text, onChange]);
+  return <input value={text} onChange={(event) => setText(event.target.value)} />;
+};
+`,
+      },
+    });
+
+    const hits = await collectRuleHits(projectDir, "prefer-use-effect-event", {
+      reactMajorVersion: null,
+    });
     expect(hits.length).toBeGreaterThanOrEqual(1);
   });
 });
