@@ -15,17 +15,6 @@ Works with Next.js, Vite, React Native, fix your app in minutes
 
 ### [See it in action →](https://react.doctor)
 
-https://github.com/user-attachments/assets/07cc88d9-9589-44c3-aa73-5d603cb1c570
-
-## How it works
-
-React Doctor detects your framework (Next.js, Vite, Remix, etc.), React version, and compiler setup, then runs two analysis passes **in parallel**:
-
-1. **Lint**: Checks 60+ rules across state & effects, performance, architecture, bundle size, security, correctness, accessibility, and framework-specific categories (Next.js, React Native). Rules are toggled automatically based on your project setup.
-2. **Dead code**: Detects unused files, exports, types, and duplicates.
-
-Diagnostics are filtered through your config, then scored by severity (errors weigh more than warnings) to produce a **0–100 health score** (75+ Great, 50–74 Needs work, <50 Critical).
-
 ## Install
 
 Run this at your project root:
@@ -40,6 +29,8 @@ Use `--verbose` to see affected files and line numbers:
 npx -y react-doctor@latest . --verbose
 ```
 
+https://github.com/user-attachments/assets/07cc88d9-9589-44c3-aa73-5d603cb1c570
+
 ## Install for your coding agent
 
 Teach your coding agent React best practices. Run this at your project root:
@@ -50,7 +41,16 @@ npx -y react-doctor@latest install
 
 You'll be prompted to pick which detected agents to install for. Pass `--yes` to skip prompts and install for every detected agent.
 
-Supports 50+ coding agents via [`agent-install`](https://www.npmjs.com/package/agent-install), including Claude Code, Codex, Cursor, Factory Droid, Gemini CLI, GitHub Copilot, Goose, OpenCode, Pi, Windsurf, Roo Code, Cline, Kilo Code, Warp, Replit, OpenHands, Continue, and many more. Detection is the union of CLI binaries on `$PATH` and config dirs in `$HOME` (`~/.claude`, `~/.cursor`, `~/.codex`, `~/.factory`, `~/.pi`, etc.).
+Works with Claude Code, Codex, Cursor, OpenCode and many more.
+
+## How it works
+
+React Doctor detects your framework (Next.js, Vite, Remix, etc.), React version, and compiler setup, then runs two analysis passes **in parallel**:
+
+1. **Lint**: Checks 60+ rules across state & effects, performance, architecture, bundle size, security, correctness, accessibility, and framework-specific categories (Next.js, React Native). Rules are toggled automatically based on your project setup.
+2. **Dead code**: Detects unused files, exports, types, and duplicates.
+
+Diagnostics are filtered through your config, then scored by severity (errors weigh more than warnings) to produce a **0–100 health score** (75+ Great, 50–74 Needs work, <50 Critical).
 
 ## GitHub Actions
 
@@ -77,7 +77,7 @@ Supports 50+ coding agents via [`agent-install`](https://www.npmjs.com/package/a
 
 The action outputs a `score` (0–100) you can use in subsequent steps.
 
-## Options
+## CLI Reference
 
 ```
 Usage: react-doctor [directory] [options]
