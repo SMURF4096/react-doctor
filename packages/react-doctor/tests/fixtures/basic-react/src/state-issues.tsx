@@ -159,6 +159,15 @@ const MutableInDepsComponent = ({ token }: { token: string }) => {
   return <div />;
 };
 
+const PreferUseEffectEventComponent = ({ onSearch }: { onSearch: (q: string) => void }) => {
+  const [query, setQuery] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => onSearch(query), 300);
+    return () => clearTimeout(id);
+  }, [query, onSearch]);
+  return <input value={query} onChange={(event) => setQuery(event.target.value)} />;
+};
+
 declare const externalStore: {
   subscribe: (listener: () => void) => () => void;
   getSnapshot: () => number;
@@ -258,6 +267,7 @@ export {
   EffectNeedsCleanupComponent,
   MirrorPropEffectComponent,
   MutableInDepsComponent,
+  PreferUseEffectEventComponent,
   SubscribeStorePatternComponent,
   EventTriggerStateComponent,
   EffectChainComponent,

@@ -390,6 +390,18 @@ export const MUTATING_ROUTE_SEGMENTS = new Set([
 export const EFFECT_HOOK_NAMES = new Set(["useEffect", "useLayoutEffect"]);
 export const HOOKS_WITH_DEPS = new Set(["useEffect", "useLayoutEffect", "useMemo", "useCallback"]);
 
+// Direct CallExpression callees whose function argument is a "sub-handler"
+// — code that runs asynchronously, in response to an event the React render
+// can't observe. Calling a reactive value from inside a sub-handler is the
+// classic case for `useEffectEvent` (see "Separating Events from Effects").
+export const SUB_HANDLER_DIRECT_CALLEE_NAMES = new Set([
+  "setTimeout",
+  "setInterval",
+  "requestAnimationFrame",
+  "requestIdleCallback",
+  "queueMicrotask",
+]);
+
 // Globals whose values mutate outside the React data flow. Listing
 // them as deps doesn't trigger a re-run when they change because
 // React compares deps with `Object.is` during render — and the read

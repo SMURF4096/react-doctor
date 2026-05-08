@@ -162,6 +162,12 @@ describe("runOxlint", () => {
         ruleSource: "rules/state-and-effects.ts",
         severity: "warning",
       },
+      "prefer-use-effect-event": {
+        fixture: "state-issues.tsx",
+        ruleSource: "rules/state-and-effects.ts",
+        severity: "warning",
+        category: "State & Effects",
+      },
       "prefer-useReducer": {
         fixture: "state-issues.tsx",
         ruleSource: "rules/state-and-effects.ts",
