@@ -19,6 +19,17 @@ interface ComponentPropStackTracker {
   visitors: RuleVisitors;
 }
 
+interface ComponentBindingStackTrackerCallbacks {
+  onVariableDeclarator?: (node: EsTreeNode) => void;
+}
+
+interface ComponentBindingStackTracker {
+  isInsideComponent: () => boolean;
+  isBoundName: (name: string) => boolean;
+  addBindingToCurrentFrame: (name: string) => void;
+  visitors: RuleVisitors;
+}
+
 // HACK: AST is acyclic except for `parent` back-references, which we skip.
 // Visitors may return `false` to prune the subtree below `node` (e.g. to
 // stop walking into nested functions when collecting `await` expressions
@@ -475,4 +486,64 @@ export const createComponentPropStackTracker = (
   };
 
   return { isPropName, getCurrentPropNames, visitors };
+};
+
+// HACK: sibling of `createComponentPropStackTracker` for rules that need
+// to track *binding* sets per component scope rather than the destructured
+// prop set — e.g. `no-effect-event-in-deps` accumulates the names of
+// `useEffectEvent` declarators while inside a component and then queries
+// "is this dep-array identifier one of our useEffectEvent bindings?".
+//
+// Three rules previously reimplemented this push/pop bookkeeping inline.
+// They now share the same scaffold; the per-rule predicate (e.g. "is the
+// initializer a `useEffectEvent(...)` call?") lives in the
+// `onVariableDeclarator` callback.
+//
+// The barrier semantic is intentionally simpler than the prop-stack
+// tracker: the rule (e.g. `no-effect-event-in-deps`) only mutates the
+// top frame for VariableDeclarators directly inside a component, and
+// the stack only grows on FunctionDeclaration / VariableDeclarator
+// component entries, so a closed-over name from an outer component
+// can't leak in via a nested helper.
+export const createComponentBindingStackTracker = (
+  callbacks?: ComponentBindingStackTrackerCallbacks,
+): ComponentBindingStackTracker => {
+  const componentBindingStack: Array<Set<string>> = [];
+
+  const isInsideComponent = (): boolean => componentBindingStack.length > 0;
+
+  const isBoundName = (name: string): boolean => {
+    for (let frameIndex = componentBindingStack.length - 1; frameIndex >= 0; frameIndex--) {
+      if (componentBindingStack[frameIndex].has(name)) return true;
+    }
+    return false;
+  };
+
+  const addBindingToCurrentFrame = (name: string): void => {
+    if (componentBindingStack.length === 0) return;
+    componentBindingStack[componentBindingStack.length - 1].add(name);
+  };
+
+  const visitors: RuleVisitors = {
+    FunctionDeclaration(node: EsTreeNode) {
+      if (!node.id?.name || !isUppercaseName(node.id.name)) return;
+      componentBindingStack.push(new Set());
+    },
+    "FunctionDeclaration:exit"(node: EsTreeNode) {
+      if (!node.id?.name || !isUppercaseName(node.id.name)) return;
+      componentBindingStack.pop();
+    },
+    VariableDeclarator(node: EsTreeNode) {
+      if (isComponentAssignment(node)) {
+        componentBindingStack.push(new Set());
+        return;
+      }
+      callbacks?.onVariableDeclarator?.(node);
+    },
+    "VariableDeclarator:exit"(node: EsTreeNode) {
+      if (isComponentAssignment(node)) componentBindingStack.pop();
+    },
+  };
+
+  return { isInsideComponent, isBoundName, addBindingToCurrentFrame, visitors };
 };

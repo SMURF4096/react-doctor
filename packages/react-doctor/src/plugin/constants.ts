@@ -568,13 +568,19 @@ export const EXTERNAL_SYNC_OBSERVER_CONSTRUCTORS = new Set([
 // almost always denotes a fire-and-forget user-action effect."
 // Layered on top of `FETCH_CALLEE_NAMES` so adding a new HTTP client
 // shorthand in one place propagates to every detector that recognizes it.
+//
+// HACK: ambiguous generic verbs (`track`, `logEvent`, `del`) used to
+// live here too. They produced FPs on user-defined helpers
+// (`track(progress)`, `del(item)`) that have nothing to do with
+// network/analytics side effects. Detection still works via the
+// receiver-bound member-call shape (`analytics.track(...)`,
+// `api.del(...)`) in `EVENT_TRIGGERED_SIDE_EFFECT_MEMBER_METHODS`.
 export const EVENT_TRIGGERED_SIDE_EFFECT_CALLEES = new Set([
   ...FETCH_CALLEE_NAMES,
   // Network shorthand verbs (article uses `post`)
   "post",
   "put",
   "patch",
-  "del",
   // Navigation
   "navigate",
   "navigateTo",
@@ -584,8 +590,6 @@ export const EVENT_TRIGGERED_SIDE_EFFECT_CALLEES = new Set([
   "alert",
   "confirm",
   // Analytics
-  "track",
-  "logEvent",
   "logVisit",
   "captureEvent",
 ]);

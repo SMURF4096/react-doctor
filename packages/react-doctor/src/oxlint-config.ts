@@ -381,24 +381,50 @@ export const ALL_REACT_DOCTOR_RULE_KEYS: ReadonlySet<string> = new Set([
 
 // HACK: single source of truth for which rules are gated behind the
 // project's detected React major. Adding a new version-gated rule means
-// touching just this map. `null` reactMajorVersion (couldn't detect)
-// keeps every rule enabled so we never silently swallow real findings.
-const VERSION_GATED_RULE_IDS: ReadonlyMap<string, number> = new Map([
-  ["react-doctor/no-react19-deprecated-apis", REACT_19_DEPRECATION_MIN_MAJOR],
-  ["react-doctor/no-default-props", REACT_19_DEPRECATION_MIN_MAJOR],
-  ["react-doctor/no-react-dom-deprecated-apis", REACT_DOM_LEGACY_API_MIN_MAJOR],
-  ["react-doctor/prefer-use-effect-event", USE_EFFECT_EVENT_MIN_MAJOR],
+// touching just this map.
+//
+// `mode` controls behavior when version detection FAILS (null):
+//   - "prefer-newer-api": the rule recommends an API that ONLY exists at
+//     or above `minMajor` (e.g. `useEffectEvent`). Suggesting it on a
+//     project where we can't prove the API exists is noise — fail closed.
+//   - "deprecation-warning": the rule flags patterns that BREAK at or
+//     above `minMajor` (e.g. `defaultProps` removal in React 19). Useful
+//     even on projects we can't version-detect, because the user may be
+//     mid-migration. Fail open.
+type VersionGateMode = "prefer-newer-api" | "deprecation-warning";
+interface VersionGate {
+  minMajor: number;
+  mode: VersionGateMode;
+}
+const VERSION_GATED_RULE_IDS: ReadonlyMap<string, VersionGate> = new Map([
+  [
+    "react-doctor/no-react19-deprecated-apis",
+    { minMajor: REACT_19_DEPRECATION_MIN_MAJOR, mode: "deprecation-warning" },
+  ],
+  [
+    "react-doctor/no-default-props",
+    { minMajor: REACT_19_DEPRECATION_MIN_MAJOR, mode: "deprecation-warning" },
+  ],
+  [
+    "react-doctor/no-react-dom-deprecated-apis",
+    { minMajor: REACT_DOM_LEGACY_API_MIN_MAJOR, mode: "deprecation-warning" },
+  ],
+  [
+    "react-doctor/prefer-use-effect-event",
+    { minMajor: USE_EFFECT_EVENT_MIN_MAJOR, mode: "prefer-newer-api" },
+  ],
 ]);
 
 const filterRulesByReactMajor = (
   rules: Record<string, RuleSeverity>,
   reactMajorVersion: number | null,
 ): Record<string, RuleSeverity> => {
-  if (reactMajorVersion === null) return rules;
   return Object.fromEntries(
     Object.entries(rules).filter(([ruleKey]) => {
-      const minMajor = VERSION_GATED_RULE_IDS.get(ruleKey);
-      return minMajor === undefined || reactMajorVersion >= minMajor;
+      const gate = VERSION_GATED_RULE_IDS.get(ruleKey);
+      if (gate === undefined) return true;
+      if (reactMajorVersion === null) return gate.mode === "deprecation-warning";
+      return reactMajorVersion >= gate.minMajor;
     }),
   );
 };

@@ -30,6 +30,7 @@ import {
   collectPatternNames,
   containsFetchCall,
   countSetStateCalls,
+  createComponentBindingStackTracker,
   createComponentPropStackTracker,
   getCallbackStatements,
   getEffectCallback,
@@ -550,33 +551,34 @@ export const noPropCallbackInEffect: Rule = {
         const depsNode = node.arguments[1];
         if (depsNode.type !== "ArrayExpression" || !depsNode.elements?.length) return;
 
-        const bodyStatements = getCallbackStatements(callback);
-        for (const bodyStatement of bodyStatements) {
-          let invokedPropName: string | null = null;
-          if (
-            bodyStatement.type === "ExpressionStatement" &&
-            bodyStatement.expression?.type === "CallExpression" &&
-            bodyStatement.expression.callee?.type === "Identifier" &&
-            propStackTracker.isPropName(bodyStatement.expression.callee.name)
-          ) {
-            invokedPropName = bodyStatement.expression.callee.name;
-          }
-          if (!invokedPropName) continue;
+        // Only flag if at least one dep is a non-prop (state-shape)
+        // identifier — otherwise the effect is just adapting to prop
+        // changes (legit pattern).
+        const hasStateLikeDep = depsNode.elements.some(
+          (element: EsTreeNode) =>
+            element?.type === "Identifier" && !propStackTracker.isPropName(element.name),
+        );
+        if (!hasStateLikeDep) return;
 
-          // Only flag if at least one dep is a non-prop (state-shape)
-          // identifier — otherwise the effect is just adapting to prop
-          // changes (legit pattern).
-          const hasStateLikeDep = depsNode.elements.some(
-            (element: EsTreeNode) =>
-              element?.type === "Identifier" && !propStackTracker.isPropName(element.name),
-          );
-          if (!hasStateLikeDep) continue;
-
+        // HACK: walk control-flow descendants (`if`, `try`, `for`,
+        // `switch`) but stop at any nested function boundary so calls
+        // inside `setTimeout(() => onChange(state))` aren't conflated
+        // with the top-level `onChange(state)` shape — those belong to
+        // `prefer-use-effect-event` (sub-handler reads), not this rule
+        // (lift state via callback).
+        const reportedNodes = new Set<EsTreeNode>();
+        walkInsideStatementBlocks(callback.body, (child: EsTreeNode) => {
+          if (child.type !== "CallExpression") return;
+          if (child.callee?.type !== "Identifier") return;
+          const calleeName = child.callee.name;
+          if (!propStackTracker.isPropName(calleeName)) return;
+          if (reportedNodes.has(child)) return;
+          reportedNodes.add(child);
           context.report({
-            node: bodyStatement,
-            message: `useEffect calls prop callback "${invokedPropName}" with local state in deps — this is the "lift state via callback" anti-pattern; lift state into a shared Provider so both sides read the same source`,
+            node: child,
+            message: `useEffect calls prop callback "${calleeName}" with local state in deps — this is the "lift state via callback" anti-pattern; lift state into a shared Provider so both sides read the same source`,
           });
-        }
+        });
       },
     };
   },
@@ -593,55 +595,27 @@ export const noPropCallbackInEffect: Rule = {
 // `onChange` in ComponentB in the same file.
 export const noEffectEventInDeps: Rule = {
   create: (context: RuleContext) => {
-    const componentBindingStack: Array<Set<string>> = [];
-
-    const isEffectEventBinding = (name: string): boolean => {
-      for (let stackIndex = componentBindingStack.length - 1; stackIndex >= 0; stackIndex--) {
-        if (componentBindingStack[stackIndex].has(name)) return true;
-      }
-      return false;
-    };
-
-    const enterComponent = (): void => {
-      componentBindingStack.push(new Set());
-    };
-    const exitComponent = (): void => {
-      componentBindingStack.pop();
-    };
+    const componentBindings = createComponentBindingStackTracker({
+      onVariableDeclarator: (declaratorNode: EsTreeNode) => {
+        if (declaratorNode.id?.type !== "Identifier") return;
+        const initializer = declaratorNode.init;
+        if (!initializer || initializer.type !== "CallExpression") return;
+        if (!isHookCall(initializer, "useEffectEvent")) return;
+        componentBindings.addBindingToCurrentFrame(declaratorNode.id.name);
+      },
+    });
 
     return {
-      FunctionDeclaration(node: EsTreeNode) {
-        if (!node.id?.name || !isUppercaseName(node.id.name)) return;
-        enterComponent();
-      },
-      "FunctionDeclaration:exit"(node: EsTreeNode) {
-        if (!node.id?.name || !isUppercaseName(node.id.name)) return;
-        exitComponent();
-      },
-      VariableDeclarator(node: EsTreeNode) {
-        if (isComponentAssignment(node)) {
-          enterComponent();
-          return;
-        }
-        if (componentBindingStack.length === 0) return;
-        if (node.id?.type !== "Identifier") return;
-        const init = node.init;
-        if (!init || init.type !== "CallExpression") return;
-        if (!isHookCall(init, "useEffectEvent")) return;
-        componentBindingStack[componentBindingStack.length - 1].add(node.id.name);
-      },
-      "VariableDeclarator:exit"(node: EsTreeNode) {
-        if (isComponentAssignment(node)) exitComponent();
-      },
+      ...componentBindings.visitors,
       CallExpression(node: EsTreeNode) {
         if (!isHookCall(node, HOOKS_WITH_DEPS) || node.arguments.length < 2) return;
-        if (componentBindingStack.length === 0) return;
+        if (!componentBindings.isInsideComponent()) return;
         const depsNode = node.arguments[1];
         if (depsNode.type !== "ArrayExpression") return;
 
         for (const element of depsNode.elements ?? []) {
           if (element?.type !== "Identifier") continue;
-          if (isEffectEventBinding(element.name)) {
+          if (componentBindings.isBoundName(element.name)) {
             context.report({
               node: element,
               message: `"${element.name}" is from useEffectEvent and must not be in the deps array — its identity is intentionally unstable; call it inside the effect without listing it`,
@@ -1355,47 +1329,9 @@ const cleanupReleasesSubscription = (
 ): boolean => {
   const lastStatement = effectBodyStatements[effectBodyStatements.length - 1];
   if (lastStatement?.type !== "ReturnStatement") return false;
-  const returnedValue = lastStatement.argument;
-  if (!returnedValue) return false;
-
-  if (
-    boundUnsubscribeName &&
-    returnedValue.type === "Identifier" &&
-    returnedValue.name === boundUnsubscribeName
-  ) {
-    return true;
-  }
-
-  if (
-    returnedValue.type === "ArrowFunctionExpression" ||
-    returnedValue.type === "FunctionExpression"
-  ) {
-    let didReleaseSubscription = false;
-    walkAst(returnedValue, (child: EsTreeNode) => {
-      if (didReleaseSubscription) return;
-      if (child.type !== "CallExpression") return;
-
-      if (
-        boundUnsubscribeName &&
-        child.callee?.type === "Identifier" &&
-        child.callee.name === boundUnsubscribeName
-      ) {
-        didReleaseSubscription = true;
-        return;
-      }
-
-      if (
-        child.callee?.type === "MemberExpression" &&
-        child.callee.property?.type === "Identifier" &&
-        UNSUBSCRIPTION_METHOD_NAMES.has(child.callee.property.name)
-      ) {
-        didReleaseSubscription = true;
-      }
-    });
-    return didReleaseSubscription;
-  }
-
-  return false;
+  const knownBoundReleaseNames = new Set<string>();
+  if (boundUnsubscribeName) knownBoundReleaseNames.add(boundUnsubscribeName);
+  return isCleanupReturn(lastStatement.argument, knownBoundReleaseNames);
 };
 
 export const preferUseSyncExternalStore: Rule = {
@@ -1736,18 +1672,51 @@ const collectDepIdentifierNames = (effectNode: EsTreeNode): Set<string> => {
   return depNames;
 };
 
+// HACK: only count setter calls that actually run during the effect's
+// synchronous body. A `setX` inside `setTimeout(() => setX(...))` or
+// `.then(() => setX(...))` is a DEFERRED write — by the time it fires,
+// the chain reader effect has already had its dep-update window. Treat
+// only direct (non-nested-function) writes as chain triggers; that
+// stops `noEffectChain` from over-flagging the dominant debounce /
+// async-fetch shape that real codebases use.
 const collectWrittenStateNamesInEffect = (
   effectCallback: EsTreeNode,
   setterToStateName: Map<string, string>,
 ): Set<string> => {
   const writtenStateNames = new Set<string>();
-  walkAst(effectCallback, (child: EsTreeNode) => {
+  walkInsideStatementBlocks(effectCallback.body, (child: EsTreeNode) => {
     if (child.type !== "CallExpression") return;
     if (child.callee?.type !== "Identifier") return;
     const stateName = setterToStateName.get(child.callee.name);
     if (stateName) writtenStateNames.add(stateName);
   });
   return writtenStateNames;
+};
+
+// HACK: a useEffect cleanup return value MUST be a function (or
+// undefined). Anything else is either user error or "I'm using
+// `return` for early-exit, not for cleanup". For the chain detector,
+// we treat only function-shaped returns as "this effect owns an
+// external resource" — bare literals (`return null`, `return 0`) and
+// state reads (`return foo`) get ignored so they don't silently
+// disable chain detection.
+const isFunctionShapedReturn = (returnedValue: EsTreeNode): boolean => {
+  if (
+    returnedValue.type === "ArrowFunctionExpression" ||
+    returnedValue.type === "FunctionExpression"
+  ) {
+    return true;
+  }
+  // Returning a CallExpression result — most cleanup-returning
+  // primitives (subscribe, addEventListener helpers) return a
+  // function. Conservatively accept this shape.
+  if (returnedValue.type === "CallExpression") return true;
+  // Returning a bare Identifier — could be the unsub binding from a
+  // `const unsub = subscribe(...)` line. We can't statically prove
+  // it's function-typed without scope analysis, but in idiomatic React
+  // this is the dominant cleanup pattern. Accept.
+  if (returnedValue.type === "Identifier") return true;
+  return false;
 };
 
 const isExternalSyncEffect = (effectCallback: EsTreeNode): boolean => {
@@ -1757,7 +1726,13 @@ const isExternalSyncEffect = (effectCallback: EsTreeNode): boolean => {
   if (effectCallback.body?.type === "BlockStatement") {
     const statements = effectCallback.body.body ?? [];
     for (const statement of statements) {
-      if (statement.type === "ReturnStatement" && statement.argument) return true;
+      if (
+        statement.type === "ReturnStatement" &&
+        statement.argument &&
+        isFunctionShapedReturn(statement.argument)
+      ) {
+        return true;
+      }
     }
   }
 
@@ -2070,6 +2045,96 @@ const isSubscribeLikeCallExpression = (node: EsTreeNode): boolean => {
   return SUBSCRIPTION_METHOD_NAMES.has(node.callee.property.name);
 };
 
+// HACK: variables bound to a subscribe-like or timer-like call inside
+// an effect body are CLEANUP TARGETS — `return X` or `() => X()` /
+// `() => clearTimeout(X)` releases the resource. Collecting them here
+// lets the shared release predicate accept user-named bindings
+// (`const unsub = ...; return unsub`) without falling back to the
+// previous "any Identifier is fine" behavior.
+const collectReleasableBindingNames = (effectCallback: EsTreeNode): Set<string> => {
+  const releasableNames = new Set<string>();
+  if (effectCallback.body?.type !== "BlockStatement") return releasableNames;
+  for (const statement of effectCallback.body.body ?? []) {
+    if (statement.type !== "VariableDeclaration") continue;
+    for (const declarator of statement.declarations ?? []) {
+      if (declarator.id?.type !== "Identifier") continue;
+      const init = declarator.init;
+      if (!init || init.type !== "CallExpression") continue;
+      if (isSubscribeLikeCallExpression(init)) {
+        releasableNames.add(declarator.id.name);
+        continue;
+      }
+      if (
+        init.callee?.type === "Identifier" &&
+        TIMER_CALLEE_NAMES_REQUIRING_CLEANUP.has(init.callee.name)
+      ) {
+        releasableNames.add(declarator.id.name);
+      }
+    }
+  }
+  return releasableNames;
+};
+
+// Single source of truth for "does this CallExpression release a
+// previously-acquired effect resource?". Used by both
+// `effectNeedsCleanup` and `prefer-use-sync-external-store` so the
+// two rules can never disagree on what a cleanup looks like.
+const isReleaseLikeCall = (
+  callNode: EsTreeNode,
+  knownBoundReleaseNames: ReadonlySet<string>,
+): boolean => {
+  if (callNode?.type !== "CallExpression") return false;
+  const callee = callNode.callee;
+  if (callee?.type === "Identifier") {
+    if (TIMER_CLEANUP_CALLEE_NAMES.has(callee.name)) return true;
+    if (CLEANUP_LIKE_RELEASE_CALLEE_NAMES.has(callee.name)) return true;
+    if (knownBoundReleaseNames.has(callee.name)) return true;
+    return false;
+  }
+  if (callee?.type === "MemberExpression" && callee.property?.type === "Identifier") {
+    return UNSUBSCRIPTION_METHOD_NAMES.has(callee.property.name);
+  }
+  return false;
+};
+
+const containsReleaseLikeCall = (
+  node: EsTreeNode,
+  knownBoundReleaseNames: ReadonlySet<string>,
+): boolean => {
+  let didFindRelease = false;
+  walkAst(node, (child: EsTreeNode) => {
+    if (didFindRelease) return false;
+    if (isReleaseLikeCall(child, knownBoundReleaseNames)) {
+      didFindRelease = true;
+      return false;
+    }
+  });
+  return didFindRelease;
+};
+
+// Recognizes the four cleanup-return shapes uniformly:
+//   return unsub                              → bound name match
+//   return store.subscribe(handler)           → subscribe call IS the unsub
+//   return () => unsub()                      → closure releases via name
+//   return () => store.removeListener(...)    → closure releases via verb
+const isCleanupReturn = (
+  returnedValue: EsTreeNode | null | undefined,
+  knownBoundReleaseNames: ReadonlySet<string>,
+): boolean => {
+  if (!returnedValue) return false;
+  if (returnedValue.type === "Identifier") {
+    return knownBoundReleaseNames.has(returnedValue.name);
+  }
+  if (isSubscribeLikeCallExpression(returnedValue)) return true;
+  if (
+    returnedValue.type === "ArrowFunctionExpression" ||
+    returnedValue.type === "FunctionExpression"
+  ) {
+    return containsReleaseLikeCall(returnedValue, knownBoundReleaseNames);
+  }
+  return false;
+};
+
 const effectHasCleanupRelease = (callback: EsTreeNode): boolean => {
   // HACK: expression-body arrows are the dominant shape for trivial
   // subscribe-only effects:
@@ -2087,48 +2152,8 @@ const effectHasCleanupRelease = (callback: EsTreeNode): boolean => {
   const statements = callback.body.body ?? [];
   const lastStatement = statements[statements.length - 1];
   if (lastStatement?.type !== "ReturnStatement") return false;
-  const returnedValue = lastStatement.argument;
-  if (!returnedValue) return false;
-
-  if (returnedValue.type === "Identifier") return true;
-
-  if (isSubscribeLikeCallExpression(returnedValue)) return true;
-
-  if (
-    returnedValue.type !== "ArrowFunctionExpression" &&
-    returnedValue.type !== "FunctionExpression"
-  ) {
-    return false;
-  }
-
-  let didFindRelease = false;
-  walkAst(returnedValue, (child: EsTreeNode) => {
-    if (didFindRelease) return false;
-    if (child.type !== "CallExpression") return;
-    const callee = child.callee;
-    if (callee?.type === "Identifier" && TIMER_CLEANUP_CALLEE_NAMES.has(callee.name)) {
-      didFindRelease = true;
-      return;
-    }
-    if (
-      callee?.type === "MemberExpression" &&
-      callee.property?.type === "Identifier" &&
-      UNSUBSCRIPTION_METHOD_NAMES.has(callee.property.name)
-    ) {
-      didFindRelease = true;
-      return;
-    }
-    // Direct call to an Identifier whose name SAYS "release this
-    // resource" (e.g. `return () => unsubscribe()` or
-    // `return () => cleanup()`). The allowlist lives in `constants.ts`
-    // as `CLEANUP_LIKE_RELEASE_CALLEE_NAMES` so it stays in lockstep
-    // with `UNSUBSCRIPTION_METHOD_NAMES` plus the generic teardown
-    // vocabulary (`cleanup` / `dispose` / `destroy` / `teardown`).
-    if (callee?.type === "Identifier" && CLEANUP_LIKE_RELEASE_CALLEE_NAMES.has(callee.name)) {
-      didFindRelease = true;
-    }
-  });
-  return didFindRelease;
+  const knownBoundReleaseNames = collectReleasableBindingNames(callback);
+  return isCleanupReturn(lastStatement.argument, knownBoundReleaseNames);
 };
 
 export const effectNeedsCleanup: Rule = {
@@ -2212,9 +2237,16 @@ export const noMirrorPropEffect: Rule = {
 
         const depsNode = effectCall.arguments[1];
         if (depsNode.type !== "ArrayExpression") continue;
-        if ((depsNode.elements?.length ?? 0) !== 1) continue;
-        const depElement = depsNode.elements[0];
-        if (depElement?.type !== "Identifier") continue;
+        // HACK: previously required EXACTLY one dep, which silently
+        // missed the legitimate `useEffect(() => setX(value), [value, otherDep])`
+        // mirror shape. Now we accept any deps array as long as the
+        // prop root we mirror IS one of the deps — `otherDep` being
+        // unused inside the body is a separate (exhaustive-deps) concern.
+        const depIdentifierNames = new Set<string>();
+        for (const element of depsNode.elements ?? []) {
+          if (element?.type === "Identifier") depIdentifierNames.add(element.name);
+        }
+        if (depIdentifierNames.size === 0) continue;
 
         const callback = getEffectCallback(effectCall);
         if (!callback) continue;
@@ -2232,7 +2264,7 @@ export const noMirrorPropEffect: Rule = {
         const matchedBinding = mirrorBindings.find(
           (binding) =>
             binding.setterName === expression.callee.name &&
-            binding.propRootName === depElement.name &&
+            depIdentifierNames.has(binding.propRootName) &&
             areExpressionsStructurallyEqual(binding.initializer, setterArgument),
         );
         if (!matchedBinding) continue;
@@ -2395,6 +2427,32 @@ const getSubHandlerCalleeName = (callExpression: EsTreeNode): string | null => {
 // for either a direct sub-handler argument position OR a const binding
 // whose Identifier appears as an argument to a sub-handler call later
 // in the same effect body.
+// Resolve the enclosing function back to its local-binding name across
+// the three idiomatic shapes:
+//   const handler = (e) => ...      → VariableDeclarator binding
+//   function handler(e) { ... }     → FunctionDeclaration self-binding
+//   let handler; handler = (e) => ... → AssignmentExpression binding
+const getEnclosingFunctionBindingName = (enclosingFunction: EsTreeNode): string | null => {
+  if (
+    enclosingFunction.type === "FunctionDeclaration" &&
+    enclosingFunction.id?.type === "Identifier"
+  ) {
+    return enclosingFunction.id.name;
+  }
+  const directParent = enclosingFunction.parent;
+  if (directParent?.type === "VariableDeclarator" && directParent.id?.type === "Identifier") {
+    return directParent.id.name;
+  }
+  if (
+    directParent?.type === "AssignmentExpression" &&
+    directParent.right === enclosingFunction &&
+    directParent.left?.type === "Identifier"
+  ) {
+    return directParent.left.name;
+  }
+  return null;
+};
+
 const findSubHandlerForEnclosingFunction = (
   enclosingFunction: EsTreeNode,
   effectCallback: EsTreeNode,
@@ -2408,9 +2466,8 @@ const findSubHandlerForEnclosingFunction = (
     return directParent;
   }
 
-  if (directParent?.type !== "VariableDeclarator") return null;
-  if (directParent.id?.type !== "Identifier") return null;
-  const localName: string = directParent.id.name;
+  const localName = getEnclosingFunctionBindingName(enclosingFunction);
+  if (localName === null) return null;
 
   let matchingSubHandlerCall: EsTreeNode | null = null;
   walkAst(effectCallback, (child: EsTreeNode) => {

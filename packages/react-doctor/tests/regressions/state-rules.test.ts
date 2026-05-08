@@ -12,10 +12,14 @@ afterAll(() => {
   fs.rmSync(tempRoot, { recursive: true, force: true });
 });
 
+// HACK: `setupReactProject` defaults to React ^19.0.0 in the synthetic
+// `package.json`, so the test plumbing must mirror what production
+// detection would yield for that project. Explicit values (17 / 18 /
+// null) still override at the call site.
 const collectRuleHits = async (
   projectDir: string,
   ruleId: string,
-  reactMajorVersion: number | null = null,
+  reactMajorVersion: number | null = 19,
 ): Promise<Array<{ filePath: string; message: string }>> => {
   const diagnostics = await runOxlint({
     rootDirectory: projectDir,
@@ -642,6 +646,45 @@ export const Leaky = () => {
     const hits = await collectRuleHits(projectDir, "prefer-use-sync-external-store");
     expect(hits).toHaveLength(0);
   });
+
+  it("DOES flag a useSyncExternalStore reimplementation whose cleanup uses a generic teardown verb (`cleanup()`)", async () => {
+    // Regression: `cleanupReleasesSubscription` previously only accepted
+    // `UNSUBSCRIPTION_METHOD_NAMES` plus the literal bound-unsubscribe
+    // name. Generic teardown verbs from `CLEANUP_LIKE_RELEASE_CALLEE_NAMES`
+    // (`cleanup`, `dispose`, `destroy`, `teardown`) were silently ignored,
+    // so a complete useSyncExternalStore reimplementation with a
+    // generic-named cleanup slipped past detection — even though
+    // `effectNeedsCleanup` (which already shared the broader allowlist)
+    // recognized the same shape. Both rules now share the same
+    // `isReleaseLikeCall` primitive.
+    const projectDir = setupReactProject(tempRoot, "prefer-use-sync-external-store-cleanup-verb", {
+      files: {
+        "src/Cleaned.tsx": `import { useEffect, useState } from "react";
+
+declare const store: {
+  subscribe: (listener: () => void) => () => void;
+  getSnapshot: () => number;
+};
+declare const cleanup: () => void;
+
+export const Cleaned = () => {
+  const [snapshot, setSnapshot] = useState(store.getSnapshot());
+  useEffect(() => {
+    store.subscribe(() => {
+      setSnapshot(store.getSnapshot());
+    });
+    return () => cleanup();
+  }, []);
+  return <div>{snapshot}</div>;
+};
+`,
+      },
+    });
+
+    const hits = await collectRuleHits(projectDir, "prefer-use-sync-external-store");
+    expect(hits).toHaveLength(1);
+    expect(hits[0].message).toContain("useSyncExternalStore");
+  });
 });
 
 describe("no-event-trigger-state", () => {
@@ -888,6 +931,60 @@ export const Wizard = () => {
 
     const triggerHits = await collectRuleHits(projectDir, "no-event-trigger-state");
     expect(triggerHits.length).toBe(1);
+  });
+
+  it("does NOT misclassify a user-defined `track(progress)` helper as analytics", async () => {
+    // Regression: `track` and `logEvent` used to be in the direct-call
+    // allowlist. They're so common as user-helper names (game progress
+    // tracking, event tracking) that direct-call detection produced
+    // FPs. Detection still works via the receiver shape
+    // (`analytics.track(...)`), which is what real analytics SDKs use.
+    const projectDir = setupReactProject(tempRoot, "no-event-trigger-state-user-track", {
+      files: {
+        "src/Game.tsx": `import { useEffect, useState } from "react";
+
+declare const track: (progress: number) => void;
+
+export const Game = () => {
+  const [progress, setProgress] = useState<number | null>(null);
+  useEffect(() => {
+    if (progress !== null) {
+      track(progress);
+    }
+  }, [progress]);
+  return <button onClick={() => setProgress(50)}>Go</button>;
+};
+`,
+      },
+    });
+
+    const triggerHits = await collectRuleHits(projectDir, "no-event-trigger-state");
+    expect(triggerHits.length).toBe(0);
+  });
+
+  it("DOES still flag `analytics.track(progress)` member-call as event-triggered analytics", async () => {
+    const projectDir = setupReactProject(tempRoot, "no-event-trigger-state-analytics-track", {
+      files: {
+        "src/Game.tsx": `import { useEffect, useState } from "react";
+
+declare const analytics: { track: (progress: number) => void };
+
+export const Game = () => {
+  const [progress, setProgress] = useState<number | null>(null);
+  useEffect(() => {
+    if (progress !== null) {
+      analytics.track(progress);
+    }
+  }, [progress]);
+  return <button onClick={() => setProgress(50)}>Go</button>;
+};
+`,
+      },
+    });
+
+    const triggerHits = await collectRuleHits(projectDir, "no-event-trigger-state");
+    expect(triggerHits.length).toBe(1);
+    expect(triggerHits[0].message).toContain("analytics.track");
   });
 
   it("KEEPS no-effect-event-handler warning when state-typed dep has a non-allowlisted callee (Bugbot #155 round 3)", async () => {
@@ -1283,6 +1380,66 @@ export const Profile = ({ userId, theme }: { userId: string; theme: string }) =>
     const hits = await collectRuleHits(projectDir, "no-effect-chain");
     expect(hits).toHaveLength(0);
   });
+
+  it("does NOT flag a chain whose writer setter runs inside a deferred sub-handler (setTimeout)", async () => {
+    // Regression: `collectWrittenStateNamesInEffect` previously walked
+    // the ENTIRE callback (including nested function bodies). A `setX`
+    // inside `setTimeout(() => setX(...))` was attributed as a sync
+    // chain write, producing a noisy diagnostic on the dominant
+    // debounce / delayed-fetch pattern.
+    const projectDir = setupReactProject(tempRoot, "no-effect-chain-deferred-write", {
+      files: {
+        "src/Debounced.tsx": `import { useEffect, useState } from "react";
+
+export const Debounced = ({ raw }: { raw: string }) => {
+  const [debounced, setDebounced] = useState("");
+  const [upper, setUpper] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(raw), 300);
+    return () => clearTimeout(id);
+  }, [raw]);
+  useEffect(() => {
+    setUpper(debounced.toUpperCase());
+  }, [debounced]);
+  return <span>{upper}</span>;
+};
+`,
+      },
+    });
+
+    const hits = await collectRuleHits(projectDir, "no-effect-chain");
+    expect(hits).toHaveLength(0);
+  });
+
+  it("DOES flag a chain when the writer effect uses a non-function `return` (literal / state read)", async () => {
+    // Regression: previously ANY `return <argument>` made the writer
+    // effect look "external sync" — so `return null` or `return foo`
+    // silently disabled chain detection. We now require the returned
+    // value to be function-shaped for the early-out.
+    const projectDir = setupReactProject(tempRoot, "no-effect-chain-return-literal", {
+      files: {
+        "src/Chain.tsx": `import { useEffect, useState } from "react";
+
+export const Chain = ({ userId }: { userId: string }) => {
+  const [name, setName] = useState("");
+  const [upper, setUpper] = useState("");
+  useEffect(() => {
+    setName(userId);
+    return null;
+  }, [userId]);
+  useEffect(() => {
+    setUpper(name.toUpperCase());
+  }, [name]);
+  return <span>{upper}</span>;
+};
+`,
+      },
+    });
+
+    const hits = await collectRuleHits(projectDir, "no-effect-chain");
+    expect(hits).toHaveLength(1);
+    expect(hits[0].message).toContain("name");
+  });
 });
 
 describe("no-uncontrolled-input", () => {
@@ -1660,6 +1817,57 @@ export const Form = ({ value }: { value: string }) => {
     setDraft(value);
   }, [value]);
   return <input value={draft} onChange={(event) => setDraft(event.target.value)} />;
+};
+`,
+      },
+    });
+
+    const hits = await collectRuleHits(projectDir, "no-mirror-prop-effect");
+    expect(hits).toHaveLength(1);
+    expect(hits[0].message).toContain("draft");
+    expect(hits[0].message).toContain("value");
+  });
+
+  it("does NOT flag a multi-dep mirror when the prop root is NOT one of the deps (FP guard for L1)", async () => {
+    // Regression / FP guard: L1 widened the deps check from
+    // "exactly one dep" to "any deps including the prop root". Without
+    // the `depIdentifierNames.has(propRootName)` clause this would
+    // false-positive on effects that mention the setter+value but
+    // are actually keyed off something else entirely.
+    const projectDir = setupReactProject(tempRoot, "no-mirror-prop-effect-prop-not-in-deps", {
+      files: {
+        "src/Form.tsx": `import { useEffect, useState } from "react";
+
+export const Form = ({ value, theme }: { value: string; theme: string }) => {
+  const [draft, setDraft] = useState(value);
+  useEffect(() => {
+    setDraft(value);
+  }, [theme]);
+  return <input value={draft} data-theme={theme} onChange={(event) => setDraft(event.target.value)} />;
+};
+`,
+      },
+    });
+
+    const hits = await collectRuleHits(projectDir, "no-mirror-prop-effect");
+    expect(hits).toHaveLength(0);
+  });
+
+  it("flags the multi-dep mirror shape `useEffect(setX(value), [value, otherDep])`", async () => {
+    // Regression: previously required EXACTLY one dep, missing the
+    // common case where the mirror effect lists additional deps for
+    // exhaustive-deps compliance. The mirror anti-pattern still
+    // applies — `value` is mirrored even if `otherDep` is co-listed.
+    const projectDir = setupReactProject(tempRoot, "no-mirror-prop-effect-multi-deps", {
+      files: {
+        "src/Form.tsx": `import { useEffect, useState } from "react";
+
+export const Form = ({ value, theme }: { value: string; theme: string }) => {
+  const [draft, setDraft] = useState(value);
+  useEffect(() => {
+    setDraft(value);
+  }, [value, theme]);
+  return <input value={draft} data-theme={theme} onChange={(event) => setDraft(event.target.value)} />;
 };
 `,
       },
@@ -2371,6 +2579,58 @@ export const Outer = ({ value }: { value: (q: string) => void }) => {
     expect(hits).toHaveLength(0);
   });
 
+  it("flags a `function handler() {...}` declaration (FunctionDeclaration shape, not just `const handler = ...`)", async () => {
+    // Regression: `findSubHandlerForEnclosingFunction` previously only
+    // recognized `const handler = ...` (VariableDeclarator). The
+    // FunctionDeclaration shape was a silent FN.
+    const projectDir = setupReactProject(tempRoot, "prefer-use-effect-event-fn-decl", {
+      files: {
+        "src/Listener.tsx": `import { useEffect, useState } from "react";
+
+export const Listener = ({ onKey }: { onKey: (key: string) => void }) => {
+  const [prefix, setPrefix] = useState("");
+  useEffect(() => {
+    function handler(event: KeyboardEvent) { onKey(event.key + prefix); }
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [prefix, onKey]);
+  return <input value={prefix} onChange={(event) => setPrefix(event.target.value)} />;
+};
+`,
+      },
+    });
+
+    const hits = await collectRuleHits(projectDir, "prefer-use-effect-event");
+    expect(hits).toHaveLength(1);
+    expect(hits[0].message).toContain("onKey");
+  });
+
+  it("flags an `let h; h = (e) => ...` reassignment shape (AssignmentExpression binding)", async () => {
+    // Regression: the AssignmentExpression form was a silent FN
+    // alongside the FunctionDeclaration shape.
+    const projectDir = setupReactProject(tempRoot, "prefer-use-effect-event-assign", {
+      files: {
+        "src/Listener.tsx": `import { useEffect, useState } from "react";
+
+export const Listener = ({ onKey }: { onKey: (key: string) => void }) => {
+  const [prefix, setPrefix] = useState("");
+  useEffect(() => {
+    let handler: (event: KeyboardEvent) => void;
+    handler = (event) => onKey(event.key + prefix);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [prefix, onKey]);
+  return <input value={prefix} onChange={(event) => setPrefix(event.target.value)} />;
+};
+`,
+      },
+    });
+
+    const hits = await collectRuleHits(projectDir, "prefer-use-effect-event");
+    expect(hits).toHaveLength(1);
+    expect(hits[0].message).toContain("onKey");
+  });
+
   it("does NOT flag a scalar destructured prop only read inside a sub-handler (Bugbot #162)", async () => {
     // Regression: previously every destructured prop satisfied the
     // function-typed gate. A component like \`({ onSearch, prefix })\`
@@ -2407,9 +2667,14 @@ export const SearchInput = ({
     expect(hits[0].message).not.toContain("prefix");
   });
 
-  it("fires when reactMajorVersion is unknown (null) so we never silently swallow real findings", async () => {
-    // Matches the existing convention — null version detection keeps every
-    // rule enabled. See `filterRulesByReactMajor` in oxlint-config.ts.
+  it("does NOT fire when reactMajorVersion is unknown (null) — `prefer-X` rules need the API to exist", async () => {
+    // Directional gating: `prefer-use-effect-event` recommends a
+    // React-19-only API. Without proof the project HAS the API,
+    // every diagnostic is invalid. See `filterRulesByReactMajor` in
+    // oxlint-config.ts (`VersionGateMode = "prefer-newer-api"`).
+    // `deprecation-warning`-mode rules (`no-react19-deprecated-apis`,
+    // `no-default-props`, `no-react-dom-deprecated-apis`) keep firing
+    // on unknown versions because they're useful during migration.
     const projectDir = setupReactProject(tempRoot, "prefer-use-effect-event-unknown-version", {
       files: {
         "src/SearchInput.tsx": `import { useEffect, useState } from "react";
@@ -2427,6 +2692,6 @@ export const SearchInput = ({ onSearch }: { onSearch: (q: string) => void }) => 
     });
 
     const hits = await collectRuleHits(projectDir, "prefer-use-effect-event", null);
-    expect(hits).toHaveLength(1);
+    expect(hits).toHaveLength(0);
   });
 });

@@ -52,6 +52,7 @@ describe("runOxlint", () => {
       framework: "unknown",
       hasReactCompiler: false,
       hasTanStackQuery: true,
+      reactMajorVersion: 19,
     });
     nextjsDiagnostics = await runOxlint({
       rootDirectory: NEXTJS_APP_DIRECTORY,
@@ -59,6 +60,7 @@ describe("runOxlint", () => {
       framework: "nextjs",
       hasReactCompiler: false,
       hasTanStackQuery: false,
+      reactMajorVersion: 19,
     });
     tanstackStartDiagnostics = await runOxlint({
       rootDirectory: TANSTACK_START_APP_DIRECTORY,
@@ -66,6 +68,7 @@ describe("runOxlint", () => {
       framework: "tanstack-start",
       hasReactCompiler: false,
       hasTanStackQuery: false,
+      reactMajorVersion: 19,
     });
   });
 
