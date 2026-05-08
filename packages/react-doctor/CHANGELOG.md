@@ -1,5 +1,201 @@
 # react-doctor
 
+## 0.1.0
+
+### Minor Changes
+
+- d71a6bf: feat(react-doctor): ship rules as an ESLint plugin (`react-doctor/eslint-plugin`)
+
+  The same React Doctor rule set that powers the CLI scan and the
+  `react-doctor/oxlint-plugin` export is now available as a first-class
+  ESLint plugin. Drop it into your `eslint.config.js` flat config and
+  diagnostics surface inline through whichever IDE / agent / pre-commit
+  hook already speaks ESLint — no separate `react-doctor` invocation
+  needed.
+
+  ```js
+  // eslint.config.js
+  import reactDoctor from "react-doctor/eslint-plugin";
+
+  export default [
+    reactDoctor.configs.recommended,
+    reactDoctor.configs.next, // composable framework presets
+    reactDoctor.configs["react-native"],
+    reactDoctor.configs["tanstack-start"],
+    reactDoctor.configs["tanstack-query"],
+    // reactDoctor.configs.all, // every rule at react-doctor's default severity
+  ];
+  ```
+
+  The exported `recommended`, `next`, `react-native`, `tanstack-start`,
+  `tanstack-query`, and `all` configs reuse the exact severity maps the
+  react-doctor CLI emits to oxlint, so behavior stays in lock-step
+  between engines. You can also cherry-pick individual rules under the
+  `react-doctor/*` namespace.
+
+  The visitor signatures inside each rule are already ESLint-compatible
+  (`create(context) => visitors`); the new export wraps each rule with
+  the ESLint-required `meta` (`type`, `docs.url`, `schema`) and exposes
+  the plugin shape ESLint v9 flat configs expect. Closes
+  [#143](https://github.com/millionco/react-doctor/issues/143).
+
+- d71a6bf: feat(react-doctor): adopt the project's existing oxlint / eslint config and factor those rules into the score
+
+  When a project has a JSON-format oxlint or eslint config (`.oxlintrc.json`
+  or `.eslintrc.json`) at the scanned directory or any ancestor up to the
+  nearest project boundary (`.git` directory or monorepo root),
+  react-doctor now folds that config into the same scan via oxlint's
+  `extends` field. The user's existing rules fire alongside the curated
+  react-doctor rule set, and the resulting diagnostics count toward the
+  0–100 health score — no separate `oxlint` / `eslint` invocation needed.
+
+  **Behavior change on upgrade.** Projects with an existing
+  `.oxlintrc.json` / `.eslintrc.json` will see new diagnostics flow into
+  the score on first run; the score may drop. Set
+  `"adoptExistingLintConfig": false` in `react-doctor.config.json` (or the
+  `"reactDoctor"` key in `package.json`) to preserve the previous
+  behavior. `customRulesOnly: true` also implies opt-out, since that mode
+  runs only the `react-doctor/*` plugin.
+
+  **Resilience.** If oxlint can't load the user's config (broken JSON,
+  missing plugin, unknown rule name), react-doctor logs the reason on
+  stderr and retries the scan once without `extends` so the score is
+  still computed off the curated rule set instead of failing the whole
+  lint pass.
+
+  **Coverage broadened.** Diagnostics on `.ts` and `.js` files are now
+  reported (previously the parser dropped everything that wasn't `.tsx`
+  / `.jsx`). This affects react-doctor's own JS-performance / bundle-size
+  rules in addition to adopted user rules.
+
+  **Limitations.** Only JSON configs are picked up: oxlint's `extends`
+  cannot evaluate JS or TS, so flat configs (`eslint.config.js`),
+  `.eslintrc.{js,cjs}`, and `oxlint.config.ts` are silently skipped.
+  Rule-level severities (`"rules": {...}`) flow through, but
+  category-level enables (`"categories": {...}`) do not — react-doctor's
+  local categories block always wins. Closes #143.
+
+- d71a6bf: feat(react-doctor): add 11 new lint rules — 3 state / correctness, 8 design system
+
+  **3 new state / correctness rules** (all `warn`):
+
+  - `react-doctor/no-direct-state-mutation` — flags `state.foo = x` and
+    in-place array mutators (`push` / `pop` / `shift` / `unshift` /
+    `splice` / `sort` / `reverse` / `fill` / `copyWithin`) on `useState`
+    values. Tracks shadowed names through nested function params and
+    locals so a handler that re-binds the state name doesn't
+    false-positive.
+  - `react-doctor/no-set-state-in-render` — flags only **unconditional**
+    top-level setter calls so the canonical
+    `if (prev !== prop) setPrev(prop)` derive-from-props pattern stays
+    clean.
+  - `react-doctor/no-uncontrolled-input` — catches `<input value={…}>`
+    without `onChange` / `readOnly`, `value` + `defaultValue` conflicts,
+    and `useState()` flip-from-undefined. Bails on JSX spread props
+    (`{...register(…)}`, Headless UI, Radix) where `onChange` may come
+    from spread.
+
+  **8 new design-system rules in `react-ui.ts`** (all `warn`):
+
+  - `react-doctor/design-no-bold-heading` —
+    `font-bold` / `font-extrabold` / `font-black` or inline
+    `fontWeight ≥ 700` on `h1`–`h6`.
+  - `react-doctor/design-no-redundant-padding-axes` — collapse
+    `px-N py-N` → `p-N`.
+  - `react-doctor/design-no-redundant-size-axes` — collapse `w-N h-N` →
+    `size-N`.
+  - `react-doctor/design-no-space-on-flex-children` — use `gap-*` over
+    `space-*-*`.
+  - `react-doctor/design-no-em-dash-in-jsx-text` — em dashes in JSX
+    text.
+  - `react-doctor/design-no-three-period-ellipsis` — `Loading...` →
+    `Loading…`.
+  - `react-doctor/design-no-default-tailwind-palette` —
+    `indigo-*` / `gray-*` / `slate-*` reads as the Tailwind template
+    default; reports every offending token in the className (not just
+    the first).
+  - `react-doctor/design-no-vague-button-label` — `OK` / `Continue` /
+    `Submit` etc.; recurses into `<>…</>` fragment children.
+
+  Each new rule has dedicated regression tests covering both the
+  positive trigger and the false-positive cases above.
+
+  **Other**
+
+  - Hoists shared regex / token patterns into the appropriate
+    `constants.ts` per AGENTS.md.
+
+- d71a6bf: remove(react-doctor): drop browser entrypoints, browser CLI, and the
+  `react-doctor-browser` workspace package
+
+  **Removed package exports.** `react-doctor/browser` and
+  `react-doctor/worker` are no longer published. Imports of either subpath
+  will fail with `ERR_PACKAGE_PATH_NOT_EXPORTED`. If you depended on the
+  in-browser diagnostics pipeline (caller-supplied `projectFiles` map +
+  `runOxlint` callback running oxlint in a Web Worker), pin
+  `react-doctor@0.0.47` or vendor the relevant modules from the
+  `archive/browser` git branch.
+
+  **Removed CLI subcommand.** `react-doctor browser …` (`start`, `stop`,
+  `status`, `snapshot`, `screenshot`, `playwright`) is gone. The
+  long-running headless Chrome session, ARIA snapshot helpers, screenshot
+  capture, and `--eval` Playwright harness are no longer available from
+  the CLI.
+
+  **Removed companion package.** The `react-doctor-browser` npm package
+  (headless browser automation, CDP discovery, system Chrome launcher,
+  cross-browser cookie extraction) has been removed from the workspace.
+  The last published version remains installable on npm but will not
+  receive further updates.
+
+  **Why.** The browser surface area was unused inside the monorepo (the
+  website does not import it) and added a heavy dependency footprint
+  (`playwright`, `libsql`, etc.) for a public API with no known internal
+  consumers. Removing it tightens what `react-doctor` is responsible for —
+  the diagnostics CLI, the Node `react-doctor/api`, and the
+  `react-doctor/eslint-plugin` / `react-doctor/oxlint-plugin` exports.
+
+  The full removed source remains available on the `archive/browser`
+  branch for anyone who wants to fork or vendor the modules.
+
+### Patch Changes
+
+- 2aebfa6: fix(react-doctor): support block comment forms of `react-doctor-disable-line` / `react-doctor-disable-next-line`
+
+  The inline-suppression matcher previously only recognized line comments
+  (`// react-doctor-disable-…`). Block comments — including the JSX form
+  `{/* react-doctor-disable-next-line … */}`, which is the only suppression
+  form legal directly inside JSX — were silently ignored, forcing users to
+  write `{/* // react-doctor-disable-line … */}` as a workaround. Both forms
+  now work, and either accepts a comma- or whitespace-separated rule list
+  or no rule id (suppress every diagnostic on the targeted line). Closes #144.
+
+- 2aebfa6: fix(react-doctor): stop flagging `useState` as `useRef` when state reaches render through `useMemo`, derived values, or context `value`
+
+  `rerender-state-only-in-handlers` (the rule that suggests "use `useRef`
+  because this state is never read in render") only checked whether the
+  state name appeared by name in the component's `return` JSX. That
+  heuristic produced loud false positives for ordinary patterns:
+
+  - state filtered/derived through `useMemo` → JSX uses the memo result
+  - state passed as the `value` of a React Context Provider
+  - state combined with other variables into a rendered constant
+
+  Following the bad hint and converting these to `useRef` silently broke
+  apps because `ref.current = …` does not trigger a re-render — search
+  results stopped updating, dialogs stayed open, and context consumers
+  saw stale snapshots.
+
+  The rule now performs a transitive "render-reachable" analysis on
+  top-level component bindings. A `useState` is only flagged when neither
+  the value itself nor anything derived from it (recursively) appears
+  anywhere in the rendered JSX, including attribute values like
+  `<Context value={…}>`, `style={…}`, `className={…}`, etc. Truly
+  transient state (e.g. a scroll position only stored to be ignored)
+  still fires. Closes #146.
+
+- fix
+
 ## 0.0.47
 
 ### Patch Changes
@@ -52,6 +248,7 @@
   previously hand-rolled).
 
   Behavior changes:
+
   - **Detection** is now the union of CLI binaries on `$PATH` (the previous
     signal) and config dirs in `$HOME` (`~/.claude`, `~/.cursor`,
     `~/.codex`, `~/.factory`, `~/.pi`, etc.). This catches agents the user
