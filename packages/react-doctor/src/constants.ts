@@ -14,10 +14,6 @@ export const SCORE_OK_THRESHOLD = 50;
 
 export const SCORE_BAR_WIDTH_CHARS = 50;
 
-export const SUMMARY_BOX_HORIZONTAL_PADDING_CHARS = 1;
-
-export const SUMMARY_BOX_OUTER_INDENT_CHARS = 2;
-
 export const SCORE_API_URL = "https://www.react.doctor/api/score";
 
 export const SHARE_BASE_URL = "https://www.react.doctor/share";
@@ -105,4 +101,23 @@ export const USE_EFFECT_EVENT_MIN_MAJOR = 19;
 // before collapsing the remainder into a single summary line. Keeps
 // the default output scannable while pointing users at `--verbose`
 // for the full breakdown.
-export const MAX_RULE_GROUPS_SHOWN_NON_VERBOSE = 3;
+export const MAX_RULE_GROUPS_SHOWN_NON_VERBOSE = 5;
+
+// How many of the top rule groups get the full message+help+location
+// treatment in the default output. The rest collapse to a single
+// `<icon> <rule> <count> sites` line so the list stays scannable.
+export const MAX_DETAILED_RULE_GROUPS_NON_VERBOSE = 1;
+
+// Bar width used by the per-category horizontal bar chart in the
+// summary block. Sized to fit comfortably in an 80-col terminal next
+// to the longest category label.
+export const CATEGORY_BAR_WIDTH_CHARS = 16;
+
+// Width of the category-name column in the breakdown so the bars line
+// up regardless of label length.
+export const CATEGORY_LABEL_COLUMN_WIDTH_CHARS = 18;
+
+// Minimum width of the rule-name column in the diagnostics list. Pads
+// shorter rule names so the right-aligned `N sites` count stays in a
+// consistent column even when one rule has a much longer identifier.
+export const RULE_NAME_COLUMN_WIDTH_CHARS = 36;
