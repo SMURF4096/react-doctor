@@ -34,7 +34,7 @@ jobs:
 
       - name: Commit and push if changed
         run: |
-          if [ -z "$(git status --porcelain)" ]; then
+          if git diff --quiet -- packages/react-doctor/README.md; then
             echo "No leaderboard changes."
             exit 0
           fi
