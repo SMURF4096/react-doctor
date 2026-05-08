@@ -6,7 +6,6 @@ import { performance } from "node:perf_hooks";
 import {
   CATEGORY_BAR_WIDTH_CHARS,
   CATEGORY_LABEL_COLUMN_WIDTH_CHARS,
-  MAX_DETAILED_RULE_GROUPS_NON_VERBOSE,
   MAX_RULE_GROUPS_SHOWN_NON_VERBOSE,
   MILLISECONDS_PER_SECOND,
   buildNoReactDependencyError,
@@ -206,21 +205,13 @@ const printDiagnostics = (
     visibleRuleGroups.map(([ruleKey]) => ruleKey),
   );
 
-  visibleRuleGroups.forEach(([ruleKey, ruleDiagnostics], visibleIndex) => {
+  visibleRuleGroups.forEach(([ruleKey, ruleDiagnostics]) => {
     if (isVerbose) {
       printVerboseRuleGroup(ruleKey, ruleDiagnostics, ruleNameColumnWidth);
       return;
     }
-    if (visibleIndex < MAX_DETAILED_RULE_GROUPS_NON_VERBOSE) {
-      printDetailedRuleGroup(ruleKey, ruleDiagnostics, rootDirectory, ruleNameColumnWidth);
-      return;
-    }
-    printCompactRuleGroupLine(ruleKey, ruleDiagnostics, ruleNameColumnWidth);
+    printDetailedRuleGroup(ruleKey, ruleDiagnostics, rootDirectory, ruleNameColumnWidth);
   });
-
-  if (visibleRuleGroups.length > MAX_DETAILED_RULE_GROUPS_NON_VERBOSE && !isVerbose) {
-    logger.break();
-  }
 
   if (hiddenRuleGroups.length > 0) {
     printHiddenDiagnosticsSummary(hiddenRuleGroups);
@@ -775,6 +766,7 @@ const runScan = async (
     return buildResult();
   }
 
+  logger.break();
   printDiagnostics(diagnostics, options.verbose, directory);
 
   const displayedSourceFileCount = isDiffMode ? includePaths.length : lintSourceFileCount;

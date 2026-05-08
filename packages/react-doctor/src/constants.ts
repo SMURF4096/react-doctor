@@ -106,7 +106,6 @@ export const MAX_RULE_GROUPS_SHOWN_NON_VERBOSE = 5;
 // How many of the top rule groups get the full message+help+location
 // treatment in the default output. The rest collapse to a single
 // `<icon> <rule> <count> sites` line so the list stays scannable.
-export const MAX_DETAILED_RULE_GROUPS_NON_VERBOSE = 1;
 
 // Bar width used by the per-category horizontal bar chart in the
 // summary block. Sized to fit comfortably in an 80-col terminal next
@@ -121,3 +120,5 @@ export const CATEGORY_LABEL_COLUMN_WIDTH_CHARS = 18;
 // shorter rule names so the right-aligned `N sites` count stays in a
 // consistent column even when one rule has a much longer identifier.
 export const RULE_NAME_COLUMN_WIDTH_CHARS = 36;
+
+export const SPINNER_INDENT_CHARS = 2;
