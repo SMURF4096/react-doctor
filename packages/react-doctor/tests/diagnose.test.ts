@@ -1,9 +1,10 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterAll, describe, expect, it } from "vite-plus/test";
+import { afterAll, beforeEach, describe, expect, it } from "vite-plus/test";
 
-import { diagnose } from "../src/index.js";
+import { AmbiguousProjectError, diagnose } from "../src/index.js";
+import { clearConfigCache } from "../src/utils/load-config.js";
 import { setupReactProject } from "./regressions/_helpers.js";
 
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "rd-diagnose-api-"));
@@ -97,5 +98,104 @@ export const Debounced = ({ onChange }: { onChange: (value: string) => void }) =
     await expect(diagnose(emptyDir, { lint: false, deadCode: false })).rejects.toThrow(
       "No React project found in",
     );
+  });
+
+  // Regression: when the requested directory has no root package.json AND
+  // there are multiple nested React projects, `diagnose()` previously
+  // silently picked whichever one `readdirSync` returned first. That's a
+  // footgun for monorepo callers (e.g. apps/web vs apps/admin). The
+  // single-result programmatic API now surfaces ambiguity via a typed
+  // error so the caller can disambiguate explicitly.
+  it("throws AmbiguousProjectError when there are multiple nested React subprojects and no root package.json", async () => {
+    const wrapperDir = path.join(tempRoot, "diagnose-ambiguous-nested");
+    fs.mkdirSync(wrapperDir, { recursive: true });
+    setupReactProject(wrapperDir, "web");
+    setupReactProject(wrapperDir, "admin");
+
+    await expect(diagnose(wrapperDir, { lint: false, deadCode: false })).rejects.toBeInstanceOf(
+      AmbiguousProjectError,
+    );
+
+    const rejection = await diagnose(wrapperDir, { lint: false, deadCode: false }).catch(
+      (error: unknown) => error,
+    );
+    expect(rejection).toBeInstanceOf(AmbiguousProjectError);
+    const ambiguousError = rejection as AmbiguousProjectError;
+    expect(ambiguousError.directory).toBe(wrapperDir);
+    expect(ambiguousError.candidates.toSorted()).toEqual(["admin", "web"]);
+  });
+
+  describe("react-doctor.config.json rootDir redirect", () => {
+    beforeEach(() => {
+      clearConfigCache();
+    });
+
+    it("redirects diagnose() to config.rootDir resolved relative to the config file location", async () => {
+      const wrapperDir = path.join(tempRoot, "diagnose-rootdir-redirect");
+      fs.mkdirSync(wrapperDir, { recursive: true });
+      setupReactProject(wrapperDir, "web");
+      setupReactProject(wrapperDir, "admin");
+      fs.writeFileSync(
+        path.join(wrapperDir, "react-doctor.config.json"),
+        JSON.stringify({ rootDir: "web" }),
+      );
+
+      const result = await diagnose(wrapperDir, { lint: false, deadCode: false });
+      expect(result.project.rootDirectory).toBe(path.join(wrapperDir, "web"));
+    });
+
+    it("disambiguates a wrapper that would otherwise throw AmbiguousProjectError", async () => {
+      const wrapperDir = path.join(tempRoot, "diagnose-rootdir-disambiguates");
+      fs.mkdirSync(wrapperDir, { recursive: true });
+      setupReactProject(wrapperDir, "web");
+      setupReactProject(wrapperDir, "admin");
+      fs.writeFileSync(
+        path.join(wrapperDir, "react-doctor.config.json"),
+        JSON.stringify({ rootDir: "admin" }),
+      );
+
+      const result = await diagnose(wrapperDir, { lint: false, deadCode: false });
+      expect(result.project.rootDirectory).toBe(path.join(wrapperDir, "admin"));
+    });
+
+    it("resolves rootDir against the ancestor config file location, not the requested directory", async () => {
+      const repoRoot = path.join(tempRoot, "diagnose-rootdir-ancestor");
+      const childDir = path.join(repoRoot, "packages", "ui");
+      fs.mkdirSync(childDir, { recursive: true });
+      setupReactProject(repoRoot, "apps/web");
+      fs.writeFileSync(
+        path.join(repoRoot, "react-doctor.config.json"),
+        JSON.stringify({ rootDir: "apps/web" }),
+      );
+
+      const result = await diagnose(childDir, { lint: false, deadCode: false });
+      expect(result.project.rootDirectory).toBe(path.join(repoRoot, "apps", "web"));
+    });
+
+    it("ignores rootDir that does not exist and falls back to the requested directory", async () => {
+      const wrapperDir = path.join(tempRoot, "diagnose-rootdir-missing");
+      fs.mkdirSync(wrapperDir, { recursive: true });
+      setupReactProject(wrapperDir, "web");
+      fs.writeFileSync(
+        path.join(wrapperDir, "react-doctor.config.json"),
+        JSON.stringify({ rootDir: "does-not-exist" }),
+      );
+
+      const result = await diagnose(wrapperDir, { lint: false, deadCode: false });
+      expect(result.project.rootDirectory).toBe(path.join(wrapperDir, "web"));
+    });
+
+    it("honors an absolute rootDir path", async () => {
+      const wrapperDir = path.join(tempRoot, "diagnose-rootdir-absolute");
+      fs.mkdirSync(wrapperDir, { recursive: true });
+      const targetDir = setupReactProject(wrapperDir, "web");
+      fs.writeFileSync(
+        path.join(wrapperDir, "react-doctor.config.json"),
+        JSON.stringify({ rootDir: targetDir }),
+      );
+
+      const result = await diagnose(wrapperDir, { lint: false, deadCode: false });
+      expect(result.project.rootDirectory).toBe(targetDir);
+    });
   });
 });

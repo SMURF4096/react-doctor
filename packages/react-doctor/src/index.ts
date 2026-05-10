@@ -1,5 +1,5 @@
 import path from "node:path";
-import { buildNoReactDependencyError } from "./constants.js";
+import { NoReactDependencyError, ProjectNotFoundError } from "./errors.js";
 import type {
   Diagnostic,
   DiagnoseOptions,
@@ -22,11 +22,12 @@ import { checkReducedMotion } from "./utils/check-reduced-motion.js";
 import { clearIgnorePatternsCache } from "./utils/collect-ignore-patterns.js";
 import { clearProjectCache, discoverProject } from "./utils/discover-project.js";
 import { computeJsxIncludePaths } from "./utils/jsx-include-paths.js";
-import { clearConfigCache, loadConfig } from "./utils/load-config.js";
+import { clearConfigCache, loadConfigWithSource } from "./utils/load-config.js";
 import { mergeAndFilterDiagnostics } from "./utils/merge-and-filter-diagnostics.js";
 import { parseReactMajor } from "./utils/parse-react-major.js";
 import { clearPackageJsonCache } from "./utils/read-package-json.js";
 import { createNodeReadFileLinesSync } from "./utils/read-file-lines-node.js";
+import { resolveConfigRootDir } from "./utils/resolve-config-root-dir.js";
 import { resolveDiagnoseTarget } from "./utils/resolve-diagnose-target.js";
 import { resolveLintIncludePaths } from "./utils/resolve-lint-include-paths.js";
 import { runKnip } from "./utils/run-knip.js";
@@ -50,6 +51,14 @@ export type {
 export { getDiffInfo, filterSourceFiles } from "./utils/get-diff-files.js";
 export { summarizeDiagnostics } from "./utils/summarize-diagnostics.js";
 export { buildJsonReport, buildJsonReportError };
+export {
+  ReactDoctorError,
+  ProjectNotFoundError,
+  NoReactDependencyError,
+  PackageJsonNotFoundError,
+  AmbiguousProjectError,
+  isReactDoctorError,
+} from "./errors.js";
 
 // HACK: programmatic API consumers (watch-mode tools, test runners,
 // agentic CLI flows) call diagnose() repeatedly on the same directory.
@@ -107,19 +116,32 @@ export const diagnose = async (
 ): Promise<DiagnoseResult> => {
   const startTime = globalThis.performance.now();
   const requestedDirectory = path.resolve(directory);
-  const resolvedDirectory = resolveDiagnoseTarget(requestedDirectory);
+
+  // Load config first against the requested directory so a `rootDir`
+  // redirect applies BEFORE we hunt for nested React subprojects. This
+  // is the documented escape hatch for monorepos that hold the only
+  // react-doctor config at the repo root but want scans to target a
+  // subproject like `apps/web`.
+  const initialLoadedConfig = loadConfigWithSource(requestedDirectory);
+  const redirectedDirectory = resolveConfigRootDir(
+    initialLoadedConfig?.config ?? null,
+    initialLoadedConfig?.sourceDirectory ?? null,
+  );
+  const directoryAfterRedirect = redirectedDirectory ?? requestedDirectory;
+
+  const resolvedDirectory = resolveDiagnoseTarget(directoryAfterRedirect);
   if (!resolvedDirectory) {
-    throw new Error(
-      `No React project found in ${requestedDirectory}. Expected a package.json at the directory root or a nested package.json with a React dependency.`,
-    );
+    throw new ProjectNotFoundError(directoryAfterRedirect);
   }
-  const userConfig = loadConfig(resolvedDirectory);
+
+  const userConfig =
+    initialLoadedConfig?.config ?? loadConfigWithSource(resolvedDirectory)?.config ?? null;
   const includePaths = options.includePaths ?? [];
   const isDiffMode = includePaths.length > 0;
   const projectInfo = discoverProject(resolvedDirectory);
 
   if (!projectInfo.reactVersion) {
-    throw new Error(buildNoReactDependencyError(resolvedDirectory));
+    throw new NoReactDependencyError(resolvedDirectory);
   }
 
   const lintIncludePaths =
