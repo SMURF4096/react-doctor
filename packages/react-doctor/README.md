@@ -272,7 +272,7 @@ Top React codebases scanned by React Doctor, ranked by score. Updated automatica
 <!-- prettier-ignore -->
 | #  | Repo | Score |
 | -- | ---- | ----: |
-| 1  | [executor](https://github.com/RhysSullivan/executor) | 96 |
+| 1  | [executor](https://github.com/RhysSullivan/executor) | 94 |
 | 2  | [nodejs.org](https://github.com/nodejs/nodejs.org) | 86 |
 | 3  | [tldraw](https://github.com/tldraw/tldraw) | 70 |
 | 4  | [t3code](https://github.com/pingdotgg/t3code) | 68 |
