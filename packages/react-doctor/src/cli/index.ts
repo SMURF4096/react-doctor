@@ -1,6 +1,8 @@
 import { performance } from "node:perf_hooks";
 import { Command } from "commander";
-import { buildJsonReportError, CANONICAL_GITHUB_URL, highlighter } from "@react-doctor/core";
+import { buildJsonReportError } from "../core/build-json-report-error.js";
+import { highlighter } from "../core/highlighter.js";
+import { CANONICAL_GITHUB_URL } from "../constants.js";
 import { cliState } from "./cli-state.js";
 import { createInspectAction } from "./commands/inspect.js";
 import { installAction } from "./commands/install.js";
@@ -30,7 +32,7 @@ const program = new Command()
     "--diff [base]",
     "scan only files changed vs base branch (pass `false` to disable; overridden by --full)",
   )
-  .option("--offline", "skip the score API and the share URL (no score is shown)")
+  .option("--offline", "skip telemetry (anonymous, not stored, only used to calculate score)")
   .option("--staged", "scan only staged (git index) files for pre-commit hooks")
   .option("--fail-on <level>", "exit with error code on diagnostics: error, warning, none", "error")
   .option("--annotations", "output diagnostics as GitHub Actions annotations")

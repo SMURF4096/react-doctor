@@ -3,8 +3,9 @@ import os from "node:os";
 import path from "node:path";
 import { afterAll, describe, expect, it } from "vite-plus/test";
 
-import type { Diagnostic } from "@react-doctor/types";
-import { createNodeReadFileLinesSync, mergeAndFilterDiagnostics } from "@react-doctor/core";
+import type { Diagnostic } from "../src/types/diagnostic.js";
+import { createNodeReadFileLinesSync } from "../src/core/read-file-lines-node.js";
+import { mergeAndFilterDiagnostics } from "../src/core/merge-and-filter-diagnostics.js";
 import { buildDiagnostic, writeFile } from "./regressions/_helpers.js";
 
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "rd-merge-and-filter-"));

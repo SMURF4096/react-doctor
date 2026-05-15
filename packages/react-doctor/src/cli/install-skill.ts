@@ -1,16 +1,14 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import {
-  getSkillAgentConfig,
-  installSkillsFromSource,
-  SKILL_MANIFEST_FILE,
-  type SkillAgentType,
-} from "agent-install";
-import { highlighter, logger, SKILL_NAME } from "@react-doctor/core";
+import { installSkillsFromSource, SKILL_MANIFEST_FILE, type SkillAgentType } from "agent-install";
+import { SKILL_NAME } from "../constants.js";
 import { detectAvailableAgents } from "./detect-agents.js";
+import { highlighter } from "../core/highlighter.js";
+import { logger } from "../core/logger.js";
 import { prompts } from "./prompts.js";
 import { spinner } from "./spinner.js";
+import { toDisplayName } from "./to-display-name.js";
 
 interface InstallSkillOptions {
   yes?: boolean;
@@ -57,7 +55,7 @@ export const runInstallSkill = async (options: InstallSkillOptions = {}): Promis
           name: "agents",
           message: `Install the ${highlighter.info(SKILL_NAME)} skill for:`,
           choices: detectedAgents.map((agent) => ({
-            title: getSkillAgentConfig(agent).displayName,
+            title: toDisplayName(agent),
             value: agent,
             selected: true,
           })),
@@ -71,7 +69,7 @@ export const runInstallSkill = async (options: InstallSkillOptions = {}): Promis
   if (options.dryRun) {
     logger.log(`Dry run — would install ${SKILL_NAME} skill for:`);
     for (const agent of selectedAgents) {
-      logger.dim(`  - ${getSkillAgentConfig(agent).displayName}`);
+      logger.dim(`  - ${toDisplayName(agent)}`);
     }
     logger.dim(`  Source: ${sourceDir}`);
     return;
@@ -94,13 +92,13 @@ export const runInstallSkill = async (options: InstallSkillOptions = {}): Promis
     if (installResult.failed.length > 0) {
       throw new Error(
         installResult.failed
-          .map((failure) => `${getSkillAgentConfig(failure.agent).displayName}: ${failure.error}`)
+          .map((failure) => `${toDisplayName(failure.agent)}: ${failure.error}`)
           .join("\n"),
       );
     }
 
     installSpinner.succeed(
-      `${SKILL_NAME} skill installed for ${selectedAgents.map((agent) => getSkillAgentConfig(agent).displayName).join(", ")}.`,
+      `${SKILL_NAME} skill installed for ${selectedAgents.map(toDisplayName).join(", ")}.`,
     );
   } catch (error) {
     installSpinner.fail(`Failed to install ${SKILL_NAME} skill.`);

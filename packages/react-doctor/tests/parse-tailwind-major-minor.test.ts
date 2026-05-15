@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
-import { isTailwindAtLeast, parseTailwindMajorMinor } from "@react-doctor/project-info";
+import {
+  isTailwindAtLeast,
+  parseTailwindMajorMinor,
+} from "../src/core/parse-tailwind-major-minor.js";
 
 describe("parseTailwindMajorMinor", () => {
   it("extracts major.minor from caret/tilde/exact ranges", () => {

@@ -1,5 +1,6 @@
 import { performance } from "node:perf_hooks";
-import { buildJsonReportError, logger } from "@react-doctor/core";
+import { buildJsonReportError } from "../core/build-json-report-error.js";
+import { logger } from "../core/logger.js";
 import { cliState } from "./cli-state.js";
 import { VERSION } from "./version.js";
 import { writeJsonReport } from "./write-json-report.js";
