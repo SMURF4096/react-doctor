@@ -1,13 +1,13 @@
 import { collectPatternNames } from "./collect-pattern-names.js";
 import type { ComponentPropStackTrackerCallbacks } from "./component-prop-stack-tracker-callbacks.js";
 import type { EsTreeNode } from "./es-tree-node.js";
-import { isComponentAssignment } from "./is-component-assignment.js";
+import type { EsTreeNodeOfType } from "./es-tree-node-of-type.js";
 import { isNodeOfType } from "./is-node-of-type.js";
 import { isUppercaseName } from "./is-uppercase-name.js";
 import type { RuleVisitors } from "./rule-visitors.js";
 
 export interface ComponentPropStackTracker {
-  isPropName: (name: string) => boolean;
+  isPropName: (name: string, referenceNode?: EsTreeNode) => boolean;
   getCurrentPropNames: () => Set<string>;
   visitors: RuleVisitors;
 }
@@ -18,6 +18,91 @@ const extractDestructuredPropNames = (params: EsTreeNode[]): Set<string> => {
     collectPatternNames(param, propNames);
   }
   return propNames;
+};
+
+const isFunctionNode = (
+  node: EsTreeNode | null | undefined,
+): node is
+  | EsTreeNodeOfType<"ArrowFunctionExpression">
+  | EsTreeNodeOfType<"FunctionDeclaration">
+  | EsTreeNodeOfType<"FunctionExpression"> =>
+  Boolean(node) &&
+  (isNodeOfType(node, "ArrowFunctionExpression") ||
+    isNodeOfType(node, "FunctionDeclaration") ||
+    isNodeOfType(node, "FunctionExpression"));
+
+const getInlineFunctionNode = (
+  node: EsTreeNode | null | undefined,
+):
+  | EsTreeNodeOfType<"ArrowFunctionExpression">
+  | EsTreeNodeOfType<"FunctionDeclaration">
+  | EsTreeNodeOfType<"FunctionExpression">
+  | null => {
+  if (!node) return null;
+  if (isFunctionNode(node)) return node;
+  if (!isNodeOfType(node, "CallExpression")) return null;
+
+  for (const argument of node.arguments ?? []) {
+    const inlineFunctionNode = getInlineFunctionNode(argument);
+    if (inlineFunctionNode) return inlineFunctionNode;
+  }
+
+  return null;
+};
+
+const getNearestComponentFunction = (
+  node: EsTreeNode,
+):
+  | EsTreeNodeOfType<"ArrowFunctionExpression">
+  | EsTreeNodeOfType<"FunctionDeclaration">
+  | EsTreeNodeOfType<"FunctionExpression">
+  | null => {
+  let cursor: EsTreeNode | null = node.parent ?? null;
+  while (cursor) {
+    if (isFunctionNode(cursor)) return cursor;
+    cursor = cursor.parent ?? null;
+  }
+  return null;
+};
+
+const isFunctionAssignedToComponent = (
+  functionNode:
+    | EsTreeNodeOfType<"ArrowFunctionExpression">
+    | EsTreeNodeOfType<"FunctionDeclaration">
+    | EsTreeNodeOfType<"FunctionExpression">,
+): boolean => {
+  let cursor: EsTreeNode | null = functionNode.parent ?? null;
+  while (isNodeOfType(cursor, "CallExpression")) {
+    cursor = cursor.parent ?? null;
+  }
+
+  if (
+    isNodeOfType(cursor, "VariableDeclarator") &&
+    isNodeOfType(cursor.id, "Identifier") &&
+    isUppercaseName(cursor.id.name)
+  ) {
+    return true;
+  }
+
+  return isNodeOfType(cursor, "ExportDefaultDeclaration");
+};
+
+const isComponentFunction = (
+  functionNode:
+    | EsTreeNodeOfType<"ArrowFunctionExpression">
+    | EsTreeNodeOfType<"FunctionDeclaration">
+    | EsTreeNodeOfType<"FunctionExpression">,
+): boolean => {
+  if (isNodeOfType(functionNode, "FunctionDeclaration")) {
+    return (
+      !functionNode.id ||
+      functionNode.id.name === "default" ||
+      isUppercaseName(functionNode.id.name) ||
+      isNodeOfType(functionNode.parent, "ExportDefaultDeclaration")
+    );
+  }
+
+  return isFunctionAssignedToComponent(functionNode);
 };
 
 // HACK: barrier-frame predicate - a non-component arrow / function-expression
@@ -53,12 +138,20 @@ export const createComponentPropStackTracker = (
   callbacks?: ComponentPropStackTrackerCallbacks,
 ): ComponentPropStackTracker => {
   const propParamStack: Array<Set<string>> = [];
+  const exportDefaultDeclarationsWithFrames = new WeakSet<EsTreeNode>();
+  const functionDeclarationsWithFrames = new WeakSet<EsTreeNode>();
+  const variableDeclaratorsWithFrames = new WeakSet<EsTreeNode>();
 
-  const isPropName = (name: string): boolean => {
+  const isPropName = (name: string, referenceNode?: EsTreeNode): boolean => {
     for (let frameIndex = propParamStack.length - 1; frameIndex >= 0; frameIndex--) {
       const frame = propParamStack[frameIndex];
-      if (frame.size === 0) return false;
+      if (frame.size === 0) break;
       if (frame.has(name)) return true;
+    }
+    if (referenceNode) {
+      const componentFunctionNode = getNearestComponentFunction(referenceNode);
+      if (!componentFunctionNode || !isComponentFunction(componentFunctionNode)) return false;
+      return extractDestructuredPropNames(componentFunctionNode.params ?? []).has(name);
     }
     return false;
   };
@@ -72,43 +165,70 @@ export const createComponentPropStackTracker = (
     return new Set();
   };
 
+  const pushFunctionPropFrame = (
+    functionNode:
+      | EsTreeNodeOfType<"ArrowFunctionExpression">
+      | EsTreeNodeOfType<"FunctionDeclaration">
+      | EsTreeNodeOfType<"FunctionExpression">,
+  ): void => {
+    propParamStack.push(extractDestructuredPropNames(functionNode.params ?? []));
+    callbacks?.onComponentEnter?.(functionNode.body);
+  };
+
   const visitors: RuleVisitors = {
+    ExportDefaultDeclaration(node: EsTreeNode) {
+      if (!isNodeOfType(node, "ExportDefaultDeclaration")) return;
+      const inlineFunctionNode = getInlineFunctionNode(node.declaration);
+      if (!inlineFunctionNode) return;
+      if (isNodeOfType(inlineFunctionNode, "FunctionDeclaration")) return;
+      pushFunctionPropFrame(inlineFunctionNode);
+      exportDefaultDeclarationsWithFrames.add(node);
+    },
+    "ExportDefaultDeclaration:exit"(node: EsTreeNode) {
+      if (!isNodeOfType(node, "ExportDefaultDeclaration")) return;
+      if (!exportDefaultDeclarationsWithFrames.has(node)) return;
+      propParamStack.pop();
+    },
     FunctionDeclaration(node: EsTreeNode) {
       if (!isNodeOfType(node, "FunctionDeclaration")) return;
-      if (!node.id || !isUppercaseName(node.id.name)) {
+      if (!node.id || node.id.name === "default") {
+        propParamStack.push(extractDestructuredPropNames(node.params ?? []));
+        callbacks?.onComponentEnter?.(node.body);
+        functionDeclarationsWithFrames.add(node);
+        return;
+      }
+      if (!isUppercaseName(node.id.name)) {
         propParamStack.push(new Set());
+        functionDeclarationsWithFrames.add(node);
         return;
       }
       propParamStack.push(extractDestructuredPropNames(node.params ?? []));
       callbacks?.onComponentEnter?.(node.body);
+      functionDeclarationsWithFrames.add(node);
     },
-    "FunctionDeclaration:exit"() {
+    "FunctionDeclaration:exit"(node: EsTreeNode) {
+      if (!isNodeOfType(node, "FunctionDeclaration")) return;
+      if (!functionDeclarationsWithFrames.has(node)) return;
       propParamStack.pop();
     },
     VariableDeclarator(node: EsTreeNode) {
       if (!isNodeOfType(node, "VariableDeclarator")) return;
-      if (isComponentAssignment(node)) {
-        const initializer = node.init;
-        if (
-          isNodeOfType(initializer, "ArrowFunctionExpression") ||
-          isNodeOfType(initializer, "FunctionExpression")
-        ) {
-          propParamStack.push(extractDestructuredPropNames(initializer.params ?? []));
-          callbacks?.onComponentEnter?.(initializer.body);
-        } else {
-          propParamStack.push(new Set());
-        }
+      if (isNodeOfType(node.id, "Identifier") && isUppercaseName(node.id.name)) {
+        const inlineFunctionNode = getInlineFunctionNode(node.init);
+        if (!inlineFunctionNode) return;
+        pushFunctionPropFrame(inlineFunctionNode);
+        variableDeclaratorsWithFrames.add(node);
         return;
       }
       if (isFunctionLikeVariableDeclarator(node)) {
         propParamStack.push(new Set());
+        variableDeclaratorsWithFrames.add(node);
       }
     },
     "VariableDeclarator:exit"(node: EsTreeNode) {
       if (!isNodeOfType(node, "VariableDeclarator")) return;
-      if (isComponentAssignment(node) || isFunctionLikeVariableDeclarator(node)) {
-        propParamStack.pop();
-      }
+      if (!variableDeclaratorsWithFrames.has(node)) return;
+      propParamStack.pop();
     },
   };
 

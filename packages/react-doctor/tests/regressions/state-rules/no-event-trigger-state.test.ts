@@ -304,14 +304,7 @@ export const Game = () => {
     expect(triggerHits[0].message).toContain("analytics.track");
   });
 
-  it("KEEPS no-effect-event-handler warning when state-typed dep has a non-allowlisted callee (Bugbot #155 round 3)", async () => {
-    // Regression: round-2 deference was too eager — it skipped
-    // no-effect-event-handler whenever the trigger was a useState
-    // value, but no-event-trigger-state has a tighter side-effect-
-    // callee allowlist. \`customAction()\` isn't in the allowlist, so
-    // no-event-trigger-state would NOT fire — and the round-2
-    // version then silently dropped the warning. Now no-effect-
-    // event-handler fires unless BOTH predicates match.
+  it("does NOT report event-only trigger state when the callee is not event-shaped", async () => {
     const projectDir = setupReactProject(
       tempRoot,
       "no-event-trigger-state-no-overshadow-on-custom-callee",
@@ -337,27 +330,17 @@ export const Custom = () => {
 
     const handlerHits = await collectRuleHits(projectDir, "no-effect-event-handler");
     const triggerHits = await collectRuleHits(projectDir, "no-event-trigger-state");
-    // customAction isn't in the side-effect allowlist → no-event-
-    // trigger-state stays silent. no-effect-event-handler MUST still
-    // warn (otherwise we silently dropped the diagnostic).
-    expect(handlerHits.length).toBe(1);
+    expect(handlerHits.length).toBe(0);
     expect(triggerHits.length).toBe(0);
   });
 
-  it("intentionally double-warns on the bare-truthy state shape (handler + trigger-state both fire)", async () => {
-    // Regression: \`if (destination) navigate(destination)\` triggers
-    // BOTH no-effect-event-handler and no-event-trigger-state. An
-    // earlier implementation tried to defer the former to the latter,
-    // but that deference silently dropped diagnostics whenever the
-    // narrower rule's preconditions (handler-only writes,
-    // not render-reachable, etc.) didn't hold. Both rules now fire
-    // independently — the messages frame the same code differently
-    // ("this useEffect simulates a handler" vs "this state exists
-    // only to schedule navigate from an effect") so a duplicate is
-    // strictly better than a silent drop.
-    const projectDir = setupReactProject(tempRoot, "no-event-trigger-state-double-warn", {
-      files: {
-        "src/Wizard.tsx": `import { useEffect, useState } from "react";
+  it("reports local trigger state without a no-effect-event-handler duplicate", async () => {
+    const projectDir = setupReactProject(
+      tempRoot,
+      "no-event-trigger-state-without-handler-duplicate",
+      {
+        files: {
+          "src/Wizard.tsx": `import { useEffect, useState } from "react";
 
 declare const navigate: (path: string) => void;
 
@@ -371,13 +354,14 @@ export const Wizard = () => {
   return <button onClick={() => setDestination("/next")}>Next</button>;
 };
 `,
+        },
       },
-    });
+    );
 
     const triggerHits = await collectRuleHits(projectDir, "no-event-trigger-state");
     const handlerHits = await collectRuleHits(projectDir, "no-effect-event-handler");
     expect(triggerHits.length).toBe(1);
-    expect(handlerHits.length).toBe(1);
+    expect(handlerHits.length).toBe(0);
   });
 
   it("does NOT flag dual-purpose state that's also read in render (Bugbot #155)", async () => {
