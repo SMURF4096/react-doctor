@@ -387,14 +387,10 @@ export const SearchInput = ({
     expect(hits[0].message).not.toContain("prefix");
   });
 
-  it("DOES fire when reactMajorVersion is unknown (null) — assume latest React, apply every rule", async () => {
-    // When detection fails (custom resolver, monorepo override, mid-clone
-    // state) we optimistically treat the project as if it were on the
-    // latest React major and apply every rule, including
-    // `prefer-newer-api` ones like `prefer-use-effect-event`. Hiding the
-    // suggestion would silently degrade the scan whenever React resolves
-    // through an unusual path. See `filterRulesByReactMajor` in
-    // oxlint-config.ts.
+  it("does NOT fire when reactMajorVersion is unknown (null)", async () => {
+    // Unknown React majors must not enable React-19-only suggestions.
+    // This prevents unparseable dependency specs from being treated as
+    // the latest React major and warning on React 18 projects.
     const projectDir = setupReactProject(tempRoot, "prefer-use-effect-event-unknown-version", {
       files: {
         "src/SearchInput.tsx": `import { useEffect, useState } from "react";
@@ -414,6 +410,6 @@ export const SearchInput = ({ onSearch }: { onSearch: (q: string) => void }) => 
     const hits = await collectRuleHits(projectDir, "prefer-use-effect-event", {
       reactMajorVersion: null,
     });
-    expect(hits.length).toBeGreaterThanOrEqual(1);
+    expect(hits).toHaveLength(0);
   });
 });

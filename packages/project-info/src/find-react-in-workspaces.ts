@@ -1,9 +1,66 @@
 import path from "node:path";
 import type { DependencyInfo, PackageJson } from "@react-doctor/types";
 import { EMPTY_DEPENDENCY_INFO, extractDependencyInfo } from "./extract-dependency-info.js";
+import { getDependencyDeclaration } from "./utils/get-dependency-declaration.js";
 import { getWorkspacePatterns } from "./get-workspace-patterns.js";
+import { parseReactMajor } from "./parse-react-major.js";
 import { readPackageJson } from "./read-package-json.js";
+import { resolveCatalogVersion } from "./resolve-catalog-version.js";
 import { resolveWorkspaceDirectories } from "./resolve-workspace-directories.js";
+
+interface ResolveWorkspaceDependencyVersionOptions {
+  concreteVersion: string | null;
+  packageName: string;
+  rootDirectory: string;
+  rootPackageJson: PackageJson;
+  sections: ReadonlyArray<"dependencies" | "peerDependencies" | "devDependencies">;
+  workspaceDirectory: string;
+  workspacePackageJson: PackageJson;
+}
+
+const resolveWorkspaceDependencyVersion = ({
+  concreteVersion,
+  packageName,
+  rootDirectory,
+  rootPackageJson,
+  sections,
+  workspaceDirectory,
+  workspacePackageJson,
+}: ResolveWorkspaceDependencyVersionOptions): string | null => {
+  const dependencyDeclaration = getDependencyDeclaration({
+    packageJson: workspacePackageJson,
+    packageName,
+    sections,
+  });
+  if (!dependencyDeclaration.hasDeclaration) return null;
+
+  return (
+    concreteVersion ??
+    resolveCatalogVersion(
+      workspacePackageJson,
+      packageName,
+      workspaceDirectory,
+      dependencyDeclaration.catalogReference,
+    ) ??
+    resolveCatalogVersion(
+      rootPackageJson,
+      packageName,
+      rootDirectory,
+      dependencyDeclaration.catalogReference,
+    )
+  );
+};
+
+const shouldReplaceReactVersion = (currentVersion: string | null, nextVersion: string): boolean => {
+  if (!currentVersion) return true;
+
+  const currentMajor = parseReactMajor(currentVersion);
+  const nextMajor = parseReactMajor(nextVersion);
+
+  if (currentMajor === null) return nextMajor !== null;
+  if (nextMajor === null) return false;
+  return nextMajor < currentMajor;
+};
 
 export const findReactInWorkspaces = (
   rootDirectory: string,
@@ -18,27 +75,43 @@ export const findReactInWorkspaces = (
     for (const workspaceDirectory of directories) {
       const workspacePackageJson = readPackageJson(path.join(workspaceDirectory, "package.json"));
       const info = extractDependencyInfo(workspacePackageJson);
+      const reactVersion = resolveWorkspaceDependencyVersion({
+        concreteVersion: info.reactVersion,
+        packageName: "react",
+        rootDirectory,
+        rootPackageJson: packageJson,
+        sections: ["dependencies", "peerDependencies", "devDependencies"],
+        workspaceDirectory,
+        workspacePackageJson,
+      });
+      const tailwindVersion = resolveWorkspaceDependencyVersion({
+        concreteVersion: info.tailwindVersion,
+        packageName: "tailwindcss",
+        rootDirectory,
+        rootPackageJson: packageJson,
+        sections: ["dependencies", "devDependencies", "peerDependencies"],
+        workspaceDirectory,
+        workspacePackageJson,
+      });
 
-      if (info.reactVersion && !result.reactVersion) {
-        result.reactVersion = info.reactVersion;
+      if (reactVersion && shouldReplaceReactVersion(result.reactVersion, reactVersion)) {
+        result.reactVersion = reactVersion;
       }
-      if (info.tailwindVersion && !result.tailwindVersion) {
-        result.tailwindVersion = info.tailwindVersion;
+      if (tailwindVersion && !result.tailwindVersion) {
+        result.tailwindVersion = tailwindVersion;
       }
       if (info.framework !== "unknown" && result.framework === "unknown") {
         result.framework = info.framework;
       }
 
-      // HACK: deliberately don't add `result.tailwindVersion` to the
-      // early-exit predicate. Tailwind is collected opportunistically
-      // here — but a non-Tailwind monorepo would never satisfy that
-      // gate, forcing us to read every workspace package.json on every
-      // scan. The hot path (react-only project, possibly large
-      // monorepo) keeps the original short-circuit; Tailwind users
-      // either declare it on the leaf (no walk needed) or via a
-      // catalog at the monorepo root (resolved by the cheap
-      // resolveCatalogVersion path before this fallback even runs).
-      if (result.reactVersion && result.framework !== "unknown") {
+      const resultReactMajor = parseReactMajor(result.reactVersion);
+      if (
+        result.reactVersion &&
+        result.tailwindVersion &&
+        result.framework !== "unknown" &&
+        resultReactMajor !== null &&
+        resultReactMajor <= 17
+      ) {
         return result;
       }
     }

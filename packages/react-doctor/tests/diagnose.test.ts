@@ -45,12 +45,10 @@ export const Debounced = ({ onChange }: { onChange: (value: string) => void }) =
     expect(preferUseEffectEventHits.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("STILL emits prefer-use-effect-event when the React version cannot be resolved (assume latest)", async () => {
-    // When the React major can't be parsed (custom resolver, git URL,
-    // workspace:* without a resolved manifest) we optimistically assume
-    // the latest React major and apply every rule, including the
-    // `prefer-newer-api` ones. Hiding the suggestion would silently
-    // degrade the scan whenever React resolves through an unusual path.
+  it("does NOT emit prefer-use-effect-event when the React version cannot be resolved", async () => {
+    // Unknown React majors must not enable React-19-only suggestions.
+    // Otherwise unparseable dependency specs such as git URLs or
+    // workspace protocols can false-positive on React 18 projects.
     const projectDir = setupReactProject(tempRoot, "diagnose-prefer-use-effect-event-fallback", {
       reactVersion: "github:facebook/react",
       files: {
@@ -72,7 +70,80 @@ export const Debounced = ({ onChange }: { onChange: (value: string) => void }) =
     const preferUseEffectEventHits = result.diagnostics.filter(
       (diagnostic) => diagnostic.rule === "prefer-use-effect-event",
     );
-    expect(preferUseEffectEventHits.length).toBeGreaterThanOrEqual(1);
+    expect(preferUseEffectEventHits).toHaveLength(0);
+  });
+
+  it("does NOT emit React 19 migration diagnostics when runtime React is 18", async () => {
+    const projectDir = setupReactProject(tempRoot, "diagnose-react-18-runtime-over-dev", {
+      reactVersion: "^18.3.1",
+      packageJsonExtras: {
+        devDependencies: { react: "^19.0.0" },
+      },
+      files: {
+        "src/Button.tsx": `import { createContext, forwardRef, useContext } from "react";
+
+const ThemeContext = createContext("");
+
+export const Button = forwardRef<HTMLButtonElement>((_props, ref) => {
+  useContext(ThemeContext);
+  return <button ref={ref} />;
+});
+`,
+      },
+    });
+
+    const result = await diagnose(projectDir, { lint: true });
+    const react19MigrationHits = result.diagnostics.filter(
+      (diagnostic) => diagnostic.rule === "no-react19-deprecated-apis",
+    );
+    expect(result.project.reactMajorVersion).toBe(18);
+    expect(react19MigrationHits).toHaveLength(0);
+  });
+
+  it("does NOT emit React 19 migration diagnostics for upper-bound-only React ranges", async () => {
+    const projectDir = setupReactProject(tempRoot, "diagnose-react-upper-bound-only", {
+      reactVersion: "<19",
+      files: {
+        "src/Button.tsx": `import { forwardRef } from "react";
+
+export const Button = forwardRef<HTMLButtonElement>((_props, ref) => (
+  <button ref={ref} />
+));
+`,
+      },
+    });
+
+    const result = await diagnose(projectDir, { lint: true });
+    const react19MigrationHits = result.diagnostics.filter(
+      (diagnostic) => diagnostic.rule === "no-react19-deprecated-apis",
+    );
+    expect(result.project.reactMajorVersion).toBeNull();
+    expect(react19MigrationHits).toHaveLength(0);
+  });
+
+  it("does NOT emit React 19 migration diagnostics for libraries with mixed upper-bound peer support", async () => {
+    const projectDir = setupReactProject(tempRoot, "diagnose-react-mixed-peer-upper-bound", {
+      packageJsonExtras: {
+        dependencies: {},
+        peerDependencies: { react: "<19 || ^19.0.0", "react-dom": "<19 || ^19.0.0" },
+        devDependencies: { react: "^19.0.0", "react-dom": "^19.0.0" },
+      },
+      files: {
+        "src/Button.tsx": `import { forwardRef } from "react";
+
+export const Button = forwardRef<HTMLButtonElement>((_props, ref) => (
+  <button ref={ref} />
+));
+`,
+      },
+    });
+
+    const result = await diagnose(projectDir, { lint: true });
+    const react19MigrationHits = result.diagnostics.filter(
+      (diagnostic) => diagnostic.rule === "no-react19-deprecated-apis",
+    );
+    expect(result.project.reactMajorVersion).toBeNull();
+    expect(react19MigrationHits).toHaveLength(0);
   });
 
   // Regression: external review pipelines (e.g. the Vercel AI Code

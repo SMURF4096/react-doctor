@@ -366,6 +366,25 @@ export const Button = forwardRef<HTMLButtonElement>((_props, ref) => (
     expect(hits).toHaveLength(0);
   });
 
+  it("does NOT flag forwardRef on React 17 projects", async () => {
+    const projectDir = setupReactProject(tempRoot, "gating-r17-forwardRef", {
+      reactVersion: "^17.0.2",
+      files: {
+        "src/Button.tsx": `import { forwardRef } from "react";
+
+export const Button = forwardRef<HTMLButtonElement>((_props, ref) => (
+  <button ref={ref} />
+));
+`,
+      },
+    });
+
+    const hits = await collectRuleHits(projectDir, "no-react19-deprecated-apis", {
+      reactMajorVersion: 17,
+    });
+    expect(hits).toHaveLength(0);
+  });
+
   it("DOES flag forwardRef on React 19 projects", async () => {
     const projectDir = setupReactProject(tempRoot, "gating-r19-forwardRef", {
       files: {
@@ -382,6 +401,25 @@ export const Button = forwardRef<HTMLButtonElement>((_props, ref) => (
       reactMajorVersion: 19,
     });
     expect(hits.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("does NOT flag forwardRef when the React version is unknown", async () => {
+    const projectDir = setupReactProject(tempRoot, "gating-null-forwardRef", {
+      reactVersion: "*",
+      files: {
+        "src/Button.tsx": `import { forwardRef } from "react";
+
+export const Button = forwardRef<HTMLButtonElement>((_props, ref) => (
+  <button ref={ref} />
+));
+`,
+      },
+    });
+
+    const hits = await collectRuleHits(projectDir, "no-react19-deprecated-apis", {
+      reactMajorVersion: null,
+    });
+    expect(hits).toHaveLength(0);
   });
 
   // HACK: regression for the prototype-pollution sibling of the
@@ -419,6 +457,34 @@ Button.defaultProps = { size: "md" };
     expect(hits).toHaveLength(0);
   });
 
+  it("does NOT flag Foo.defaultProps on React 17 projects", async () => {
+    const projectDir = setupReactProject(tempRoot, "gating-r17-defaultProps", {
+      reactVersion: "^17.0.2",
+      files: {
+        "src/Button.tsx": `export const Button = ({ size }: { size?: string }) => <button data-size={size} />;
+Button.defaultProps = { size: "md" };
+`,
+      },
+    });
+
+    const hits = await collectRuleHits(projectDir, "no-default-props", { reactMajorVersion: 17 });
+    expect(hits).toHaveLength(0);
+  });
+
+  it("DOES flag Foo.defaultProps on React 19 projects", async () => {
+    const projectDir = setupReactProject(tempRoot, "gating-r19-defaultProps", {
+      reactVersion: "^19.0.0",
+      files: {
+        "src/Button.tsx": `export const Button = ({ size }: { size?: string }) => <button data-size={size} />;
+Button.defaultProps = { size: "md" };
+`,
+      },
+    });
+
+    const hits = await collectRuleHits(projectDir, "no-default-props", { reactMajorVersion: 19 });
+    expect(hits.length).toBeGreaterThanOrEqual(1);
+  });
+
   it("does NOT flag react-dom render on React 17 projects (deprecated since 18, not 17)", async () => {
     const projectDir = setupReactProject(tempRoot, "gating-r17-render", {
       reactVersion: "^17.0.2",
@@ -453,6 +519,40 @@ void render;
     expect(hits.length).toBeGreaterThanOrEqual(1);
   });
 
+  it("DOES flag react-dom render on React 19 projects", async () => {
+    const projectDir = setupReactProject(tempRoot, "gating-r19-render", {
+      reactVersion: "^19.0.0",
+      files: {
+        "src/main.tsx": `import { render } from "react-dom";
+
+void render;
+`,
+      },
+    });
+
+    const hits = await collectRuleHits(projectDir, "no-react-dom-deprecated-apis", {
+      reactMajorVersion: 19,
+    });
+    expect(hits.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("does NOT flag react-dom render when the React version is unknown", async () => {
+    const projectDir = setupReactProject(tempRoot, "gating-null-render", {
+      reactVersion: "*",
+      files: {
+        "src/main.tsx": `import { render } from "react-dom";
+
+void render;
+`,
+      },
+    });
+
+    const hits = await collectRuleHits(projectDir, "no-react-dom-deprecated-apis", {
+      reactMajorVersion: null,
+    });
+    expect(hits).toHaveLength(0);
+  });
+
   it("STILL flags legacy lifecycles regardless of React version (warned since 16.3)", async () => {
     const projectDir = setupReactProject(tempRoot, "gating-r17-lifecycle", {
       reactVersion: "^17.0.2",
@@ -473,7 +573,7 @@ export class Legacy extends React.Component<{}, {}> {
     expect(hits.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("leaves all rules enabled when the React version is unknown (null) — assumes latest", async () => {
+  it("does NOT flag React-19-only defaultProps migration when the React version is unknown", async () => {
     const projectDir = setupReactProject(tempRoot, "gating-null-defaultProps", {
       reactVersion: "*",
       files: {
@@ -484,15 +584,10 @@ Button.defaultProps = { size: "md" };
     });
 
     const hits = await collectRuleHits(projectDir, "no-default-props", { reactMajorVersion: null });
-    expect(hits.length).toBeGreaterThanOrEqual(1);
+    expect(hits).toHaveLength(0);
   });
 
-  // HACK: complement to the deprecation-warning case — `prefer-newer-api`
-  // rules ALSO run when version detection fails, on the assumption that
-  // the user is on the latest React major. Custom resolvers, monorepo
-  // overrides, and `workspace:*` references commonly produce `null`, and
-  // hiding the suggestion silently degrades the scan in those setups.
-  it("DOES flag prefer-use-effect-event when the React version is unknown (null) — assumes latest", async () => {
+  it("does NOT flag prefer-use-effect-event when the React version is unknown", async () => {
     const projectDir = setupReactProject(tempRoot, "gating-null-prefer-use-effect-event", {
       reactVersion: "*",
       files: {
@@ -513,6 +608,6 @@ export const Search = ({ onChange }: { onChange: (value: string) => void }) => {
     const hits = await collectRuleHits(projectDir, "prefer-use-effect-event", {
       reactMajorVersion: null,
     });
-    expect(hits.length).toBeGreaterThanOrEqual(1);
+    expect(hits).toHaveLength(0);
   });
 });

@@ -1,5 +1,6 @@
 import type { DependencyInfo, PackageJson } from "@react-doctor/types";
 import { detectFramework } from "./detect-framework.js";
+import { isConcreteDependencyVersion } from "./utils/is-concrete-dependency-version.js";
 import { isCatalogReference } from "./resolve-catalog-version.js";
 
 export const EMPTY_DEPENDENCY_INFO: DependencyInfo = {
@@ -8,18 +9,36 @@ export const EMPTY_DEPENDENCY_INFO: DependencyInfo = {
   framework: "unknown",
 };
 
+const pickConcreteVersion = (
+  packageJson: PackageJson,
+  packageName: string,
+  sections: ReadonlyArray<"dependencies" | "peerDependencies" | "devDependencies">,
+): string | null => {
+  for (const section of sections) {
+    const version = packageJson[section]?.[packageName];
+    if (version === undefined) continue;
+    if (isCatalogReference(version)) return null;
+    if (isConcreteDependencyVersion(version)) return version;
+  }
+  return null;
+};
+
 export const extractDependencyInfo = (packageJson: PackageJson): DependencyInfo => {
   const allDependencies = {
     ...packageJson.peerDependencies,
     ...packageJson.dependencies,
     ...packageJson.devDependencies,
   };
-  const rawReactVersion = allDependencies.react ?? null;
-  const reactVersion =
-    rawReactVersion && !isCatalogReference(rawReactVersion) ? rawReactVersion : null;
-  const rawTailwindVersion = allDependencies.tailwindcss ?? null;
-  const tailwindVersion =
-    rawTailwindVersion && !isCatalogReference(rawTailwindVersion) ? rawTailwindVersion : null;
+  const reactVersion = pickConcreteVersion(packageJson, "react", [
+    "dependencies",
+    "peerDependencies",
+    "devDependencies",
+  ]);
+  const tailwindVersion = pickConcreteVersion(packageJson, "tailwindcss", [
+    "dependencies",
+    "devDependencies",
+    "peerDependencies",
+  ]);
   return {
     reactVersion,
     tailwindVersion,

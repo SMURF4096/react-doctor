@@ -9,9 +9,10 @@ import { extractDependencyInfo } from "./extract-dependency-info.js";
 import { findDependencyInfoFromMonorepoRoot } from "./find-dependency-info-from-monorepo-root.js";
 import { findMonorepoRoot, isMonorepoRoot } from "./find-monorepo-root.js";
 import { findReactInWorkspaces } from "./find-react-in-workspaces.js";
+import { getDependencyDeclaration } from "./utils/get-dependency-declaration.js";
 import { hasTanStackQuery } from "./has-tanstack-query.js";
 import { readPackageJson } from "./read-package-json.js";
-import { extractCatalogName, resolveCatalogVersion } from "./resolve-catalog-version.js";
+import { isCatalogReference, resolveCatalogVersion } from "./resolve-catalog-version.js";
 import { resolveEffectiveReactMajor } from "./resolve-effective-react-major.js";
 
 export { discoverReactSubprojects } from "./discover-react-subprojects.js";
@@ -39,34 +40,32 @@ export const discoverProject = (directory: string): ProjectInfo => {
   const packageJson = readPackageJson(packageJsonPath);
   let { reactVersion, tailwindVersion, framework } = extractDependencyInfo(packageJson);
 
-  // HACK: capture the catalog reference (e.g. `catalog:react19`) from
-  // the LEAF package once so every fallback resolver below can route
-  // named-catalog lookups to the right group, even when the root
-  // package.json has no `react` dependency to derive a name from.
-  const leafDependencies = {
-    ...packageJson.peerDependencies,
-    ...packageJson.dependencies,
-    ...packageJson.devDependencies,
-  };
-  const leafReactCatalogReference = extractCatalogName(leafDependencies.react ?? "") ?? null;
-  const leafTailwindCatalogReference =
-    extractCatalogName(leafDependencies.tailwindcss ?? "") ?? null;
+  const reactDeclaration = getDependencyDeclaration({
+    packageJson,
+    packageName: "react",
+    sections: ["dependencies", "peerDependencies", "devDependencies"],
+  });
+  const tailwindDeclaration = getDependencyDeclaration({
+    packageJson,
+    packageName: "tailwindcss",
+    sections: ["dependencies", "devDependencies", "peerDependencies"],
+  });
 
-  if (!reactVersion) {
+  if (!reactVersion && reactDeclaration.hasDeclaration) {
     reactVersion = resolveCatalogVersion(
       packageJson,
       "react",
       directory,
-      leafReactCatalogReference,
+      reactDeclaration.catalogReference,
     );
   }
 
-  if (!tailwindVersion) {
+  if (!tailwindVersion && tailwindDeclaration.hasDeclaration) {
     tailwindVersion = resolveCatalogVersion(
       packageJson,
       "tailwindcss",
       directory,
-      leafTailwindCatalogReference,
+      tailwindDeclaration.catalogReference,
     );
   }
 
@@ -85,20 +84,20 @@ export const discoverProject = (directory: string): ProjectInfo => {
       const monorepoPackageJsonPath = path.join(monorepoRoot, "package.json");
       if (isFile(monorepoPackageJsonPath)) {
         const rootPackageJson = readPackageJson(monorepoPackageJsonPath);
-        if (!reactVersion) {
+        if (!reactVersion && reactDeclaration.hasDeclaration) {
           reactVersion = resolveCatalogVersion(
             rootPackageJson,
             "react",
             monorepoRoot,
-            leafReactCatalogReference,
+            reactDeclaration.catalogReference,
           );
         }
-        if (!tailwindVersion) {
+        if (!tailwindVersion && tailwindDeclaration.hasDeclaration) {
           tailwindVersion = resolveCatalogVersion(
             rootPackageJson,
             "tailwindcss",
             monorepoRoot,
-            leafTailwindCatalogReference,
+            tailwindDeclaration.catalogReference,
           );
         }
       }
@@ -129,6 +128,17 @@ export const discoverProject = (directory: string): ProjectInfo => {
     if (framework === "unknown") {
       framework = monorepoInfo.framework;
     }
+  }
+
+  if (!reactVersion && reactDeclaration.version && !isCatalogReference(reactDeclaration.version)) {
+    reactVersion = reactDeclaration.version;
+  }
+  if (
+    !tailwindVersion &&
+    tailwindDeclaration.version &&
+    !isCatalogReference(tailwindDeclaration.version)
+  ) {
+    tailwindVersion = tailwindDeclaration.version;
   }
 
   const projectName = packageJson.name ?? path.basename(directory);

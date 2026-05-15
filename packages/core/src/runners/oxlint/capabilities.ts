@@ -9,13 +9,11 @@ export const buildCapabilities = (project: ProjectInfo): ReadonlySet<string> => 
     capabilities.add("react-native");
   }
 
-  // HACK: when version detection fails (null), assume the latest React
-  // major so every version-gated rule fires. Silently dropping rules
-  // on detection failure was the worse outcome in practice.
   const reactMajor = project.reactMajorVersion;
-  const effectiveReactMajor = reactMajor ?? 99;
-  for (let major = 17; major <= effectiveReactMajor; major++) {
-    capabilities.add(`react:${major}`);
+  if (reactMajor !== null) {
+    for (let major = 17; major <= reactMajor; major++) {
+      capabilities.add(`react:${major}`);
+    }
   }
 
   if (project.tailwindVersion !== null) {
