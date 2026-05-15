@@ -142,3 +142,41 @@ export const AppGuard = () => {
     expect(appIssue?.message).not.toContain("getServerSideProps");
   });
 });
+
+describe("issue #55: nextjs-no-native-script ignores JSON-LD data scripts", () => {
+  it("does not flag application/ld+json scripts but still flags executable native scripts", async () => {
+    const projectDir = setupReactProject(tempRoot, "issue-55-json-ld", {
+      packageJsonExtras: {
+        dependencies: { next: "^15.0.0", react: "^19.0.0", "react-dom": "^19.0.0" },
+      },
+      files: {
+        "src/app/jsonld/page.tsx": `export default function JsonLdPage() {
+  return <script type="application/ld+json">{JSON.stringify({ "@context": "https://schema.org" })}</script>;
+}
+`,
+        "src/app/analytics/page.tsx": `export default function AnalyticsPage() {
+  return <script src="https://cdn.example.com/analytics.js" />;
+}
+`,
+      },
+    });
+
+    const diagnostics = await runOxlint({
+      rootDirectory: projectDir,
+      project: buildTestProject({
+        rootDirectory: projectDir,
+        framework: "nextjs",
+      }),
+    });
+
+    const nativeScriptIssues = diagnostics.filter(
+      (diagnostic) => diagnostic.rule === "nextjs-no-native-script",
+    );
+    expect(nativeScriptIssues.some((diagnostic) => diagnostic.filePath.includes("jsonld"))).toBe(
+      false,
+    );
+    expect(nativeScriptIssues.some((diagnostic) => diagnostic.filePath.includes("analytics"))).toBe(
+      true,
+    );
+  });
+});
