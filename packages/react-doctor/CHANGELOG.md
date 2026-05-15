@@ -1,5 +1,13 @@
 # react-doctor
 
+## 0.2.0-beta.3
+
+### Patch Changes
+
+- Fix workspace packages not being bundled into dist, causing
+  `ERR_MODULE_NOT_FOUND: Cannot find package '@react-doctor/core'`
+  when running the published CLI.
+
 ## 0.2.0-beta.2
 
 ### Minor Changes
