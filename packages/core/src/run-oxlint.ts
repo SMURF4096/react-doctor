@@ -13,6 +13,7 @@ import { canOxlintExtendConfig } from "./can-oxlint-extend-config.js";
 import { collectIgnorePatterns } from "./collect-ignore-patterns.js";
 import { detectUserLintConfigPaths } from "./detect-user-lint-config.js";
 import { createOxlintConfig } from "./runners/oxlint/config.js";
+import { shouldSuppressLocalUseHookDiagnostic } from "./runners/oxlint/should-suppress-local-use-hook-diagnostic.js";
 import reactDoctorPlugin, {
   ALL_REACT_DOCTOR_RULE_KEYS,
   FRAMEWORK_SPECIFIC_RULE_KEYS,
@@ -213,13 +214,22 @@ const spawnOxlint = (
     });
   });
 
+const isSplittableOxlintBatchError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false;
+  return (
+    error.message.includes("did not return within") ||
+    error.message.includes("output exceeded") ||
+    error.message.includes("out of memory")
+  );
+};
+
 const isOxlintOutput = (value: unknown): value is OxlintOutput => {
   if (typeof value !== "object" || value === null) return false;
   const candidate = value as { diagnostics?: unknown };
   return Array.isArray(candidate.diagnostics);
 };
 
-const parseOxlintOutput = (stdout: string): Diagnostic[] => {
+const parseOxlintOutput = (stdout: string, rootDirectory: string): Diagnostic[] => {
   if (!stdout) return [];
 
   // HACK: oxlint sometimes prepends a notice line to stdout (e.g. when
@@ -254,7 +264,12 @@ const parseOxlintOutput = (stdout: string): Diagnostic[] => {
   // erased their score impact. SOURCE_FILE_PATTERN matches the same
   // extensions we count as source files everywhere else.
   return output.diagnostics
-    .filter((diagnostic) => diagnostic.code && SOURCE_FILE_PATTERN.test(diagnostic.filename))
+    .filter(
+      (diagnostic) =>
+        diagnostic.code &&
+        SOURCE_FILE_PATTERN.test(diagnostic.filename) &&
+        !shouldSuppressLocalUseHookDiagnostic(diagnostic, rootDirectory),
+    )
     .map((diagnostic) => {
       const { plugin, rule } = parseRuleCode(diagnostic.code);
       const primaryLabel = diagnostic.labels[0];
@@ -436,10 +451,23 @@ export const runOxlint = async (options: RunOxlintOptions): Promise<Diagnostic[]
 
     const spawnLintBatches = async (): Promise<Diagnostic[]> => {
       const allDiagnostics: Diagnostic[] = [];
-      for (const batch of fileBatches) {
+      const spawnLintBatch = async (batch: string[]): Promise<Diagnostic[]> => {
         const batchArgs = [...baseArgs, ...batch];
-        const stdout = await spawnOxlint(batchArgs, rootDirectory, nodeBinaryPath);
-        allDiagnostics.push(...parseOxlintOutput(stdout));
+        try {
+          const stdout = await spawnOxlint(batchArgs, rootDirectory, nodeBinaryPath);
+          return parseOxlintOutput(stdout, rootDirectory);
+        } catch (error) {
+          if (batch.length <= 1 || !isSplittableOxlintBatchError(error)) throw error;
+          const splitIndex = Math.ceil(batch.length / 2);
+          return [
+            ...(await spawnLintBatch(batch.slice(0, splitIndex))),
+            ...(await spawnLintBatch(batch.slice(splitIndex))),
+          ];
+        }
+      };
+
+      for (const batch of fileBatches) {
+        allDiagnostics.push(...(await spawnLintBatch(batch)));
       }
       return allDiagnostics;
     };
