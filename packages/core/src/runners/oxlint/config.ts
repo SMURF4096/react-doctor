@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import reactDoctorPlugin from "oxlint-plugin-react-doctor";
 import type { OxlintRuleSeverity } from "oxlint-plugin-react-doctor";
 import type { ProjectInfo } from "@react-doctor/types";
@@ -23,6 +24,11 @@ export interface OxlintConfigOptions {
   extendsPaths?: string[];
   ignoredTags?: ReadonlySet<string>;
 }
+
+const resolveSettingsRootDirectory = (rootDirectory: string): string => {
+  if (!fs.existsSync(rootDirectory)) return rootDirectory;
+  return fs.realpathSync(rootDirectory);
+};
 
 export const createOxlintConfig = ({
   pluginPath,
@@ -79,6 +85,12 @@ export const createOxlintConfig = ({
     },
     plugins: customRulesOnly ? [] : ["react", "jsx-a11y"],
     jsPlugins: [...jsPlugins, pluginPath],
+    settings: {
+      "react-doctor": {
+        framework: project.framework,
+        rootDirectory: resolveSettingsRootDirectory(project.rootDirectory),
+      },
+    },
     rules: {
       ...(customRulesOnly ? {} : BUILTIN_REACT_RULES),
       ...(customRulesOnly ? {} : BUILTIN_A11Y_RULES),
