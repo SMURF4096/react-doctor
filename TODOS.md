@@ -92,16 +92,19 @@ Sources:
 - Screenshot: `async-parallel` in `SettingsPanels.browser.tsx`.
 - Screenshot: ordered test-like `render -> expect -> click -> expect`.
 - Dogfood issues: https://github.com/millionco/react-doctor/issues/216, https://github.com/millionco/react-doctor/issues/219
+- Related PR: https://github.com/millionco/react-doctor/pull/238
 
 Current problem:
 - `async-parallel.ts` uses a narrow local `TEST_FILE_PATTERN`.
 - It misses `tests/`, `test/`, `__tests__/`, `e2e/`, `playwright/`, `cypress/`, fixtures, mocks, and `.browser.tsx`.
 - It is not tagged `test-noise`, so shared test suppression does not apply.
+- Dogfood warnings also include intentional `async-await-in-loop` animation/delay sequences.
 
 Fix:
 - Tag `async-parallel` as `test-noise` or use shared `isTestFilePath()`.
 - Suppress in files importing Playwright, Testing Library, Vitest, Jest, or browser test helpers.
 - Do not parallelize `render`, `expect`, `locator.click`, `page.click`, setup/teardown, or ordered UI assertions.
+- Allow intentional animation/demo sequencing or require documented inline suppression.
 - Add regression for render/assert/click/assert.
 
 ### [ ] Stop React Native rules in web-only packages
@@ -341,6 +344,20 @@ Fix:
 - Avoid cache bugs when same source dir is analyzed with different manifests.
 - Close duplicate PR.
 
+### [ ] Keep React dependency detection robust in non-standard workspaces
+
+Status: partially addressed.
+
+Sources:
+- "No React dependency found" reports in Bun workspaces, catalog setups, and non-standard `package.json` layouts.
+- Related fixed issues: #27, #87, #101, #105, #116, #191.
+- Related open PRs: #192, #214, #32.
+
+Fix:
+- Keep regression coverage for pnpm/Bun catalogs, grouped catalogs, peer deps, and dev deps.
+- Improve error text with nearest detected package and suggested `--package-json` / `--project` fix.
+- Do not regress root-project and monorepo package discovery.
+
 ### [ ] Review `no-secrets-in-client-code` scoping before landing #252
 
 Status: open.
@@ -351,6 +368,37 @@ Fix:
 - Ensure server/config/test exclusions do not hide real client leaks.
 - Add fixtures for Vite, Next, CRA, Gatsby, TanStack Start.
 - Keep value-pattern secret detection active where appropriate.
+
+### [ ] Audit React version and library-pattern false positives
+
+Status: open PRs, recurring feedback.
+
+Links:
+- https://github.com/millionco/react-doctor/pull/254
+- https://github.com/millionco/react-doctor/pull/186
+
+Sources:
+- Users reported `forwardRef` and React 18-compatible library patterns being penalized.
+
+Fix:
+- Do not apply React 19-only advice to React 18 packages.
+- Respect library peer dependency ranges.
+- Add fixtures for `forwardRef`, library exports, local `use`, and React 18/19 split behavior.
+
+### [ ] Track large-codebase crash and resource failure modes
+
+Status: partially addressed.
+
+Sources:
+- High RAM / OOM / SIGABRT reports on large monorepos.
+- Historical dead-code crashes: #77, #132, #135, #149.
+- Historical large command/path issue: #46.
+
+Fix:
+- Keep crash regressions even after Knip removal.
+- Add clearer partial-output/error reporting for scan aborts.
+- Document memory expectations and large-repo mitigations.
+- Re-check Windows/path-length behavior outside dead-code scanning.
 
 ### [ ] Clarify React Doctor vs React Review
 
@@ -375,6 +423,18 @@ Fix:
 - Distinguish not installed, missing permission, private repo, rate limit, unsupported host, and backend failure.
 - Add reconnect/retry path.
 
+### [ ] Add non-GitHub / self-hosted GitLab integration path
+
+Status: hosted/product.
+
+Source:
+- Self-hosted GitLab user said they feel left out.
+
+Fix:
+- Decide support level for GitLab SaaS, self-hosted GitLab, generic CI annotations, and webhook-based hosted Review.
+- Publish current workaround using CLI JSON/SARIF or CI output.
+- Add GitLab CI recipe if hosted integration is not immediate.
+
 ### [ ] Improve install flow and post-install empty states
 
 Status: hosted/product.
@@ -389,6 +449,21 @@ Fix:
 - Explain selected-repo vs account-wide access before redirect.
 - Add states for waiting, queued, running, no issues, comment failed, repo access failed, unsupported project, backend error.
 - Alert internally when install succeeds but no analysis/comment appears.
+
+### [ ] Keep local and hosted privacy/data behavior explicit
+
+Status: partially addressed.
+
+Links:
+- https://github.com/millionco/react-doctor/issues/35
+- https://github.com/millionco/react-doctor/issues/89
+- https://github.com/millionco/react-doctor/issues/92
+
+Fix:
+- Explain what CLI sends to score/share APIs.
+- Explain what `--offline` disables.
+- Explain hosted Review repo/code access.
+- Explain local CLI-only mode and share-link opt-out.
 
 ### [ ] Improve score-change communication
 
@@ -411,6 +486,33 @@ Status: partially addressed.
 Fix:
 - Publish mapping for marketing version, npm version, action tag, and hosted Review version.
 - Include rule diff and expected score impact in releases.
+
+### [ ] Verify local report/export support and docs
+
+Status: partially addressed.
+
+Links:
+- #47
+- #60
+- #88
+
+Fix:
+- Confirm current JSON/report/share outputs.
+- Document local-only report workflow.
+- Add SARIF or generic report path if needed for non-GitHub CI.
+
+### [ ] Make PR blocking and `fail-on` semantics explicit
+
+Status: partially addressed.
+
+Sources:
+- Users asked for simple "block merge if score < X" behavior.
+- Existing scoring/delta feedback shows absolute thresholds can be misleading.
+
+Fix:
+- Document `fail-on`, score thresholds, annotations, and PR comments together.
+- Separate "fail on new regressions" from "fail because baseline score is below threshold."
+- Add examples for advisory mode, regression-only mode, and strict threshold mode.
 
 ## P2 - Platform and Product Expansion
 
@@ -444,6 +546,20 @@ Better wedges:
 - Framework-aware React CI guardrail.
 - Security/correctness-first React reviewer.
 - React Review plus repo/CI security checks.
+
+### [ ] Improve hosted React Review PR comment and dashboard polish
+
+Status: hosted/product.
+
+Sources:
+- v1 feedback called out dashboard/error states and PR comment quality.
+- Competitive feedback criticized whimsical, filler, low-value, or over-broad bot comments.
+
+Fix:
+- Put new regressions first and baseline findings separately.
+- Collapse low-value warnings by default.
+- Keep comments concise, serious, and actionable.
+- Improve dashboard empty/error states and copy.
 
 ### [ ] Add Preact support position
 
@@ -488,8 +604,24 @@ Decision:
 - Not a blocker for PR trust, install, or false-positive quality.
 - Keep behind subcommand or beta flag.
 
+### [ ] Decide broader ecosystem "Doctor" variants
+
+Status: product.
+
+Source:
+- Requests mention Vue, Angular, Svelte, TypeScript, Python, Solid, and broader agent-friendly-code checks.
+
+Decision:
+- Keep React Doctor React-only, or create separate rule packs/products.
+- If broadening, separate branding and diagnostics so React-specific quality is not diluted.
+
 ## Open PR Triage
 
+- [ ] #257 `fix: suppress local use hook false positives` - review as rule-trust work.
+- [ ] #256 `fix: narrow effect event handler detection` - review as rule-trust work.
+- [ ] #255 `fix: treat return guards as render state reads` - review as rule-trust work.
+- [ ] #254 `fix: avoid React 19 rule false positives on React 18` - prioritize with React version gating.
+- [ ] #253 `Fix no-barrel-import index false positives` - review as false-positive reduction.
 - [ ] #252 `fix: scope client secret diagnostics` - review carefully.
 - [ ] #251 `feat: port PR 217 lint rule coverage` - large rule expansion; do not land before false-positive defaults are settled.
 - [ ] #243 ReDoS glob pattern fix - prioritize security review.
@@ -509,6 +641,17 @@ Decision:
 - [ ] #179 index-derived key locals - decide priority.
 - [ ] #173 TUI - product priority.
 - [ ] #164 HIR port - precision research; high review burden.
+
+## Open Issue Triage
+
+- [ ] #241 async-defer-await false positives - covered by P0.
+- [ ] #239 auth member-expression false positives - covered by P0.
+- [ ] #219 React Review audit - covered by async/test noise, baseline semantics, and #238.
+- [ ] #216 React Review default-branch diagnostics - covered by async/test noise, baseline semantics, and #238.
+- [ ] #215 `Hello` - close unless reporter adds actionable detail.
+- [ ] #206 GET side-effect false positives - covered by P0.
+- [ ] #205 Iterator helper false positive - covered by P0.
+- [ ] #203 Husky/lint-staged docs - covered by P1.
 
 ## Historical Regression Ledger
 
