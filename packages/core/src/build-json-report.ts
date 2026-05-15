@@ -50,6 +50,7 @@ export const buildJsonReport = (input: BuildJsonReportInput): JsonReport => {
     diagnostics: result.diagnostics,
     score: result.score,
     skippedChecks: result.skippedChecks,
+    ...(result.skippedCheckReasons ? { skippedCheckReasons: result.skippedCheckReasons } : {}),
     elapsedMilliseconds: result.elapsedMilliseconds,
   }));
 

@@ -32,9 +32,14 @@ export const FETCH_TIMEOUT_MS = 10_000;
 // Use a conservative threshold to leave room for the executable path and quoting overhead.
 export const SPAWN_ARGS_MAX_LENGTH_CHARS = 24_000;
 
-// HACK: oxlint can SIGABRT on very large file sets due to memory pressure.
-// Cap each batch to avoid OOM crashes on projects with 100+ source files.
-export const OXLINT_MAX_FILES_PER_BATCH = 500;
+// HACK: bound per-batch work so that JS-evaluated plugins with bad
+// scaling (notably `eslint-plugin-react-you-might-not-need-an-effect`
+// — verified to hit the 5-min spawn timeout on supabase/studio's ~3500
+// source files at batch=500, productive at batch=100) stay tractable
+// AND so that oxlint doesn't SIGABRT from memory pressure on very
+// large file sets. Smaller batches add ~50ms spawn overhead per
+// extra batch — negligible vs the hard-cap perf cliffs they prevent.
+export const OXLINT_MAX_FILES_PER_BATCH = 100;
 
 export const DEFAULT_BRANCH_CANDIDATES = ["main", "master"];
 

@@ -7,6 +7,15 @@ export interface InspectResult {
   diagnostics: Diagnostic[];
   score: ScoreResult | null;
   skippedChecks: string[];
+  /**
+   * Human-readable explanation for each entry in `skippedChecks`. Keyed
+   * by check name (e.g. `"lint"`). Optional so existing consumers that
+   * only read `skippedChecks` keep working unchanged — but JSON output
+   * and CI integrations should prefer this for diagnostic clarity
+   * (e.g. distinguishing "oxlint native binding missing" from "oxlint
+   * spawn timed out on a large project").
+   */
+  skippedCheckReasons?: Record<string, string>;
   project: ProjectInfo;
   elapsedMilliseconds: number;
 }
@@ -44,6 +53,8 @@ export interface JsonReportProjectEntry {
   diagnostics: Diagnostic[];
   score: ScoreResult | null;
   skippedChecks: string[];
+  /** Human-readable explanation per skipped check. See `InspectResult.skippedCheckReasons`. */
+  skippedCheckReasons?: Record<string, string>;
   elapsedMilliseconds: number;
 }
 

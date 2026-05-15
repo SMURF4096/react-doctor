@@ -174,3 +174,91 @@ describe("buildJsonReportError", () => {
     expect(report.error?.chain).toEqual(["top error", "middle layer", "root cause"]);
   });
 });
+
+describe("buildJsonReport: skippedCheckReasons surface (eval-driven)", () => {
+  // HACK: in JSON mode the CLI silences logger output entirely
+  // (`setLoggerSilent(true)`), so the only signal that lint was
+  // skipped used to be `skippedChecks: ["lint"]` with no explanation.
+  // Eval against supabase/studio caught this: a 5-min oxlint hang on
+  // a real repo produced an empty stderr and an undocumented
+  // skippedChecks entry, leaving CI consumers unable to distinguish
+  // a hang from a config error. The optional `skippedCheckReasons`
+  // map now carries the human-readable why for each skipped check.
+  it("includes skippedCheckReasons on the JSON project entry when present on the scan result", () => {
+    const scan: InspectResult = {
+      diagnostics: [],
+      score: null,
+      skippedChecks: ["lint"],
+      skippedCheckReasons: {
+        lint: "oxlint did not return within 300s — please report",
+      },
+      project: SAMPLE_PROJECT,
+      elapsedMilliseconds: 300_000,
+    };
+    const report = buildJsonReport({
+      version: "1.0.0",
+      directory: "/repo",
+      mode: "full",
+      diff: null,
+      scans: [{ directory: "/repo", result: scan }],
+      totalElapsedMilliseconds: 300_000,
+    });
+    expect(report.projects[0].skippedChecks).toEqual(["lint"]);
+    expect(report.projects[0].skippedCheckReasons).toEqual({
+      lint: "oxlint did not return within 300s — please report",
+    });
+  });
+
+  it("omits skippedCheckReasons when the scan result has no reasons (backward compatibility)", () => {
+    const scan: InspectResult = {
+      diagnostics: [],
+      score: null,
+      skippedChecks: [],
+      project: SAMPLE_PROJECT,
+      elapsedMilliseconds: 1000,
+    };
+    const report = buildJsonReport({
+      version: "1.0.0",
+      directory: "/repo",
+      mode: "full",
+      diff: null,
+      scans: [{ directory: "/repo", result: scan }],
+      totalElapsedMilliseconds: 1000,
+    });
+    expect(report.projects[0]).not.toHaveProperty("skippedCheckReasons");
+  });
+
+  // HACK: regression for the eval-driven supabase/studio fix. Previously a
+  // single pathological batch hitting the oxlint spawn timeout killed the
+  // entire lint scan and left `skippedChecks: ["lint"]` + zero diagnostics.
+  // Now per-batch timeouts are soft-failures: lint as a whole still
+  // "succeeded" (we got diagnostics from every other batch), but the
+  // `lint:partial` reason surfaces WHICH files were dropped.
+  it("preserves partial-failure reasons (lint:partial) so consumers see which files were dropped", () => {
+    const scan: InspectResult = {
+      diagnostics: [buildSampleDiagnostic()],
+      score: { score: 75, label: "Good" },
+      skippedChecks: [],
+      skippedCheckReasons: {
+        "lint:partial":
+          "100 file(s) exceeded the 60s per-batch oxlint budget and were skipped (pages/foo.tsx, +99 more)",
+      },
+      project: SAMPLE_PROJECT,
+      elapsedMilliseconds: 68000,
+    };
+    const report = buildJsonReport({
+      version: "1.0.0",
+      directory: "/repo",
+      mode: "full",
+      diff: null,
+      scans: [{ directory: "/repo", result: scan }],
+      totalElapsedMilliseconds: 68000,
+    });
+    expect(report.projects[0].skippedChecks).toEqual([]);
+    expect(report.projects[0].skippedCheckReasons?.["lint:partial"]).toContain(
+      "exceeded the 60s per-batch oxlint budget",
+    );
+    // Diagnostics from successful batches are still present.
+    expect(report.projects[0].diagnostics.length).toBeGreaterThan(0);
+  });
+});

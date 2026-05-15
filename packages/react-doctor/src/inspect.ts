@@ -134,12 +134,17 @@ const runInspect = async (
   }
 
   let didLintFail = false;
+  let lintFailureReason: string | null = null;
+  const lintPartialFailures: string[] = [];
 
   const resolvedNodeBinaryPath = await resolveOxlintNode(
     options.lint,
     options.scoreOnly || options.silent,
   );
-  if (options.lint && !resolvedNodeBinaryPath) didLintFail = true;
+  if (options.lint && !resolvedNodeBinaryPath) {
+    didLintFail = true;
+    lintFailureReason = `oxlint native binding not found for Node ${process.version}; expected one matching ${OXLINT_NODE_REQUIREMENT}`;
+  }
 
   const lintPromise = resolvedNodeBinaryPath
     ? (async () => {
@@ -154,13 +159,15 @@ const runInspect = async (
             respectInlineDisables: options.respectInlineDisables,
             adoptExistingLintConfig: options.adoptExistingLintConfig,
             ignoredTags: options.ignoredTags,
+            onPartialFailure: (reason) => lintPartialFailures.push(reason),
           });
           lintSpinner?.succeed("Running lint checks.");
           return lintDiagnostics;
         } catch (error) {
           didLintFail = true;
+          const lintErrorChain = formatErrorChain(error);
+          lintFailureReason = lintErrorChain;
           if (!options.scoreOnly) {
-            const lintErrorChain = formatErrorChain(error);
             const isNativeBindingError = lintErrorChain.includes("native binding");
 
             if (isNativeBindingError) {
@@ -208,10 +215,21 @@ const runInspect = async (
     ? "Score unavailable in offline mode."
     : "Score unavailable (could not reach the score API).";
 
+  const skippedCheckReasons: Record<string, string> = {};
+  if (didLintFail && lintFailureReason !== null) {
+    skippedCheckReasons.lint = lintFailureReason;
+  } else if (lintPartialFailures.length > 0) {
+    // Lint as a whole succeeded (we got diagnostics from at least one
+    // batch) but some batches timed out — surface the partial-failure
+    // notes so JSON consumers see why a few files weren't checked.
+    skippedCheckReasons["lint:partial"] = lintPartialFailures.join("; ");
+  }
+
   const buildResult = (): InspectResult => ({
     diagnostics,
     score: scoreResult,
     skippedChecks,
+    ...(Object.keys(skippedCheckReasons).length > 0 ? { skippedCheckReasons } : {}),
     project: projectInfo,
     elapsedMilliseconds,
   });
