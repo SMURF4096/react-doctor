@@ -1,0 +1,17 @@
+{
+  "mode": "pre",
+  "tag": "beta",
+  "initialVersions": {
+    "@react-doctor/core": "0.1.6",
+    "eslint-plugin-react-doctor": "0.1.6",
+    "oxlint-plugin-react-doctor": "0.1.6",
+    "@react-doctor/project-info": "0.1.6",
+    "react-doctor": "0.1.6",
+    "@react-doctor/types": "0.1.6",
+    "website": "0.1.0"
+  },
+  "changesets": [
+    "tailwind-version-detection",
+    "thick-bars-attack"
+  ]
+}
