@@ -11,6 +11,7 @@
     "website": "0.1.0"
   },
   "changesets": [
+    "add-oxlint-plugin-dep",
     "fix-bundle-workspace-deps",
     "tailwind-version-detection",
     "thick-bars-attack"
