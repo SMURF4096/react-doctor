@@ -17,10 +17,10 @@ import type { EsTreeNode } from "../../utils/es-tree-node.js";
 import type { Rule } from "../../utils/rule.js";
 import type { RuleContext } from "../../utils/rule-context.js";
 import { collectUseStateBindings } from "./utils/collect-use-state-bindings.js";
-import { collectReturnExpressions } from "./utils/collect-return-expressions.js";
 import { buildLocalDependencyGraph } from "./utils/build-local-dependency-graph.js";
 import { collectRenderReachableNames } from "./utils/collect-render-reachable-names.js";
 import { expandTransitiveDependencies } from "./utils/expand-transitive-dependencies.js";
+import { collectFunctionLikeLocalNames } from "./utils/collect-function-like-local-names.js";
 import { collectHandlerBindingNames } from "./utils/collect-handler-binding-names.js";
 import { isInsideEventHandler } from "./utils/is-inside-event-handler.js";
 import { isNodeOfType } from "../../utils/is-node-of-type.js";
@@ -174,10 +174,13 @@ export const noEventTriggerState = defineRule<Rule>({
       // user can't just delete the state. Reuse the same render-
       // reachability machinery that `rerenderStateOnlyInHandlers`
       // uses to filter these out (transitive dep graph + walk from
-      // return expressions).
-      const returnExpressions = collectReturnExpressions(componentBody);
-      const dependencyGraph = buildLocalDependencyGraph(componentBody);
-      const directRenderNames = collectRenderReachableNames(returnExpressions);
+      // render-reachable expressions).
+      const eventHandlerReferenceNames = collectFunctionLikeLocalNames(componentBody);
+      const dependencyGraph = buildLocalDependencyGraph(componentBody, eventHandlerReferenceNames);
+      const directRenderNames = collectRenderReachableNames(
+        componentBody,
+        eventHandlerReferenceNames,
+      );
       const renderReachableNames = expandTransitiveDependencies(directRenderNames, dependencyGraph);
 
       walkAst(componentBody, (effectCall: EsTreeNode) => {
