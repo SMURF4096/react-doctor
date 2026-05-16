@@ -12,7 +12,10 @@
   },
   "changesets": [
     "add-oxlint-plugin-dep",
+    "eight-sides-matter",
     "fix-bundle-workspace-deps",
+    "rn-rules-package-scoping",
+    "sweet-schools-open",
     "tailwind-version-detection",
     "thick-bars-attack"
   ]
