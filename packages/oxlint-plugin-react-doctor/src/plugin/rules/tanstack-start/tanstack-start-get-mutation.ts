@@ -1,4 +1,6 @@
 import { MUTATING_HTTP_METHODS } from "../../constants/library.js";
+import { collectLocallyScopedCookieBindings } from "../../utils/collect-locally-scoped-cookie-bindings.js";
+import { collectLocallyScopedSafeBindings } from "../../utils/collect-locally-scoped-safe-bindings.js";
 import { defineRule } from "../../utils/define-rule.js";
 import { findSideEffect } from "../../utils/find-side-effect.js";
 import type { Rule } from "../../utils/rule.js";
@@ -34,7 +36,24 @@ export const tanstackStartGetMutation = defineRule<Rule>({
       const handlerFunction = node.arguments?.[0];
       if (!handlerFunction) return;
 
-      const sideEffect = findSideEffect(handlerFunction);
+      // HACK: `collectLocallyScoped*Bindings` uses `walkInsideStatementBlocks`,
+      // which intentionally stops at function boundaries — so we must hand it
+      // the function's body, not the function itself, or every aliased
+      // pattern (`const m = new Map(); m.set(...)`) would slip past.
+      if (
+        !isNodeOfType(handlerFunction, "ArrowFunctionExpression") &&
+        !isNodeOfType(handlerFunction, "FunctionExpression")
+      )
+        return;
+      const handlerBody = handlerFunction.body;
+      if (!handlerBody) return;
+
+      const locallyScopedSafeBindings = collectLocallyScopedSafeBindings(handlerBody);
+      const locallyScopedCookieBindings = collectLocallyScopedCookieBindings(handlerBody);
+      const sideEffect = findSideEffect(handlerBody, {
+        locallyScopedSafeBindings,
+        locallyScopedCookieBindings,
+      });
       if (sideEffect) {
         context.report({
           node,
