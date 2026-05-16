@@ -322,6 +322,31 @@ Fix:
 - Support per-rule/per-tag controls for severity, score contribution, PR comment visibility, CLI visibility, and CI failure.
 - Use this for `design`, `test-noise`, React Native, server-action, and migration-hint rules.
 
+### [ ] Support mature-codebase adoption workflows natively
+
+Status: user feedback, `react-doctor@0.0.31`.
+
+Sources:
+
+- Team disabled duplicate `react/*`, `jsx-a11y/*`, `react-hooks-js/*`, and `react-hooks/exhaustive-deps` rules because ESLint already covers them.
+- Team disabled `react-doctor/no-barrel-import` because barrel files are an intentional public API pattern and not a Vite perf concern.
+- Team disabled 8 CSS/animation perf rules after autofixes degraded `prefers-reduced-motion` behavior by making animations complete instantly and look stuck.
+- Team built custom pre-commit, CI, PR comment, dashboard, parallel worker, and per-module config plumbing around React Doctor.
+
+Already done:
+
+- [x] Land/adopt `customRulesOnly` from #109 so teams can run only React Doctor-specific rules without duplicate ESLint noise.
+
+Remaining:
+
+- Make CSS/animation autofixes `prefers-reduced-motion` aware and mark risky autofixes separately from safe ones.
+- Add native diff-only/touched-line enforcement for staged files and PRs.
+- Add baseline mode so existing violations can be tracked without blocking new commits.
+- Emit first-class PR comment data or provide built-in sticky PR comments with violation summaries and autofix guidance.
+- Support per-module/package reports, scores, trends, ownership, and backlog counts for monorepos.
+- Add native parallel runner controls and config inheritance/per-module overrides.
+- Make `no-barrel-import` bundler/framework aware, or add an official way to mark barrel files as intentional public APIs.
+
 ### [ ] Make test-noise suppression consistent
 
 Status: partially addressed.
@@ -401,21 +426,21 @@ Fix:
 - Improve error text with nearest detected package and suggested `--package-json` / `--project` fix.
 - Do not regress root-project and monorepo package discovery.
 
-### [ ] Review `no-secrets-in-client-code` scoping before landing #252
+### [x] Review `no-secrets-in-client-code` scoping before landing #252
 
-Status: open.
+Status: landed in #252.
 
 Link: https://github.com/millionco/react-doctor/pull/252
 
-Fix:
+Done:
 
-- Ensure server/config/test exclusions do not hide real client leaks.
-- Add fixtures for Vite, Next, CRA, Gatsby, TanStack Start.
-- Keep value-pattern secret detection active where appropriate.
+- Scoped the weak variable-name heuristic to client-exposed files while keeping value-pattern secret detection active.
+- Added regression coverage for Vite, Next.js App Router/Pages API, Expo, TanStack Start server functions, server/config/test exclusions, server-suffixed files, and ambiguous TypeScript files.
+- Follow up only if we want explicit CRA/Gatsby fixtures beyond the current generic/Vite-style client coverage.
 
-### [ ] Audit React version and library-pattern false positives
+### [x] Audit React version and library-pattern false positives
 
-Status: open PRs, recurring feedback.
+Status: landed in #254.
 
 Links:
 
@@ -426,21 +451,28 @@ Sources:
 
 - Users reported `forwardRef` and React 18-compatible library patterns being penalized.
 
-Fix:
+Done:
 
 - Do not apply React 19-only advice to React 18 packages.
-- Respect library peer dependency ranges.
-- Add fixtures for `forwardRef`, library exports, local `use`, and React 18/19 split behavior.
+- Respect library peer dependency ranges and upper-bound-only ranges.
+- Add fixtures for `forwardRef`, local `use`, React 18/19 split behavior, and mixed peer upper-bound support.
 
 ### [ ] Track large-codebase crash and resource failure modes
 
-Status: partially addressed.
+Status: partially addressed by #262.
 
 Sources:
 
+- PR: https://github.com/millionco/react-doctor/pull/262
 - High RAM / OOM / SIGABRT reports on large monorepos.
 - Historical dead-code crashes: #77, #132, #135, #149.
 - Historical large command/path issue: #46.
+
+Already done:
+
+- [x] Materialize full-scan file lists into batches instead of one giant oxlint invocation.
+- [x] Recover diagnostics from successful batches when a large/pathological batch times out or fails.
+- [x] Surface dropped-file partial failures instead of silently returning zero diagnostics.
 
 Fix:
 
@@ -695,12 +727,12 @@ Decision:
 
 ## Open PR Triage
 
-- [ ] #257 `fix: suppress local use hook false positives` - review as rule-trust work.
-- [ ] #256 `fix: narrow effect event handler detection` - review as rule-trust work.
-- [ ] #255 `fix: treat return guards as render state reads` - review as rule-trust work.
-- [ ] #254 `fix: avoid React 19 rule false positives on React 18` - prioritize with React version gating.
-- [ ] #253 `Fix no-barrel-import index false positives` - review as false-positive reduction.
-- [ ] #252 `fix: scope client secret diagnostics` - review carefully.
+- [x] #257 `fix: suppress local use hook false positives` - landed in main.
+- [x] #256 `fix: narrow effect event handler detection` - landed in main.
+- [x] #255 `fix: treat return guards as render state reads` - landed in main.
+- [x] #254 `fix: avoid React 19 rule false positives on React 18` - landed in main.
+- [x] #253 `Fix no-barrel-import index false positives` - landed in main.
+- [x] #252 `fix: scope client secret diagnostics` - landed in main.
 - [ ] #251 `feat: port PR 217 lint rule coverage` - large rule expansion; do not land before false-positive defaults are settled.
 - [ ] #243 ReDoS glob pattern fix - prioritize security review.
 - [ ] #240 auth member expressions - prioritize; fixes #239.
@@ -781,6 +813,7 @@ Decision:
 - [ ] #45 changed-file scan summary still needs clear baseline/diff wording.
 - [ ] #89 offline score still inconsistent.
 - [x] #92 share link opt-out.
+- [x] #262 large-monorepo batch recovery and partial-failure reporting.
 - [ ] #47 / #60 / #88 local reports: verify current support/docs.
 - [x] #117 namespace hook calls.
 - [x] #49 corporate proxy.
@@ -812,7 +845,11 @@ Decision:
 - [x] #55 Next `<Script>` JSON-LD.
 - [x] #76 `@expo/vector-icons`.
 - [x] #138 / #139 passive event listener caveat.
-- [ ] #152 / #186 React 19 library patterns partially addressed; review stale PR.
+- [x] #152 / #186 React 19 library patterns addressed by #254.
+- [x] #253 `no-barrel-import` index false positives.
+- [x] #255 state-only-in-handlers return guard read.
+- [x] #256 narrow `prefer-use-effect-event` handler detection.
+- [x] #257 local `use` hook false positives.
 - [ ] #179 index-derived key locals open.
 
 ### Product and docs
