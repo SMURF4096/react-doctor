@@ -1,4 +1,10 @@
-export type { FailOnLevel, ReactDoctorConfig, ReactDoctorIgnoreOverride } from "./config.js";
+export type {
+  DiagnosticSurface,
+  FailOnLevel,
+  ReactDoctorConfig,
+  ReactDoctorIgnoreOverride,
+  SurfaceControls,
+} from "./config.js";
 export type { DiagnoseOptions, DiagnoseResult } from "./diagnose.js";
 export type { CleanedDiagnostic, Diagnostic, OxlintOutput } from "./diagnostic.js";
 export type { HandleErrorOptions } from "./handle-error.js";

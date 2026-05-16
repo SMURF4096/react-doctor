@@ -59,4 +59,14 @@ describe("GitHub Action contract", () => {
     expect(fetchStep).toContain('case "$HEAD_REF" in -* )');
     expect(fetchStep).toContain('git fetch origin "$DIFF_BASE"');
   });
+
+  it("demotes design rules from the sticky PR comment via --pr-comment", () => {
+    const scanStep = normalizeWhitespace(
+      extractStep(readActionYaml(), "INPUT_FAIL_ON: ${{ inputs.fail-on }}"),
+    );
+
+    expect(scanStep).toContain('if [ -n "$INPUT_GITHUB_TOKEN" ]; then');
+    expect(scanStep).toContain('"${FLAGS[@]}" --pr-comment | tee "$OUTPUT_FILE"');
+    expect(scanStep).not.toContain('"${FLAGS[@]}" --pr-comment\n        else');
+  });
 });

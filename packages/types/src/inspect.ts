@@ -1,4 +1,4 @@
-import type { ReactDoctorConfig } from "./config.js";
+import type { DiagnosticSurface, ReactDoctorConfig } from "./config.js";
 import type { Diagnostic } from "./diagnostic.js";
 import type { ProjectInfo } from "./project-info.js";
 import type { ScoreResult } from "./score.js";
@@ -29,6 +29,18 @@ export interface InspectOptions {
   includePaths?: string[];
   configOverride?: ReactDoctorConfig | null;
   respectInlineDisables?: boolean;
+  /**
+   * Surface that consumes the printed diagnostic output (terminal
+   * summary + per-rule list). Defaults to `"cli"`, which shows every
+   * diagnostic. Set to `"prComment"` when capturing output destined
+   * for a PR comment — weak-signal rule families (default: `design`
+   * tag) are dropped from the printed list and replaced with a
+   * one-line "N more demoted" hint so they don't bury real React
+   * findings. The returned `InspectResult.diagnostics` always
+   * contains the full, unfiltered list so JSON consumers can see
+   * everything.
+   */
+  outputSurface?: DiagnosticSurface;
 }
 
 export interface DiffInfo {

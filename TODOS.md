@@ -201,20 +201,34 @@ Done:
 - Excludes `Object.values/keys/entries(...)` from iterator detection because they return arrays.
 - Regression coverage in `tests/regressions/js-performance-rules.test.ts` for eager arrays (still flagged), `.values/.keys/.entries` on Map/Set/array (not flagged), `Object.*` (still flagged), `.toArray()` and `Array.from()` materialization (still flagged), `Iterator.from()`, hoisted and const-bound generators, optional chaining, `.flatMap()` walks, the existing Boolean / identity filter exclusions, and a documented imported-generator false positive.
 
-### [ ] Demote design/Tailwind cleanup from default PR comments
+### [x] Demote design/Tailwind cleanup from default PR comments
 
-Status: confirmed current.
+Status: landed.
 
 Source:
 
 - Screenshot: `w-5 h-5 -> size-5` from `design-no-redundant-size-axes`.
 - Feedback: weak signal from a "React reviewer."
 
-Fix:
+Done:
 
-- Make `design` rules opt-in, score-neutral, collapsed, or hidden from PR comments by default.
-- Add category/surface controls for CLI, PR comments, score, and CI failure.
-- Keep Tailwind version gating, but do not let style cleanup dilute React findings.
+- Added a `DiagnosticSurface` model with four channels — `cli`,
+  `prComment`, `score`, `ciFailure` — and a `surfaces` config block
+  accepting `includeTags` / `excludeTags` / `includeCategories` /
+  `excludeCategories` / `includeRules` / `excludeRules` per surface
+  (include wins over exclude).
+- Defaulted the `design` tag to excluded from `prComment`, `score`,
+  and `ciFailure`. `cli` still shows everything so local devs keep
+  seeing design hints.
+- Added a `--pr-comment` CLI flag that prints the `prComment`-filtered
+  list with a "N demoted — run locally for the full list" footer.
+- The score path filters by the `score` surface before posting to the
+  score API; the fail-on gate filters by the `ciFailure` surface.
+- Updated `action.yml` to pass `--pr-comment` when posting the sticky
+  PR comment so the GitHub Action picks up the new defaults
+  automatically.
+- Kept Tailwind version gating intact (`design-no-redundant-size-axes`
+  still requires `tailwind:3.4`).
 
 ### [ ] Separate PR regressions from baseline health in React Review
 
@@ -879,8 +893,10 @@ Decision:
 - [ ] #57 configurable accessibility presets closed without clear current support.
 - [x] #109 custom rules only.
 - [x] #124 TanStack Start rules.
-- [ ] #131 design rules shipped; default PR surfacing still needs review.
-- [ ] #202 Tailwind `size-N` shipped; default PR surfacing still needs review.
+- [x] #131 design rules shipped; default PR surfacing demoted via
+      the new `surfaces` config and `--pr-comment` flag.
+- [x] #202 Tailwind `size-N` shipped; demoted from PR comments,
+      score, and CI failure by default with the surface controls.
 
 ## Immediate Order
 

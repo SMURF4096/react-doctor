@@ -12,6 +12,54 @@ interface ReactDoctorIgnoreConfig {
   tags?: string[];
 }
 
+/**
+ * Discrete output channels a diagnostic can flow through after a scan.
+ * Each surface is filtered independently so a rule can be visible
+ * locally but excluded from PR comments, the score, or the CI gate:
+ *
+ * - `cli` — local terminal output from `react-doctor` (`printDiagnostics`).
+ * - `prComment` — output captured by the GitHub Action for the sticky
+ *   PR comment. Enabled when the CLI is run with `--pr-comment` (the
+ *   action sets this automatically when `github-token` is provided).
+ * - `score` — diagnostics shipped to the React Doctor score API
+ *   (or counted toward local score calculations).
+ * - `ciFailure` — diagnostics that count toward the `--fail-on` exit
+ *   code gate. A diagnostic excluded from this surface never fails the
+ *   build, regardless of severity.
+ *
+ * Defaults: design rules (tag `"design"`) are excluded from `prComment`,
+ * `score`, and `ciFailure` so style cleanup doesn't dilute meaningful
+ * React findings. They remain in `cli` so locally-running developers
+ * still see the suggestion when they touch the file.
+ */
+export type DiagnosticSurface = "cli" | "prComment" | "score" | "ciFailure";
+
+export interface SurfaceControls {
+  /**
+   * Tag names whose diagnostics should be force-included on the surface,
+   * even if a default or category-level exclusion would otherwise drop
+   * them. Include wins over exclude when both apply to the same rule.
+   */
+  includeTags?: string[];
+  /**
+   * Tag names whose diagnostics should be excluded from the surface.
+   * Use this to silence whole rule families (e.g. `["design"]`,
+   * `["test-noise"]`) for a single channel without touching others.
+   */
+  excludeTags?: string[];
+  /** Category names (e.g. `"Architecture"`) to force-include. */
+  includeCategories?: string[];
+  /** Category names (e.g. `"Architecture"`) to exclude. */
+  excludeCategories?: string[];
+  /**
+   * Fully-qualified rule keys (`"<plugin>/<rule>"`, e.g.
+   * `"react-doctor/design-no-redundant-size-axes"`) to force-include.
+   */
+  includeRules?: string[];
+  /** Fully-qualified rule keys to exclude from this surface. */
+  excludeRules?: string[];
+}
+
 export interface ReactDoctorConfig {
   ignore?: ReactDoctorIgnoreConfig;
   lint?: boolean;
@@ -97,4 +145,24 @@ export interface ReactDoctorConfig {
    * Set to `false` to scan only react-doctor's curated rule set.
    */
   adoptExistingLintConfig?: boolean;
+  /**
+   * Per-surface include/exclude controls. Each `DiagnosticSurface` is
+   * resolved independently against rule tags, category, and id so a
+   * single rule can be visible locally yet hidden from PR comments,
+   * neutralized from the score, and excluded from `--fail-on` — all
+   * without touching the rule's severity or activation.
+   *
+   * Defaults (applied before user overrides):
+   *
+   * - `prComment` excludes tag `"design"`
+   * - `score` excludes tag `"design"`
+   * - `ciFailure` excludes tag `"design"`
+   *
+   * Pass any controls block (even an empty `{}`) to keep the default
+   * exclusions; the user's include/exclude entries layer on top.
+   * Include entries always win over exclude entries — handy for
+   * promoting a single high-signal `design-*` rule back into the
+   * score or PR-comment surface.
+   */
+  surfaces?: Partial<Record<DiagnosticSurface, SurfaceControls>>;
 }

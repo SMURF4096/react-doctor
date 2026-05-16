@@ -77,7 +77,12 @@ runs:
         echo "REACT_DOCTOR_OUTPUT_FILE=$OUTPUT_FILE" >> "$GITHUB_ENV"
 
         if [ -n "$INPUT_GITHUB_TOKEN" ]; then
-          npx -y react-doctor@latest "$INPUT_DIRECTORY" "${FLAGS[@]}" | tee "$OUTPUT_FILE"
+          # --pr-comment demotes weak-signal rule families (default:
+          # `design` tag) from the printed output and the fail-on gate
+          # so style cleanup doesn't dilute meaningful React findings
+          # in the sticky PR comment. Configure overrides via
+          # config.surfaces.{prComment,ciFailure} in react-doctor.config.json.
+          npx -y react-doctor@latest "$INPUT_DIRECTORY" "${FLAGS[@]}" --pr-comment | tee "$OUTPUT_FILE"
         else
           npx -y react-doctor@latest "$INPUT_DIRECTORY" "${FLAGS[@]}"
         fi

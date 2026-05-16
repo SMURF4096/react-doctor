@@ -113,6 +113,25 @@ React Doctor respects `.gitignore`, `.eslintignore`, `.oxlintignore`, `.prettier
 
 If you have a JSON oxlint or eslint config (`.oxlintrc.json` or `.eslintrc.json`), its rules get merged into the scan automatically and count toward the score. Set `adoptExistingLintConfig: false` to opt out.
 
+#### Surface controls (CLI, PR comments, score, CI failure)
+
+Diagnostics flow through four independent surfaces — `cli`, `prComment`, `score`, and `ciFailure` — and each one can be tuned per tag, category, or rule id. By default the `design` tag (Tailwind shorthand cleanup like `w-5 h-5 → size-5`, pure-black backgrounds, gradient text, …) stays visible on the local CLI but is excluded from the PR comment, the score, and the `--fail-on` gate so style cleanup can't dilute meaningful React findings:
+
+```json
+{
+  "surfaces": {
+    "prComment": {
+      "includeTags": ["design"],
+      "excludeCategories": ["Performance"]
+    },
+    "score": { "includeRules": ["react-doctor/design-no-redundant-size-axes"] },
+    "ciFailure": { "excludeTags": ["test-noise"] }
+  }
+}
+```
+
+Each surface accepts `includeTags`, `excludeTags`, `includeCategories`, `excludeCategories`, `includeRules`, and `excludeRules`. Include wins over exclude when both match. Run the CLI with `--pr-comment` (the GitHub Action passes it automatically when `github-token` is set) to apply the `prComment` surface to the printed output destined for sticky PR comments.
+
 #### Optional companion plugins
 
 When the following ESLint plugins are installed in the scanned project (or hoisted in your monorepo), React Doctor folds their rules into the same scan. Both are listed as **optional peer dependencies** — install only what you want.
@@ -210,6 +229,8 @@ Options:
   --offline               skip the score API and share URL (no score shown)
   --fail-on <level>       exit with error on diagnostics: error, warning, none
   --annotations           output diagnostics as GitHub Actions annotations
+  --pr-comment            tune CLI output for sticky PR comments (drops design
+                          cleanup from the printed list and fail-on gate)
   --explain <file:line>   diagnose why a rule fired or why a suppression didn't apply
   --why <file:line>       alias for --explain
   -h, --help              display help
