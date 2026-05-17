@@ -2,9 +2,9 @@
 
 ## P0 - Trust-Breaking False Positives
 
-### [ ] Fix `nextjs-no-side-effect-in-get-handler` false positives
+### [x] Fix `nextjs-no-side-effect-in-get-handler` false positives
 
-Status: confirmed current, open.
+Status: fixed.
 
 Links:
 
@@ -27,18 +27,18 @@ Why it matters:
 - Reporter said 0 were real side effects.
 - Workaround required 138 inline suppressions.
 
-Fix:
+Done:
 
 - Skip `response.headers.set/append/delete`.
 - Skip local request-scoped `Map` / `Set` created inside the handler.
 - Decide and document `cookies().set()` / `headers().set()` semantics.
 - Keep reporting real DB/cache/process-global writes and mutating `fetch()`.
 - Add regressions for `Response`, `NextResponse`, local `Map`, real `db.update().set()`, mutating `fetch()`, and mutating route segments like `/logout`.
-- Pick one PR path and close duplicate fixes.
+- Implemented one fix path; duplicate PR cleanup is no longer blocking the rule fix.
 
-### [ ] Fix `server-auth-actions` member-expression auth calls
+### [x] Fix `server-auth-actions` member-expression auth calls
 
-Status: confirmed current, open.
+Status: fixed.
 
 Links:
 
@@ -60,16 +60,16 @@ Why it matters:
 isNodeOfType(callNode?.callee, "Identifier") && AUTH_FUNCTION_NAMES.has(callNode.callee.name);
 ```
 
-Fix:
+Done:
 
 - Accept member calls whose final property is in `AUTH_FUNCTION_NAMES`.
 - Cover `auth0.getSession()`, `ctx.auth.getUser()`, `clerkClient.getUser()`, `session.auth()`.
 - Add project config allowlist for custom auth guards.
 - Avoid unrelated false positives like `analytics.getUser()`.
 
-### [ ] Fix `async-defer-await` destructuring false positive
+### [x] Fix `async-defer-await` destructuring false positive
 
-Status: confirmed current, open.
+Status: fixed.
 
 Link: https://github.com/millionco/react-doctor/issues/241
 
@@ -81,14 +81,14 @@ const [flowRow] = await db.select().from(flowsTable).where(eq(flowsTable.seq, fl
 if (!flowRow) return [];
 ```
 
-Fix:
+Done:
 
 - Add recursive binding collection for `ArrayPattern`, nested patterns, rest elements, and assignment patterns.
 - Add tests for `[row]`, `[, row]`, `[row = fallback]`, `{ rows: [row] }`.
 
-### [ ] Suppress async parallelization advice in tests and ordered UI flows
+### [x] Suppress async parallelization advice in tests and ordered UI flows
 
-Status: confirmed current.
+Status: fixed.
 
 Sources:
 
@@ -97,14 +97,14 @@ Sources:
 - Dogfood issues: https://github.com/millionco/react-doctor/issues/216, https://github.com/millionco/react-doctor/issues/219
 - Related PR: https://github.com/millionco/react-doctor/pull/238
 
-Current problem:
+Previous problem:
 
 - `async-parallel.ts` uses a narrow local `TEST_FILE_PATTERN`.
 - It misses `tests/`, `test/`, `__tests__/`, `e2e/`, `playwright/`, `cypress/`, fixtures, mocks, and `.browser.tsx`.
 - It is not tagged `test-noise`, so shared test suppression does not apply.
 - Dogfood warnings also include intentional `async-await-in-loop` animation/delay sequences.
 
-Fix:
+Done:
 
 - Tag `async-parallel` as `test-noise` or use shared `isTestFilePath()`.
 - Suppress in files importing Playwright, Testing Library, Vitest, Jest, or browser test helpers.
@@ -112,22 +112,22 @@ Fix:
 - Allow intentional animation/demo sequencing or require documented inline suppression.
 - Add regression for render/assert/click/assert.
 
-### [ ] Stop React Native rules in web-only packages
+### [x] Stop React Native rules in web-only packages
 
-Status: confirmed current.
+Status: fixed.
 
 Sources:
 
 - Screenshot: `rn-no-raw-text` in `apps/web/src/components/ThreadTerminalDrawer.tsx`.
 - Issues: https://github.com/millionco/react-doctor/issues/93, https://github.com/millionco/react-doctor/issues/100, https://github.com/millionco/react-doctor/issues/180, https://github.com/millionco/react-doctor/issues/183
 
-Current problem:
+Previous problem:
 
 - `rn-no-raw-text.ts` only skips `.web.[jt]sx?` and `"use dom"`.
 - It does not understand `apps/web/**` or package framework boundaries.
 - `rawTextWrapperComponents` helps RN wrappers, not web-package scoping.
 
-Fix:
+Done:
 
 - Scope RN rules to packages detected as React Native / Expo.
 - Skip RN rules in web, docs, Storybook, Docusaurus, Next/Vite/React DOM packages.
@@ -758,32 +758,32 @@ Decision:
 - [x] #252 `fix: scope client secret diagnostics` - landed in main.
 - [ ] #251 `feat: port PR 217 lint rule coverage` - large rule expansion; do not land before false-positive defaults are settled.
 - [ ] #243 ReDoS glob pattern fix - prioritize security review.
-- [ ] #240 auth member expressions - prioritize; fixes #239.
+- [x] #240 auth member expressions - fixed by equivalent implementation.
 - [ ] #238 React Review audit - reconcile with #206 fix path.
-- [ ] #233 / #211 / #209 GET side-effect fixes - choose one and close duplicates.
+- [x] #233 / #211 / #209 GET side-effect fixes - fixed by equivalent implementation; close duplicate PRs if still open.
 - [ ] #217 v2 Rasmus precision branch - port useful fixes intentionally.
 - [ ] #214 / #32 `--package-json` - pick one API and close duplicate.
 - [ ] #213 Husky/lint-staged docs - land or replace.
-- [ ] #212 Iterator helpers - land or fold into #251.
+- [x] #212 Iterator helpers - superseded by the landed `js-combine-iterations` fix.
 - [ ] #210 `fix` - retitle/body or close.
 - [ ] #207 Molten Hub coverage - triage likely unrelated.
 - [ ] #192 Bun grouped catalogs - close if obsolete.
 - [ ] #189 Simplified Chinese README - docs decision.
 - [ ] #186 library-aware React 19/test scoping/build-entry/string lookup - partly obsolete after Knip removal; port useful parts.
-- [ ] #185 stacked disable docs - close if README already covers it.
+- [x] #185 stacked disable docs - README already covers stacked suppressions.
 - [ ] #179 index-derived key locals - decide priority.
 - [ ] #173 TUI - product priority.
 - [ ] #164 HIR port - precision research; high review burden.
 
 ## Open Issue Triage
 
-- [ ] #241 async-defer-await false positives - covered by P0.
-- [ ] #239 auth member-expression false positives - covered by P0.
+- [x] #241 async-defer-await false positives - fixed by P0.
+- [x] #239 auth member-expression false positives - fixed by P0.
 - [ ] #219 React Review audit - covered by async/test noise, baseline semantics, and #238.
 - [ ] #216 React Review default-branch diagnostics - covered by async/test noise, baseline semantics, and #238.
 - [ ] #215 `Hello` - close unless reporter adds actionable detail.
-- [ ] #206 GET side-effect false positives - covered by P0.
-- [ ] #205 Iterator helper false positive - covered by P0.
+- [x] #206 GET side-effect false positives - fixed by P0.
+- [x] #205 Iterator helper false positive - fixed by P0.
 - [ ] #203 Husky/lint-staged docs - covered by P1.
 
 ## Historical Regression Ledger
@@ -854,7 +854,7 @@ Decision:
 - [x] #51 invalid config warning.
 - [ ] #85 config docs exist; category/surface controls missing.
 - [x] #161 / #198 `--why` / suppression audit.
-- [ ] #185 stacked disable docs PR may be obsolete.
+- [x] #185 stacked disable docs covered by README.
 
 ### Rule quality
 
@@ -864,7 +864,7 @@ Decision:
 - [ ] #95 `set-state-in-effect` precision remains worth tracking.
 - [x] #19 `no-derived-state-effect` reset-state message.
 - [x] #83 `nextjs-no-client-side-redirect` message.
-- [ ] #93 / #100 / #180 / #183 RN wrapper components partially addressed; web scoping still open.
+- [x] #93 / #100 / #180 / #183 RN wrapper components and web scoping addressed.
 - [x] #55 Next `<Script>` JSON-LD.
 - [x] #76 `@expo/vector-icons`.
 - [x] #138 / #139 passive event listener caveat.
@@ -907,12 +907,13 @@ Decision:
 
 ## Immediate Order
 
-1. Land #240 or equivalent for auth member expressions.
-2. Choose and land one #206 GET side-effect fix.
-3. Land #212 or equivalent Iterator helper guard.
-4. Patch #241 array destructuring in `async-defer-await`.
-5. Add `async-parallel` and JS micro-perf test-file suppression.
-6. Add package-level framework scoping for RN/web and SPA/server-action rules.
-7. Change React Review PR comment semantics to delta-first.
-8. Update docs for stable action tags, offline score behavior, dead-code removal, and annotations.
-9. Triage stale PRs #192, #185, #210, and #207.
+1. [x] Land #240 or equivalent for auth member expressions.
+2. [x] Choose and land one #206 GET side-effect fix.
+3. [x] Land #212 or equivalent Iterator helper guard.
+4. [x] Patch #241 array destructuring in `async-defer-await`.
+5. [x] Add `async-parallel` test-file suppression.
+6. [ ] Add remaining JS micro-perf test-file suppression.
+7. [x] Add package-level framework scoping for RN/web and SPA/server-action rules.
+8. [ ] Change React Review PR comment semantics to delta-first.
+9. [ ] Update docs for stable action tags, offline score behavior, dead-code removal, and annotations.
+10. [ ] Triage stale PRs #192, #210, and #207.
