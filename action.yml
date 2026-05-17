@@ -88,10 +88,15 @@ runs:
           # in the sticky PR comment. Configure overrides via
           # config.surfaces.{prComment,ciFailure} in react-doctor.config.json.
           RAW_FILE="${RUNNER_TEMP:-/tmp}/react-doctor-raw-${GITHUB_RUN_ID:-$$}.txt"
+          set +e
           npx react-doctor@latest "$INPUT_DIRECTORY" "${FLAGS[@]}" --pr-comment | tee "$RAW_FILE"
+          PIPELINE_EXIT_CODES=("${PIPESTATUS[@]}")
+          set -e
           # Strip annotation workflow commands from the PR-comment body;
           # the runner still parses them from the live step log.
           sed -E '/^::(error|warning) /d' "$RAW_FILE" > "$OUTPUT_FILE"
+          if [ "${PIPELINE_EXIT_CODES[1]}" -ne 0 ]; then exit "${PIPELINE_EXIT_CODES[1]}"; fi
+          exit "${PIPELINE_EXIT_CODES[0]}"
         else
           npx react-doctor@latest "$INPUT_DIRECTORY" "${FLAGS[@]}"
         fi

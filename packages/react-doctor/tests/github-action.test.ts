@@ -67,8 +67,29 @@ describe("GitHub Action contract", () => {
 
     expect(scanStep).toContain('if [ -n "$INPUT_GITHUB_TOKEN" ]; then');
     expect(scanStep).toContain('"${FLAGS[@]}" --pr-comment | tee "$RAW_FILE"');
+    expect(scanStep).toContain('PIPELINE_EXIT_CODES=("${PIPESTATUS[@]}")');
     expect(scanStep).toContain('sed -E \'/^::(error|warning) /d\' "$RAW_FILE" > "$OUTPUT_FILE"');
+    expect(scanStep).toContain('exit "${PIPELINE_EXIT_CODES[0]}"');
     expect(scanStep).not.toContain('"${FLAGS[@]}" --pr-comment\n        else');
+  });
+
+  it("creates the sticky PR comment output before preserving scan failure", () => {
+    const scanStep = normalizeWhitespace(
+      extractStep(readActionYaml(), "INPUT_FAIL_ON: ${{ inputs.fail-on }}"),
+    );
+    const disableExitOnErrorIndex = scanStep.indexOf("set +e");
+    const captureExitCodesIndex = scanStep.indexOf('PIPELINE_EXIT_CODES=("${PIPESTATUS[@]}")');
+    const restoreExitOnErrorIndex = scanStep.indexOf("set -e", captureExitCodesIndex);
+    const stripAnnotationsIndex = scanStep.indexOf(
+      'sed -E \'/^::(error|warning) /d\' "$RAW_FILE" > "$OUTPUT_FILE"',
+    );
+    const restoreScanExitCodeIndex = scanStep.indexOf('exit "${PIPELINE_EXIT_CODES[0]}"');
+
+    expect(disableExitOnErrorIndex).toBeGreaterThan(-1);
+    expect(captureExitCodesIndex).toBeGreaterThan(disableExitOnErrorIndex);
+    expect(restoreExitOnErrorIndex).toBeGreaterThan(captureExitCodesIndex);
+    expect(stripAnnotationsIndex).toBeGreaterThan(restoreExitOnErrorIndex);
+    expect(restoreScanExitCodeIndex).toBeGreaterThan(stripAnnotationsIndex);
   });
 
   it("forwards --annotations to the CLI when the annotations input is true", () => {
