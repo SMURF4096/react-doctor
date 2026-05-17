@@ -15,7 +15,7 @@
 
 - [#260](https://github.com/millionco/react-doctor/pull/260) [`b53d873`](https://github.com/millionco/react-doctor/commit/b53d8730459d2dc469a8f9841def231048c8de7e) Thanks [@NisargIO](https://github.com/NisargIO)! - `nextjs-no-side-effect-in-get-handler` stops flagging
   `response.headers.set(...)` and locally-constructed `Map` / `Set` /
-  `Headers` inside `GET` handlers — those are the response builder,
+  `Headers` inside `GET` handlers - those are the response builder,
   not a side effect. The same locally-scoped-safe-bindings classifier
   is reused by `server-auth-actions` and the TanStack Start
   `get-mutation` rule, so safe local mutations no longer trip any of
@@ -54,7 +54,7 @@
   `Iterator.from(...)`, `(...).values()` /
   `(...).entries()` / `(...).keys()` followed by
   `Iterator.prototype.{map,filter,take,drop,flatMap,reduce,forEach,toArray}`
-  are evaluated lazily — collapsing them into a single pass changes
+  are evaluated lazily - collapsing them into a single pass changes
   observable behaviour. The previous heuristic mis-flagged these as
   eager `Array.prototype` chains. Resolves [#205](https://github.com/millionco/react-doctor/issues/205).
 
@@ -68,7 +68,7 @@
 
 - [#266](https://github.com/millionco/react-doctor/pull/266) [`529015d`](https://github.com/millionco/react-doctor/commit/529015d1d89441c4708f49413ecd540db7c04255) - Scope React Native rules to per-package boundaries. Previously every
   `rn-*` rule fired on every file in a project whose top-level framework
-  was detected as React Native or Expo — even on sibling workspaces that
+  was detected as React Native or Expo - even on sibling workspaces that
   were clearly web targets. In a mixed RN + web monorepo (`apps/mobile`
   alongside `apps/web` and `packages/storybook`) the rules would noisily
   report issues against Next.js, Vite, Docusaurus, Storybook, and plain
@@ -137,8 +137,8 @@ No behavioural change in this package; published alongside the
   `src/plugin/rule-registry.ts` wiring them together and shared
   utilities under `src/plugin/utils/**`. The plugin's published
   surface (`src/index.ts`, `rules-by-framework.ts`, `types.ts`) is
-  unchanged — consumers that imported the default export continue to
-  work — but rule authors writing custom shims should consult the new
+  unchanged - consumers that imported the default export continue to
+  work - but rule authors writing custom shims should consult the new
   per-file layout. Companion PRs:
   [#218](https://github.com/millionco/react-doctor/pull/218) (initial
   per-file split),
@@ -170,7 +170,7 @@ No behavioural change in this package; published alongside the
   now gated on the project's detected React major version. They stay
   silent on React 18 projects, on workspaces whose direct `react`
   dependency is `<19`, and on monorepos where the root resolution
-  pins React 18 — eliminating a major source of "rule doesn't apply
+  pins React 18 - eliminating a major source of "rule doesn't apply
   to my codebase" noise. Backed by a 343-line discover-project test
   suite and additional `parse-react-major` /
   `parse-react-peer-range` coverage.

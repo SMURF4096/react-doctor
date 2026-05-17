@@ -24,7 +24,7 @@
 
 - [#266](https://github.com/millionco/react-doctor/pull/266) [`529015d`](https://github.com/millionco/react-doctor/commit/529015d1d89441c4708f49413ecd540db7c04255) - Scope React Native rules to per-package boundaries. Previously every
   `rn-*` rule fired on every file in a project whose top-level framework
-  was detected as React Native or Expo — even on sibling workspaces that
+  was detected as React Native or Expo - even on sibling workspaces that
   were clearly web targets. In a mixed RN + web monorepo (`apps/mobile`
   alongside `apps/web` and `packages/storybook`) the rules would noisily
   report issues against Next.js, Vite, Docusaurus, Storybook, and plain
@@ -91,7 +91,7 @@
   ([#249](https://github.com/millionco/react-doctor/pull/249) and
   follow-ups). The published ESLint plugin shape (flat-config-ready
   `recommended` / framework presets, `react-doctor/*` rule namespace)
-  is unchanged — the bump is minor because rule authors writing
+  is unchanged - the bump is minor because rule authors writing
   custom shims now consume per-file modules instead of the previous
   kitchen-sink files.
 

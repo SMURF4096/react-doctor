@@ -6,7 +6,7 @@
 
 - [#266](https://github.com/millionco/react-doctor/pull/266) [`529015d`](https://github.com/millionco/react-doctor/commit/529015d1d89441c4708f49413ecd540db7c04255) - Scope React Native rules to per-package boundaries. Previously every
   `rn-*` rule fired on every file in a project whose top-level framework
-  was detected as React Native or Expo — even on sibling workspaces that
+  was detected as React Native or Expo - even on sibling workspaces that
   were clearly web targets. In a mixed RN + web monorepo (`apps/mobile`
   alongside `apps/web` and `packages/storybook`) the rules would noisily
   report issues against Next.js, Vite, Docusaurus, Storybook, and plain
@@ -68,7 +68,7 @@
 
 ### Patch Changes
 
-- [#194](https://github.com/millionco/react-doctor/pull/194) — Resolve
+- [#194](https://github.com/millionco/react-doctor/pull/194) - Resolve
   the React version from Bun grouped catalogs (in addition to pnpm
   catalogs) so monorepos using Bun for dependency hoisting still get
   an accurate React major back from `resolve-catalog-version`.

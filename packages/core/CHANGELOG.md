@@ -18,7 +18,7 @@
   `Set` / `Headers` no longer fail the Next.js GET-handler diagnostic.
 
 - [#271](https://github.com/millionco/react-doctor/pull/271) [`7a7ec84`](https://github.com/millionco/react-doctor/commit/7a7ec84fad631d96f70279394be5f086b8424d17) - **Per-surface diagnostic filtering.** New public API:
-  `diagnostic-surface.ts` (the `DiagnosticSurface` type — `pr-comment`,
+  `diagnostic-surface.ts` (the `DiagnosticSurface` type - `pr-comment`,
   `cli`, `ci-failure-gate`), `filter-for-surface.ts` (filter a
   diagnostic list to those allowed on a given surface), and extended
   `validate-config-types.ts` with `surfaces.*` schema. Consumers can
@@ -28,7 +28,7 @@
 
 - [#266](https://github.com/millionco/react-doctor/pull/266) [`529015d`](https://github.com/millionco/react-doctor/commit/529015d1d89441c4708f49413ecd540db7c04255) - Scope React Native rules to per-package boundaries. Previously every
   `rn-*` rule fired on every file in a project whose top-level framework
-  was detected as React Native or Expo — even on sibling workspaces that
+  was detected as React Native or Expo - even on sibling workspaces that
   were clearly web targets. In a mixed RN + web monorepo (`apps/mobile`
   alongside `apps/web` and `packages/storybook`) the rules would noisily
   report issues against Next.js, Vite, Docusaurus, Storybook, and plain
@@ -108,7 +108,7 @@
 - [#208](https://github.com/millionco/react-doctor/pull/208) [`8556b31`](https://github.com/millionco/react-doctor/commit/8556b31d8e4e165f791db0aa60a6b038b18ec777) - **User-feedback sweep.** Surface each rule's contribution to the
   project score via the new scoring transparency hooks, accept
   per-rule severity overrides, and accept a `ruleSet` selector from
-  config — all without changing the public `diagnose()` signature.
+  config - all without changing the public `diagnose()` signature.
 
 - [#254](https://github.com/millionco/react-doctor/pull/254) [`bfaf9c9`](https://github.com/millionco/react-doctor/commit/bfaf9c9530a9f8761df6e2d69abcf44c1699ff77) - `runners/oxlint/capabilities.ts` now consults the detected React
   major version when deciding which capability flags to enable. The

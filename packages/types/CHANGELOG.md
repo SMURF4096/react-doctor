@@ -24,7 +24,7 @@
   `react-doctor` monolith in
   [#249](https://github.com/millionco/react-doctor/pull/249). Public
   surface: per-rule metadata interfaces (severity, category,
-  framework, recommendation, examples — the colocation shape used by
+  framework, recommendation, examples - the colocation shape used by
   [#228](https://github.com/millionco/react-doctor/pull/228) /
   [#230](https://github.com/millionco/react-doctor/pull/230) /
   [#231](https://github.com/millionco/react-doctor/pull/231) /
@@ -34,6 +34,6 @@
   [#245](https://github.com/millionco/react-doctor/pull/245)), and
   `EsTreeNode = TSESTree.Node` from
   [#235](https://github.com/millionco/react-doctor/pull/235)
-  — the loose `[key: string]: any` escape hatch on AST node types is
+  - the loose `[key: string]: any` escape hatch on AST node types is
   gone. Consumers writing custom rule shims can now import these
   from `@react-doctor/types` instead of redeclaring them locally.

@@ -9,7 +9,7 @@
 
 Rule-fix wave for the 0.2.0-beta.5 release:
 
-- Scope `no-secrets-in-client-code` to client-reachable bindings —
+- Scope `no-secrets-in-client-code` to client-reachable bindings -
   skips server-only modules, public env-prefixed values, and
   locally-classified safe files (#252).
 - `nextjs-no-side-effect-in-get-handler` stops flagging

@@ -9,7 +9,7 @@
 
 Scope React Native rules to per-package boundaries. Previously every
 `rn-*` rule fired on every file in a project whose top-level framework
-was detected as React Native or Expo — even on sibling workspaces that
+was detected as React Native or Expo - even on sibling workspaces that
 were clearly web targets. In a mixed RN + web monorepo (`apps/mobile`
 alongside `apps/web` and `packages/storybook`) the rules would noisily
 report issues against Next.js, Vite, Docusaurus, Storybook, and plain

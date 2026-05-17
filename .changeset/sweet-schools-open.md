@@ -15,7 +15,7 @@ False-positive sweep across the rule plugin and the oxlint runner:
 - Treat early-return guards as render-reachable state reads so
   `rerender-state-only-in-handlers` / `no-event-trigger-state` stop
   recommending `useRef` for state that gates render output (#255).
-- Narrow `no-effect-event-handler` — DOM imperatives, prop callbacks
+- Narrow `no-effect-event-handler` - DOM imperatives, prop callbacks
   invoked from effects, and side effects routed through a stable ref
   are no longer reclassified as handler-only (#256).
 - Suppress rules-of-hooks diagnostics on locally-defined `useX`
