@@ -4,51 +4,36 @@
 
 ### Patch Changes
 
-- fix
+- [#266](https://github.com/millionco/react-doctor/pull/266) [`529015d`](https://github.com/millionco/react-doctor/commit/529015d1d89441c4708f49413ecd540db7c04255) Thanks [@aidenybai](https://github.com/aidenybai)! - Adds the package-classification type surface that the React Native
+  rule scoping work in `oxlint-plugin-react-doctor` consumes (allowed
+  framework names, RN-package detectors, Metro resolution-field
+  shape). See the
+  [#266](https://github.com/millionco/react-doctor/pull/266)
+  description in the oxlint plugin / core changelogs for the full
+  behavioural picture.
 
-- [#266](https://github.com/millionco/react-doctor/pull/266) [`529015d`](https://github.com/millionco/react-doctor/commit/529015d1d89441c4708f49413ecd540db7c04255) Thanks [@aidenybai](https://github.com/aidenybai)! - Scope React Native rules to per-package boundaries. Previously every
-  `rn-*` rule fired on every file in a project whose top-level framework
-  was detected as React Native or Expo — even on sibling workspaces that
-  were clearly web targets. In a mixed RN + web monorepo (`apps/mobile`
-  alongside `apps/web` and `packages/storybook`) the rules would noisily
-  report issues against Next.js, Vite, Docusaurus, Storybook, and plain
-  React DOM packages where they don't apply.
-
-  React Native rules now walk up to the file's nearest `package.json`
-  before running. The rule body is skipped when the package declares a
-  web-only framework (`next`, `vite`, `react-scripts`, `gatsby`,
-  `@remix-run/react`, `@docusaurus/core`, `@storybook/*`, or plain
-  `react-dom` without an RN sibling) and stays active when the package
-  declares `react-native`, `expo`, `react-native-tvos`, `react-native-windows`,
-  `react-native-macos`, anything under the `@react-native/` or
-  `@react-native-` community namespaces (`@react-native-firebase/*`,
-  `@react-native-async-storage/*`, `@react-native-community/*`, …), or
-  Metro's top-level `"react-native"` resolution field.
-
-  The detection is bidirectional: a web-rooted monorepo (root
-  `package.json` declares `next` or `vite`) still loads `rn-*` rules
-  when any workspace targets React Native or Expo, so the rules now
-  fire on `apps/mobile` of a `next`-rooted repo as well as the inverse
-  layout that the file-level boundary alone covered.
-
-  `rn-no-raw-text` additionally skips raw text inside `Platform.OS === "web"`
-  branches: `if`, `?:`, and `&&` / `||` short-circuits, the mirror
-  `Platform.OS !== "web"` else branches, `switch (Platform.OS) { case "web": … }`
-  case bodies, and the `web` arm of `Platform.select({ web: …, default: … })`.
-  Optional chaining (`Platform?.OS`) and the TS non-null assertion
-  (`Platform.OS!`) parse the same way as the bare form. The walker stops
-  at function and `Program` boundaries so JSX defined inside a callback
-  hoisted out of a `Platform.OS` branch does not inherit the parent
-  guard.
-
-  Native-only file extensions (`.ios.tsx`, `.android.tsx`, `.native.tsx`)
-  keep the rule active even when the surrounding package classification
-  is ambiguous.
-
-- fix
+- [#262](https://github.com/millionco/react-doctor/pull/262) [`bca5d30`](https://github.com/millionco/react-doctor/commit/bca5d30fc549a16c4628001dcd2c5a83e85c04f8) Thanks [@aidenybai](https://github.com/aidenybai)! - `inspect.ts` exposes additional fields used by the dedupe + batched
+  oxlint runner in `@react-doctor/core@0.2.0-beta.5` so downstream
+  consumers can typecheck against the new diagnostic shape.
 
 ## 0.2.0-beta.2
 
 ### Minor Changes
 
-- fix
+- [#249](https://github.com/millionco/react-doctor/pull/249) [`f0198e2`](https://github.com/millionco/react-doctor/commit/f0198e2f2d9560a15bdb4a78f4a378ca2ac5fcdd) Thanks [@aidenybai](https://github.com/aidenybai)! - **New public package.** Shared TypeScript types, extracted from the
+  `react-doctor` monolith in
+  [#249](https://github.com/millionco/react-doctor/pull/249). Public
+  surface: per-rule metadata interfaces (severity, category,
+  framework, recommendation, examples — the colocation shape used by
+  [#228](https://github.com/millionco/react-doctor/pull/228) /
+  [#230](https://github.com/millionco/react-doctor/pull/230) /
+  [#231](https://github.com/millionco/react-doctor/pull/231) /
+  [#234](https://github.com/millionco/react-doctor/pull/234)),
+  diagnostic + inspect types, the single `RuleSeverity` enum
+  (deduped in
+  [#245](https://github.com/millionco/react-doctor/pull/245)), and
+  `EsTreeNode = TSESTree.Node` from
+  [#235](https://github.com/millionco/react-doctor/pull/235)
+  — the loose `[key: string]: any` escape hatch on AST node types is
+  gone. Consumers writing custom rule shims can now import these
+  from `@react-doctor/types` instead of redeclaring them locally.
