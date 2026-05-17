@@ -158,13 +158,16 @@
 
 ### Patch Changes
 
-- fix
+- [`e9e4217`](https://github.com/millionco/react-doctor/commit/e9e4217711341cf2bfb7c1b11f37caaae44df7c3) — Harden `discover-project` and `resolve-diagnose-target`: tighter
+  workspace-root detection constants, additional regression coverage in
+  `tests/diagnose.test.ts` and `tests/discover-project.test.ts` for the
+  nested-subproject fallback added in 0.1.5.
 
 ## 0.1.5
 
 ### Patch Changes
 
-- b06b768: `diagnose()` now falls back to the first nested React subproject when the
+- [`b06b768`](https://github.com/millionco/react-doctor/commit/b06b768) ([#193](https://github.com/millionco/react-doctor/pull/193)) — `diagnose()` now falls back to the first nested React subproject when the
   requested directory has no root `package.json`, instead of crashing with
   `No package.json found in <directory>`. This unblocks external review
   runners (e.g. the Vercel AI Code Review sandbox) that point `diagnose()`
@@ -172,31 +175,98 @@
   subfolder like `apps/web`. When neither the root nor any nested
   subdirectory contains a React project, `diagnose()` now throws a clearer
   `No React project found in <directory>` error.
-- fix
+
+- [#200](https://github.com/millionco/react-doctor/pull/200) — Typed
+  errors from `diagnose()` plus a `rootDir` config option so embedders
+  can target a specific subdirectory without relying on cwd inference.
+
+- [#201](https://github.com/millionco/react-doctor/pull/201) — Integrate
+  `eslint-plugin-react-you-might-not-need-an-effect` into the curated
+  rule set so its useEffect-elimination diagnostics flow into the score
+  alongside react-doctor's own state-and-effects rules.
+
+- [#194](https://github.com/millionco/react-doctor/pull/194) — Resolve
+  the React version from Bun grouped catalogs (in addition to pnpm
+  catalogs) so monorepos using Bun for dependency hoisting still get an
+  accurate React major back from the catalog resolver.
+
+- [#196](https://github.com/millionco/react-doctor/pull/196) — Match
+  `react-doctor-disable*` suppression comments that carry descriptive
+  trailing text (e.g. `// react-doctor-disable-next-line rule -- why`)
+  instead of requiring a bare comment. Resolves
+  [#159](https://github.com/millionco/react-doctor/issues/159).
+
+- [#198](https://github.com/millionco/react-doctor/pull/198) — Expose
+  `--why` as a documented public alias for `--explain` in the CLI.
+  Resolves [#161](https://github.com/millionco/react-doctor/issues/161).
+
+- [#195](https://github.com/millionco/react-doctor/pull/195) — The
+  GitHub Action's score step is output-only and never fails the job, so
+  consumers can gate on the score themselves without losing the run.
+  Resolves [#190](https://github.com/millionco/react-doctor/issues/190).
+
+- [#197](https://github.com/millionco/react-doctor/pull/197) — Docs:
+  clarify that `ignore.overrides` covers per-file rule ignores.
+
+- [#199](https://github.com/millionco/react-doctor/pull/199) — Docs:
+  full GitHub Actions workflow example and inputs reference.
 
 ## 0.1.4
 
 ### Patch Changes
 
-- fix
+- [`a63d5d5`](https://github.com/millionco/react-doctor/commit/a63d5d5d0bbff26e7367a0b6d634aeb089a935ef) — CLI scan output reformat. Adds `utils/wrap-indented-text.ts` for
+  consistent wrapping of multi-line diagnostic recommendations, expands
+  the scan-summary types to carry per-line wrap state, and threads the
+  helper through `scan.ts`. Backed by the new `wrap-indented-text.test.ts`
+  unit suite and a `cli-and-output` regression suite that snapshots the
+  rendered CLI output.
 
 ## 0.1.3
 
 ### Patch Changes
 
-- fix
+- [#184](https://github.com/millionco/react-doctor/pull/184) — Add a
+  `rawTextWrapperComponents` config option so projects can teach
+  `rn-no-raw-text` about their own `<Text>` wrappers (e.g. design-system
+  primitives that render `Text` internally). Resolves
+  [#183](https://github.com/millionco/react-doctor/issues/183).
+
+- [#182](https://github.com/millionco/react-doctor/pull/182) — Restore
+  React Compiler rules to `error` severity. They had silently regressed
+  to `warn` in 0.1.0 when the plugin-resolution gating landed, masking
+  Compiler-blocking violations behind the warning lane.
+
+- [#181](https://github.com/millionco/react-doctor/pull/181) — Website
+  fix: keep the diagnostic count next to the rule name on narrow widths
+  in the leaderboard / diagnostic listings.
+
+- [`cca5808`](https://github.com/millionco/react-doctor/commit/cca5808) — Promote `react-hooks-js/*` diagnostics to errors so projects with
+  React Hooks rule violations no longer pass with a clean score.
+
+- [`9ee3a6d`](https://github.com/millionco/react-doctor/commit/9ee3a6d) — Refresh the website's terminal demo to match the new CLI output
+  format introduced in 0.1.1 / 0.1.4.
 
 ## 0.1.2
 
 ### Patch Changes
 
-- fix
+- [`6ddb02c`](https://github.com/millionco/react-doctor/commit/6ddb02c6b08fbfb06e2429d3cabd338c91891cd6) — Polish follow-up to the 0.1.1 CLI redesign. Consolidates duplicated
+  scan-summary literals into `constants.ts`, simplifies `scan.ts` to
+  drop a redundant branch (-9 LOC), and tightens the `spinner.ts`
+  helper so its cleanup is symmetric with start. No user-visible
+  behaviour change.
 
 ## 0.1.1
 
 ### Patch Changes
 
-- fix
+- [#178](https://github.com/millionco/react-doctor/pull/178) — CLI
+  scan-summary redesign. The final report now inlines a category
+  breakdown (state-and-effects / design / bundle-size / …) and a
+  compact rule list grouped under each category, replacing the
+  previous single-line counts. Verbose mode keeps the per-diagnostic
+  listing.
 
 ## 0.1.0
 
@@ -392,7 +462,66 @@
   transient state (e.g. a scroll position only stored to be ignored)
   still fires. Closes #146.
 
-- fix
+- [#148](https://github.com/millionco/react-doctor/pull/148) ([`3f5c031`](https://github.com/millionco/react-doctor/commit/3f5c031)) — Add the (now-removed in 0.1.0) `react-doctor browser` CLI subcommand
+  and 11 new lint rules: 3 state / correctness rules
+  (`no-direct-state-mutation`, `no-set-state-in-render`,
+  `no-uncontrolled-input`) and 8 design-system rules (see the
+  dedicated bullet above).
+
+- [#152](https://github.com/millionco/react-doctor/pull/152) ([`8f10098`](https://github.com/millionco/react-doctor/commit/8f10098)) — 4 new React 18→19 migration rules: pre-flight checks for the
+  `forwardRef`-deprecation / new context API / new ref-callback
+  cleanup / `use()` adoption migration paths.
+
+- [#154](https://github.com/millionco/react-doctor/pull/154) ([`276ea2f`](https://github.com/millionco/react-doctor/commit/276ea2f)) — Add `prefer-use-sync-external-store` rule. Catches `useEffect`-based
+  subscriptions that should be `useSyncExternalStore` (concurrent-mode
+  safe, tearing-resistant).
+
+- [#155](https://github.com/millionco/react-doctor/pull/155) ([`2240b1f`](https://github.com/millionco/react-doctor/commit/2240b1f)) — Add `no-event-trigger-state` rule. Flags state that is only ever
+  written from an event handler and only read from the rendered JSX
+  return — a frequent prop-derivation antipattern.
+
+- [#156](https://github.com/millionco/react-doctor/pull/156) ([`4b92f50`](https://github.com/millionco/react-doctor/commit/4b92f50)) — Add `no-effect-chain` rule. Flags `useEffect` chains where one
+  effect's setState triggers another effect, which is almost always a
+  signal to collapse the chain into a derived value or event handler.
+
+- [#157](https://github.com/millionco/react-doctor/pull/157) ([`0be99ad`](https://github.com/millionco/react-doctor/commit/0be99ad)) — Comprehensive useEffect analyzer: three new rules
+  (`no-mutable-in-deps`, `no-mirror-prop-effect`, `effect-needs-cleanup`)
+  plus shared dependency-tracking infrastructure.
+
+- [#162](https://github.com/millionco/react-doctor/pull/162) ([`945138d`](https://github.com/millionco/react-doctor/commit/945138d)) — Gate `prefer-use-effect-event` behind React 19+ so the suggestion
+  doesn't fire on React 18 projects (where `useEffectEvent` is not
+  available).
+
+- [#163](https://github.com/millionco/react-doctor/pull/163) ([`c20857e`](https://github.com/millionco/react-doctor/commit/c20857e)) — `no-effect-event-handler` honors empty-frame barriers in prop-stack
+  lookups so callbacks hoisted out of effects don't inherit the
+  surrounding effect classification.
+
+- [#165](https://github.com/millionco/react-doctor/pull/165) ([`78db3b2`](https://github.com/millionco/react-doctor/commit/78db3b2)) — Multi-line JSX and stacked suppression comments, per-file rule
+  overrides, and near-miss hints for misspelled rule ids.
+
+- [#166](https://github.com/millionco/react-doctor/pull/166) ([`8745c34`](https://github.com/millionco/react-doctor/commit/8745c34)) — Suppression follow-ups: audit-mode handling, overrides-config
+  validation, `--explain` working inside monorepos, JSX generics
+  parsing, line-comment skip semantics, and a single-pass evaluator
+  for the suppression matcher.
+
+- [#167](https://github.com/millionco/react-doctor/pull/167) ([`d3e26d6`](https://github.com/millionco/react-doctor/commit/d3e26d6)) — Refactor: consolidate state-and-effects rule plumbing.
+
+- [#169](https://github.com/millionco/react-doctor/pull/169) ([`50d08fd`](https://github.com/millionco/react-doctor/commit/50d08fd)) — AGENTS.md compliance pass on the state-and-effects rule directory.
+
+- [#170](https://github.com/millionco/react-doctor/pull/170) ([`97cb1bb`](https://github.com/millionco/react-doctor/commit/97cb1bb)) — Collapse non-verbose CLI diagnostics to the top 3 rules so the
+  default scan output stays scannable on large projects; `--verbose`
+  restores the full listing.
+
+- [#172](https://github.com/millionco/react-doctor/pull/172) ([`2a1b0ae`](https://github.com/millionco/react-doctor/commit/2a1b0ae)) — Tighten state-and-effects rules against false positives across the
+  rules-of-hooks / handler-detection / render-reachable code paths.
+
+- [#174](https://github.com/millionco/react-doctor/pull/174) ([`4fb4d27`](https://github.com/millionco/react-doctor/commit/4fb4d27)) — Forward `reactMajorVersion` through the programmatic `diagnose()`
+  entry point so embedders get the same React-19 rule gating the CLI
+  uses.
+
+- [#177](https://github.com/millionco/react-doctor/pull/177) ([`01c38a7`](https://github.com/millionco/react-doctor/commit/01c38a7)) — Harden rules against prototype-pollution false positives and quiet
+  the adopt-config noise introduced in `d71a6bf` when the user's
+  config contains unknown rules.
 
 ## 0.0.47
 
