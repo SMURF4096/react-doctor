@@ -527,7 +527,6 @@
 
 ### Patch Changes
 
-- fix
 - 6a0e6d6: chore(react-doctor): bump oxlint to ^1.62.0
 
   Pulls in oxlint v1.61.0 + v1.62.0 improvements (additional Vue rules,
@@ -563,8 +562,6 @@
   missing optional peer silently skips them instead of crashing the
   scan (#141).
 
-- fix
-
 ## 0.0.45
 
 ### Patch Changes
@@ -592,13 +589,13 @@
     written. Build-time validation in `vite.config.ts` also catches this
     before publish.
 
-- fix
-
 ## 0.0.44
 
 ### Patch Changes
 
-- fix
+- [`57467cd`](https://github.com/millionco/react-doctor/commit/57467cd) — Patch follow-up to the 0.0.43 ignore-respecting refactor: misc
+  rough edges in the new ignore-pattern collector and inline-disable
+  matcher.
 
 ## 0.0.43
 
@@ -618,239 +615,406 @@
 
 ### Patch Changes
 
-- fix
+- [`1fdc9a0`](https://github.com/millionco/react-doctor/commit/1fdc9a0) — Patch follow-up to the 0.0.39 browser-entrypoint work: misc
+  bundling fixes for the now-removed `react-doctor/browser` and
+  `react-doctor/worker` subpath exports.
 
 ## 0.0.40
 
 ### Patch Changes
 
-- fix
+- [`874f7bc`](https://github.com/millionco/react-doctor/commit/874f7bc) — Publishing-pipeline retry of 0.0.39 (no code delta).
 
 ## 0.0.39
 
 ### Patch Changes
 
-- 7da4ce4: Fix `TypeError: issues.files is not iterable` crash during dead code detection. Knip 6.x returns `issues.files` as an `IssueRecords` object instead of a `Set<string>`. The dead code pass now handles both shapes (and arrays) defensively.
-- fix
+- [#134](https://github.com/millionco/react-doctor/pull/134) ([`7da4ce4`](https://github.com/millionco/react-doctor/commit/7da4ce4)) — Fix `TypeError: issues.files is not iterable` crash during dead-code
+  detection. Knip 6.x returns `issues.files` as an `IssueRecords`
+  object instead of a `Set<string>`. The dead-code pass now handles
+  both shapes (and arrays) defensively.
+
+- [`5238e7b`](https://github.com/millionco/react-doctor/commit/5238e7b) / [`061a794`](https://github.com/millionco/react-doctor/commit/061a794) — Add the `react-doctor/browser` entrypoint and a `diagnoseBrowser` /
+  `processBrowserDiagnostics` API so the website's in-browser
+  demo can run the same scoring + rule pipeline as the CLI without
+  shelling out. Shared diagnose helpers and the browser scorer are
+  extracted so bundles can omit the proxy-fetch path. (The browser
+  surface was later removed in 0.1.0 — see that section.)
+
+- [`b5519b6`](https://github.com/millionco/react-doctor/commit/b5519b6) — Inject the browser scorer at build time so the bundled
+  `react-doctor/browser` output omits the proxy-fetch / Node-only score
+  path.
+
+## 0.0.38
+
+### Patch Changes
+
+- [`8b0485a`](https://github.com/millionco/react-doctor/commit/8b0485a) — GitHub Action improvements (input validation + step output cleanups),
+  clickable file paths in CLI diagnostic output (terminal hyperlinks
+  via OSC-8), and a website hydration fix.
+
+- [`bb5188f`](https://github.com/millionco/react-doctor/commit/bb5188f) — Document every config option supported by `react-doctor.config.json`
+  in the README.
+
+- [`100731c`](https://github.com/millionco/react-doctor/commit/100731c) — `install-skill` and `detect-agents` formatting fixes so CI's
+  `format:check` step stays green.
 
 ## 0.0.37
 
 ### Patch Changes
 
-- fix skill
+- [`f1bd776`](https://github.com/millionco/react-doctor/commit/f1bd776) — Republish 0.0.36 after a botched skill payload — the
+  `install-skill` SKILL.md frontmatter was malformed and the prior
+  publish shipped an unusable skill. No code delta vs 0.0.36 beyond
+  the SKILL.md regeneration.
 
 ## 0.0.36
 
 ### Patch Changes
 
-- fix
+- [#131](https://github.com/millionco/react-doctor/pull/131) ([`ff5b637`](https://github.com/millionco/react-doctor/commit/ff5b637)) — Frontend design-quality rules (initial cut of the design-system
+  rule family — bold headings, redundant padding/size axes, vague
+  button labels, etc.). Expanded substantially in 0.1.0.
+
+- [`074f854`](https://github.com/millionco/react-doctor/commit/074f854) — Add the `react-doctor install` subcommand that installs the
+  React Doctor SKILL.md into the user's configured coding agents.
 
 ## 0.0.35
 
 ### Patch Changes
 
-- fix
+- [`7136aa5`](https://github.com/millionco/react-doctor/commit/7136aa5) — Republish 0.0.34 after a packaging hiccup; no code delta.
 
 ## 0.0.34
 
 ### Patch Changes
 
-- fix
+- [#124](https://github.com/millionco/react-doctor/pull/124) ([`0eb635a`](https://github.com/millionco/react-doctor/commit/0eb635a)) — Add TanStack Start rule family (router conventions, server-function
+  hygiene, `useServerFn` adoption hints).
+
+- [#129](https://github.com/millionco/react-doctor/pull/129) ([`47105e9`](https://github.com/millionco/react-doctor/commit/47105e9)) — Fix false positives for Next.js redirect guidance and React Compiler
+  detection.
 
 ## 0.0.33
 
 ### Patch Changes
 
-- fix
+- [`87d4b86`](https://github.com/millionco/react-doctor/commit/87d4b86) — Republish 0.0.32 after a packaging hiccup; no code delta.
 
 ## 0.0.32
 
 ### Patch Changes
 
-- fix
+- [#120](https://github.com/millionco/react-doctor/pull/120) ([`10bd788`](https://github.com/millionco/react-doctor/commit/10bd788)) — Address multiple GitHub issues (#117, #113, #119, #106): assorted
+  rule false-positive fixes, CLI option polish, and detection
+  hardening.
+
+- [#122](https://github.com/millionco/react-doctor/pull/122) ([`901fce5`](https://github.com/millionco/react-doctor/commit/901fce5)) — Restrict setter detection to direct `Identifier` callees so dynamic
+  / member-expression accessors no longer count as setter invocations.
 
 ## 0.0.31
 
 ### Patch Changes
 
-- fix
+- [#108](https://github.com/millionco/react-doctor/pull/108) ([`1aef45a`](https://github.com/millionco/react-doctor/commit/1aef45a)) — Resolve 7 GitHub issues across catalog resolution, file-ignore
+  semantics, CLI ergonomics, React Native detection, Next.js
+  detection, the `--offline` flag, and monorepo discovery.
+
+- [#110](https://github.com/millionco/react-doctor/pull/110) ([`720f421`](https://github.com/millionco/react-doctor/commit/720f421)) — Apply `ignore.files` as a pre-filter so ignored files are skipped
+  before linting starts (previously they were linted then filtered).
 
 ## 0.0.30
 
 ### Patch Changes
 
-- fix issues
+- [`c405f4a`](https://github.com/millionco/react-doctor/commit/c405f4a) — Resolve multiple GitHub issues (#71, #72, #76, #77, #83, #84, #86,
+  #87, #89, #92, #93, #94): broad rule false-positive sweep across
+  detection, scoring, and rule output formatting.
+
+- [`97b21f1`](https://github.com/millionco/react-doctor/commit/97b21f1) — Replace `fs.existsSync` with the shared `isFile` utility for
+  consistent file checks across the codebase.
 
 ## 0.0.29
 
 ### Patch Changes
 
-- fix
+- [#63](https://github.com/millionco/react-doctor/pull/63) ([`9f51b9d`](https://github.com/millionco/react-doctor/commit/9f51b9d)) — GitHub Action: add a `diff` input so the action can scan only files
+  changed in the PR, plus optional PR-comment posting from the action
+  step.
+
+- [#64](https://github.com/millionco/react-doctor/pull/64) ([`79af7ca`](https://github.com/millionco/react-doctor/commit/79af7ca)) — Detect Expo and React Native and enable the RN-specific rule
+  family when a project targets them.
+
+- [#68](https://github.com/millionco/react-doctor/pull/68) ([`1947859`](https://github.com/millionco/react-doctor/commit/1947859)) — Rule / detection false-positive fixes (issue rollup).
 
 ## 0.0.28
 
 ### Patch Changes
 
-- fix
+- [`bd949cc`](https://github.com/millionco/react-doctor/commit/bd949cc) — Bump the Node version requirement, enhance the linting process with
+  improved error handling, and tighten the CI matrix.
 
 ## 0.0.27
 
 ### Patch Changes
 
-- cleanip
+- [`370ea4c`](https://github.com/millionco/react-doctor/commit/370ea4c) — Refactor CLI option handling and improve automated-environment
+  detection (CI / agent contexts).
+
+- [`051a02c`](https://github.com/millionco/react-doctor/commit/051a02c) — Score-calculation refactor: extract shared constants and add the
+  proxy-fetch fallback used by the in-browser scorer.
+
+- [`bf21a87`](https://github.com/millionco/react-doctor/commit/bf21a87) — Fix `--fix` deeplink rendering issues introduced when the install
+  prompt was integrated into the CLI workflow.
 
 ## 0.0.26
 
 ### Patch Changes
 
-- fix
+- [`7716d6c`](https://github.com/millionco/react-doctor/commit/7716d6c) — Integrate the SKILL.md installation prompt directly into the CLI
+  workflow so first-run users get the skill installed without a
+  separate command.
 
 ## 0.0.25
 
 ### Patch Changes
 
-- fix
+- [#44](https://github.com/millionco/react-doctor/pull/44) ([`dcf4276`](https://github.com/millionco/react-doctor/commit/dcf4276)) — Remove the silent global install introduced in 0.0.9; the CLI no
+  longer auto-installs itself globally on first run. Resolves
+  [#43](https://github.com/millionco/react-doctor/issues/43).
+
+- [`7e20da1`](https://github.com/millionco/react-doctor/commit/7e20da1) — Refactor the diagnostic payload structure used by the
+  score-estimation API and tighten its validation.
+
+- [`da83168`](https://github.com/millionco/react-doctor/commit/da83168) — Enhance the React Doctor skill installation script with detailed
+  usage instructions and support for multiple platforms.
 
 ## 0.0.24
 
 ### Patch Changes
 
-- fix
+- [#33](https://github.com/millionco/react-doctor/pull/33) ([`c2b687a`](https://github.com/millionco/react-doctor/commit/c2b687a)) — Detect React Compiler in Expo projects.
+
+- [#37](https://github.com/millionco/react-doctor/pull/37) ([`7f49833`](https://github.com/millionco/react-doctor/commit/7f49833)) — Chore: add node.js to leaderboard.
 
 ## 0.0.23
 
 ### Patch Changes
 
-- fix issues
+- [`c05f4b0`](https://github.com/millionco/react-doctor/commit/c05f4b0) / [`b33976c`](https://github.com/millionco/react-doctor/commit/b33976c) — Patch sweep — assorted rule and CLI false-positive fixes.
 
 ## 0.0.22
 
 ### Patch Changes
 
-- fix
+- [`84bb6d5`](https://github.com/millionco/react-doctor/commit/84bb6d5) / [`61406e0`](https://github.com/millionco/react-doctor/commit/61406e0) / [`1b07fa2`](https://github.com/millionco/react-doctor/commit/1b07fa2) / [`0299fc4`](https://github.com/millionco/react-doctor/commit/0299fc4) — Patch sweep — rule false-positive fixes and formatting follow-ups.
 
 ## 0.0.21
 
 ### Patch Changes
 
-- offline flag
+- [`73da9e2`](https://github.com/millionco/react-doctor/commit/73da9e2) — Add the `--offline` flag so the CLI skips network calls (telemetry,
+  the leaderboard upload step) for users behind firewalls or in
+  air-gapped CI.
 
 ## 0.0.20
 
 ### Patch Changes
 
-- log err
+- [`45a3d33`](https://github.com/millionco/react-doctor/commit/45a3d33) / [`d90a60d`](https://github.com/millionco/react-doctor/commit/d90a60d) / [`b2d0b64`](https://github.com/millionco/react-doctor/commit/b2d0b64) — Surface stderr from `oxlint` / `knip` invocations so failures
+  produce diagnosable error messages instead of a silent non-zero
+  exit. Also updates CLI option docs.
 
 ## 0.0.19
 
 ### Patch Changes
 
-- fix issues
+- [`b8cc03a`](https://github.com/millionco/react-doctor/commit/b8cc03a) / [`2d2f7a1`](https://github.com/millionco/react-doctor/commit/2d2f7a1) — Update CLI options, enhance configuration documentation, and
+  miscellaneous fixes.
 
 ## 0.0.18
 
 ### Patch Changes
 
-- fix
+- [#17](https://github.com/millionco/react-doctor/pull/17) ([`64d837b`](https://github.com/millionco/react-doctor/commit/64d837b)) — Add `typescript` as a direct dependency to resolve the knip peer
+  requirement; previously users without TypeScript installed got a
+  warning on every scan.
 
 ## 0.0.17
 
 ### Patch Changes
 
-- add lopgging
+- [`5c2119b`](https://github.com/millionco/react-doctor/commit/5c2119b) / [`116d6cd`](https://github.com/millionco/react-doctor/commit/116d6cd) — Enhance error handling in dead-code detection so a knip failure no
+  longer drops the rest of the scan output.
 
 ## 0.0.16
 
 ### Patch Changes
 
-- fix: log lint errors
+- [`06fb14e`](https://github.com/millionco/react-doctor/commit/06fb14e) — Improve error handling in the linting and dead-code analysis paths
+  so failures log a useful message instead of a stack trace.
+
+- [`595ca55`](https://github.com/millionco/react-doctor/commit/595ca55) — Remove the video package from `main` (kept on a separate branch for
+  asset generation).
 
 ## 0.0.15
 
 ### Patch Changes
 
-- export node api
+- [`e8cfef0`](https://github.com/millionco/react-doctor/commit/e8cfef0) / [`1410650`](https://github.com/millionco/react-doctor/commit/1410650) — Update `react-doctor` package configuration / constants and refresh
+  the README with usage docs for the published node API.
 
 ## 0.0.14
 
 ### Patch Changes
 
-- fix repo
+- [`90ffa0a`](https://github.com/millionco/react-doctor/commit/90ffa0a) — Add `llms.txt` so models discovering the package via the npm
+  registry can find structured docs.
+
+- [`e218d63`](https://github.com/millionco/react-doctor/commit/e218d63) — Format the leaderboard data files to satisfy CI `format:check`.
 
 ## 0.0.13
 
 ### Patch Changes
 
-- fix: skill
+- [#11](https://github.com/millionco/react-doctor/pull/11) ([`2d2f779`](https://github.com/millionco/react-doctor/commit/2d2f779)) — React Doctor branding refresh: theme-aware README logo + asset
+  refresh. Reverted in [`28d820a`](https://github.com/millionco/react-doctor/commit/28d820a) when the assets failed to render
+  correctly on npm.
+
+- [#12](https://github.com/millionco/react-doctor/pull/12) ([`5fc130d`](https://github.com/millionco/react-doctor/commit/5fc130d)) — Fix the favicon badge ring cutout.
+
+- [#14](https://github.com/millionco/react-doctor/pull/14) ([`67bad8f`](https://github.com/millionco/react-doctor/commit/67bad8f)) — Set the Twitter image to the brand banner.
 
 ## 0.0.12
 
 ### Patch Changes
 
-- fix
+- [`b200689`](https://github.com/millionco/react-doctor/commit/b200689) / [`4519747`](https://github.com/millionco/react-doctor/commit/4519747) / [`7f0b4d2`](https://github.com/millionco/react-doctor/commit/7f0b4d2) / [`6d1ae5e`](https://github.com/millionco/react-doctor/commit/6d1ae5e) / [`5688c1f`](https://github.com/millionco/react-doctor/commit/5688c1f) / [`6dd481a`](https://github.com/millionco/react-doctor/commit/6dd481a) / [`ce8437e`](https://github.com/millionco/react-doctor/commit/ce8437e) — Iteration sweep on detection / output formatting / README copy
+  during the pre-1.0 stabilization push.
 
 ## 0.0.11
 
 ### Patch Changes
 
-- fix: enviroment vars
+- [`db319d0`](https://github.com/millionco/react-doctor/commit/db319d0) / [`358750a`](https://github.com/millionco/react-doctor/commit/358750a) — Environment-variable handling fix: thread the documented
+  `REACT_DOCTOR_*` env vars through the score-estimation API call so
+  CI overrides actually take effect.
 
 ## 0.0.10
 
 ### Patch Changes
 
-- almost ready
+- [`e5ef934`](https://github.com/millionco/react-doctor/commit/e5ef934) — "Almost ready" milestone — the rule pipeline + scoring + CLI surface
+  are end-to-end functional for the first time. No discrete commits
+  between 0.0.9 and 0.0.10 beyond the version bump itself.
 
 ## 0.0.9
 
 ### Patch Changes
 
-- fix
+- [#2](https://github.com/millionco/react-doctor/pull/2) ([`1ae6094`](https://github.com/millionco/react-doctor/commit/1ae6094)) — Improve the `--prompt` clipboard output emitted for agent fixes
+  (Ami-style copy block formatting).
+
+- [#3](https://github.com/millionco/react-doctor/pull/3) ([`f664ca2`](https://github.com/millionco/react-doctor/commit/f664ca2)) — Fix the multiselect `a`-key select-all behavior in the interactive
+  CLI prompt.
+
+- [#4](https://github.com/millionco/react-doctor/pull/4) ([`940e82a`](https://github.com/millionco/react-doctor/commit/940e82a)) — Indent multi-line diagnostic help output in the CLI scan summary.
+
+- [#5](https://github.com/millionco/react-doctor/pull/5) ([`00f21ec`](https://github.com/millionco/react-doctor/commit/00f21ec)) — Color diagnostic counts by severity in the CLI summary.
+
+- [#6](https://github.com/millionco/react-doctor/pull/6) ([`c55edc9`](https://github.com/millionco/react-doctor/commit/c55edc9)) — Add severity icons to the summary counts.
+
+- [#7](https://github.com/millionco/react-doctor/pull/7) ([`8894a54`](https://github.com/millionco/react-doctor/commit/8894a54)) — Frame the summary footer output (boxed border around the final
+  score line).
+
+- [#9](https://github.com/millionco/react-doctor/pull/9) ([`a66c977`](https://github.com/millionco/react-doctor/commit/a66c977)) — Move the website video overlays to a bottom-gradient layout and
+  darken them.
+
+- [`b5ea69b`](https://github.com/millionco/react-doctor/commit/b5ea69b) — Add the GitHub Action for CI integration and fix monorepo scanning
+  inside CI environments.
+
+- [`578e75a`](https://github.com/millionco/react-doctor/commit/578e75a) — Auto-install globally in the background when run via `npx`. (Later
+  removed in 0.0.25 / #44 because it surprised users.)
+
+- [`bde1167`](https://github.com/millionco/react-doctor/commit/bde1167) — Add the video package and Ami skills for marketing-asset
+  generation.
 
 ## 0.0.8
 
 ### Patch Changes
 
-- react doctor
+- [`19fa34b`](https://github.com/millionco/react-doctor/commit/19fa34b) — Resolve a merge conflict in `cli.ts` introduced in 0.0.7.
+
+- [`eef87e0`](https://github.com/millionco/react-doctor/commit/eef87e0) — Use a single deeplink for `--fix` instead of the two-step deeplink
+  + sleep dance.
+
+- [`9cf691d`](https://github.com/millionco/react-doctor/commit/9cf691d) / [`21c0d61`](https://github.com/millionco/react-doctor/commit/21c0d61) — Skill install prompt copy refresh and README cleanup (remove the
+  rules table, promote `install` above `options`).
 
 ## 0.0.7
 
 ### Patch Changes
 
-- fix: deeplinking
+- [`2ae9b87`](https://github.com/millionco/react-doctor/commit/2ae9b87) — Fix the `--fix` deeplink to open the project with the correct cwd
+  and autosend the prompt.
 
 ## 0.0.6
 
 ### Patch Changes
 
-- fix: improvements
+- [`f9157c7`](https://github.com/millionco/react-doctor/commit/f9157c7) — Add the `no-side-effect-in-get-handler` rule and export the oxlint
+  plugin as a standalone entrypoint.
+
+- [`9965871`](https://github.com/millionco/react-doctor/commit/9965871) / [`80d676e`](https://github.com/millionco/react-doctor/commit/80d676e) — Add the website with the animated CLI terminal landing page, and
+  update the README with consumer-friendly docs.
+
+- [`8379064`](https://github.com/millionco/react-doctor/commit/8379064) / [`de1cbd4`](https://github.com/millionco/react-doctor/commit/de1cbd4) — Add `fix` and `install-ami` commands that deeplink into Ami for
+  automated rule application.
+
+- [`330afc2`](https://github.com/millionco/react-doctor/commit/330afc2) / [`7aa7b3f`](https://github.com/millionco/react-doctor/commit/7aa7b3f) / [`05d2f79`](https://github.com/millionco/react-doctor/commit/05d2f79) / [`4dfaeab`](https://github.com/millionco/react-doctor/commit/4dfaeab) — Add ASCII doctor face / box branding to the CLI score output and
+  the website terminal.
+
+- [`b1f1abc`](https://github.com/millionco/react-doctor/commit/b1f1abc) — Add the CI workflow for e2e tests, lint, and format.
+
+- [`4b481c8`](https://github.com/millionco/react-doctor/commit/4b481c8) — Add the React Doctor skill and the install prompt on first run.
 
 ## 0.0.5
 
 ### Patch Changes
 
-- scores
+- [`ccf404a`](https://github.com/millionco/react-doctor/commit/ccf404a) — Gracefully handle failures in `oxlint`, the reduced-motion check,
+  and summary-file writing so a single subsystem can't take down the
+  scan.
+
+- [`f1407d7`](https://github.com/millionco/react-doctor/commit/f1407d7) — Gracefully handle knip failures on non-React config files.
+
+- Project scoring (the 0–100 health score) lands in this release.
 
 ## 0.0.4
 
 ### Patch Changes
 
-- fix
+- [`2d9a69b`](https://github.com/millionco/react-doctor/commit/2d9a69b) — Add actionable help text, animation rules, per-rule summary files,
+  and strengthen the framework / dependency detection.
+
+- [`327c076`](https://github.com/millionco/react-doctor/commit/327c076) — Move the website source into `packages/website`.
 
 ## 0.0.3
 
 ### Patch Changes
 
-- fix: noisiness
+- [`680e7c4`](https://github.com/millionco/react-doctor/commit/680e7c4) — Reduce default scan noisiness — tighter default rule severity
+  thresholds for the first user-facing prerelease.
 
 ## 0.0.2
 
 ### Patch Changes
 
-- init
+- [`a8770b7`](https://github.com/millionco/react-doctor/commit/a8770b7) — Add CLI scaffolding with the initial oxlint integration: scan
+  command, oxlint runner, diagnostic-collection pipeline.
 
 ## 0.0.1
 
 ### Patch Changes
 
-- init
+- [`f50426b`](https://github.com/millionco/react-doctor/commit/f50426b) — Initial publish — empty package scaffold to claim the npm name.
