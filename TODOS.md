@@ -90,8 +90,8 @@ Status: partially addressed.
 
 Fix:
 
-- Support per-rule/per-tag controls for severity, score contribution, PR comment visibility, CLI visibility, and CI failure.
-- Use this for `design`, `test-noise`, React Native, server-action, and migration-hint rules.
+- Add severity overrides.
+- Close any remaining gaps for server-action and migration-hint rule defaults.
 
 ### [ ] Support mature-codebase adoption workflows natively
 
@@ -122,10 +122,8 @@ Fix:
 
 - Audit every rule.
 - Tag noisy test rules:
-  - async parallel/defer rules,
+  - remaining async defer rules,
   - JS micro-performance,
-  - design/style,
-  - React 19 migration hints,
   - fixture-heavy UI rules.
 - Keep hooks correctness, accessibility correctness, and security enabled in tests.
 
@@ -142,9 +140,7 @@ Fix:
 
 - Show exact suppression snippet in PR comments.
 - Accept bare rule IDs when unambiguous.
-- Support rationale after `--`.
 - Link each PR comment group to suppression docs.
-- Surface near-miss suppression hints in verbose/PR output.
 
 ### [ ] Finish Husky/lint-staged docs
 
@@ -185,7 +181,7 @@ Sources:
 
 - "No React dependency found" reports in Bun workspaces, catalog setups, and non-standard `package.json` layouts.
 - Related fixed issues: #27, #87, #101, #105, #116, #191.
-- Related open PRs: #192, #214, #32.
+- Related open PRs: #214, #32.
 
 Fix:
 
@@ -396,13 +392,11 @@ Status: partially addressed.
 Links:
 
 - Support: #21, #65, #64
-- False positives: #93, #100, #180, #183
 
 Fix:
 
 - Publish RN support matrix.
 - Document `rawTextWrapperComponents`.
-- Fix web-package and `Platform.OS === "web"` scoping.
 
 ### [ ] Decide HIR precision work priority
 
@@ -444,7 +438,7 @@ Decision:
 
 - [ ] #251 `feat: port PR 217 lint rule coverage` - large rule expansion; do not land before false-positive defaults are settled.
 - [ ] #243 ReDoS glob pattern fix - prioritize security review.
-- [ ] #238 React Review audit - reconcile with #206 fix path.
+- [ ] #238 React Review audit - reconcile remaining React Review audit findings.
 - [ ] #217 v2 Rasmus precision branch - port useful fixes intentionally.
 - [ ] #214 / #32 `--package-json` - pick one API and close duplicate.
 - [ ] #213 Husky/lint-staged docs - land or replace.
@@ -495,7 +489,7 @@ Decision:
 - [ ] #188 / #97 Action docs and PR blocking partially addressed; need stable tags and delta semantics.
 - [ ] #189 Simplified Chinese README open.
 - [ ] #203 Husky/lint-staged docs open.
-- [ ] #65 / #21 / #64 RN support exists; precision/scoping remains open.
+- [ ] #65 / #21 / #64 RN support exists; support matrix/docs remain open.
 
 ### Shipped enhancements
 
@@ -507,5 +501,5 @@ Decision:
 
 1. [ ] Add remaining JS micro-perf test-file suppression.
 2. [ ] Change React Review PR comment semantics to delta-first.
-3. [ ] Update docs for stable action tags, offline score behavior, dead-code removal, and annotations.
+3. [ ] Update docs for stable action tags, offline score behavior, and annotations.
 4. [ ] Triage stale PRs #210 and #207.
