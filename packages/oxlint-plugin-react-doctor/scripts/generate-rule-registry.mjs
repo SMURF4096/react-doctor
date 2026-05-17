@@ -78,8 +78,16 @@ for (const bucket of fs.readdirSync(PLUGIN_RULES_ROOT, { withFileTypes: true }))
       process.exit(1);
     }
     const categoryMatch = source.match(/^\s*category:\s*"([^"]+)",?\s*$/m);
+    const severityMatch = source.match(/^\s*severity:\s*"(error|warn)",?\s*$/m);
+    if (!severityMatch) {
+      console.error(
+        `Rule file missing \`severity: "error" | "warn"\` field: ${path.relative(PACKAGE_ROOT, filePath)}`,
+      );
+      process.exit(1);
+    }
     const ruleId = idMatch[1];
     const category = categoryMatch ? categoryMatch[1] : defaultCategory;
+    const severity = severityMatch[1];
     // Force POSIX separators — `path.relative()` returns backslashes on
     // Windows, which TypeScript module resolution rejects.
     const relativeImport =
@@ -88,7 +96,7 @@ for (const bucket of fs.readdirSync(PLUGIN_RULES_ROOT, { withFileTypes: true }))
         .relative(path.dirname(REGISTRY_OUTPUT), filePath)
         .replaceAll(path.sep, "/")
         .replace(/\.ts$/, ".js");
-    ruleEntries.push({ ruleId, identifier, relativeImport, framework, category });
+    ruleEntries.push({ ruleId, identifier, relativeImport, framework, category, severity });
   }
 }
 
@@ -110,13 +118,21 @@ const importLines = ruleEntries
 // has nothing to rewrite. Single-line entries would be reformatted when
 // they exceed the 100-char default width, and the registry-overwrite-on-
 // codegen contract would loop forever.
-const registryLines = ruleEntries
+const ruleLines = ruleEntries
   .map(
     (entry) =>
-      `  "${entry.ruleId}": {\n` +
-      `    ...${entry.identifier},\n` +
+      `  {\n` +
+      `    key: "react-doctor/${entry.ruleId}",\n` +
+      `    id: "${entry.ruleId}",\n` +
+      `    source: "react-doctor",\n` +
       `    framework: "${entry.framework}",\n` +
       `    category: "${entry.category}",\n` +
+      `    severity: "${entry.severity}",\n` +
+      `    rule: {\n` +
+      `      ...${entry.identifier},\n` +
+      `      framework: "${entry.framework}",\n` +
+      `      category: "${entry.category}",\n` +
+      `    },\n` +
       `  },`,
   )
   .join("\n");
@@ -133,9 +149,13 @@ import type { Rule } from "./utils/rule.js";
 
 ${importLines}
 
-export const ruleRegistry: Record<string, Rule> = {
-${registryLines}
-};
+export const reactDoctorRules = [
+${ruleLines}
+] as const;
+
+export const ruleRegistry: Record<string, Rule> = Object.fromEntries(
+  reactDoctorRules.map((rule) => [rule.id, rule.rule]),
+);
 `;
 
 fs.writeFileSync(REGISTRY_OUTPUT, generatedSource);
