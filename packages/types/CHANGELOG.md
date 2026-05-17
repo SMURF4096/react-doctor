@@ -1,5 +1,15 @@
 # @react-doctor/types
 
+## 0.2.0-beta.6
+
+### Minor Changes
+
+- Add configuration-level controls for React Doctor's rule output. Users can now set top-level `rules` and `categories` severity overrides, tune individual output surfaces (`cli`, `prComment`, `score`, and `ciFailure`) by tag/category/rule id, and rely on registered rule-family tags such as `design`, `react-native`, `server-action`, `test-noise`, and `migration-hint` for broad filtering.
+
+  The scan pipeline now applies those controls both when generating the oxlint config and when post-processing diagnostics, so `"off"` can skip rules before they run while `"warn"` / `"error"` restamp emitted diagnostics consistently across the CLI, score, PR comments, and CI failure gate. The oxlint plugin also exposes shared rule-set maps that the ESLint plugin reuses for its flat configs.
+
+  Expose the GitHub Action's `annotations` input so workflow users can opt into inline PR annotations without dropping down to the raw CLI.
+
 ## 0.2.0-beta.3
 
 ### Patch Changes
@@ -35,5 +45,5 @@
   `EsTreeNode = TSESTree.Node` from
   [#235](https://github.com/millionco/react-doctor/pull/235)
   - the loose `[key: string]: any` escape hatch on AST node types is
-  gone. Consumers writing custom rule shims can now import these
-  from `@react-doctor/types` instead of redeclaring them locally.
+    gone. Consumers writing custom rule shims can now import these
+    from `@react-doctor/types` instead of redeclaring them locally.

@@ -1,5 +1,12 @@
 # @react-doctor/project-info
 
+## 0.2.0-beta.6
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @react-doctor/types@0.2.0-beta.6
+
 ## 0.2.0-beta.3
 
 ### Patch Changes

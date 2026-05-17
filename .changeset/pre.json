@@ -14,7 +14,9 @@
     "add-oxlint-plugin-dep",
     "eight-sides-matter",
     "fix-bundle-workspace-deps",
+    "fix-glob-redos",
     "rn-rules-package-scoping",
+    "rule-controls-beta",
     "sweet-schools-open",
     "tailwind-version-detection",
     "thick-bars-attack"
