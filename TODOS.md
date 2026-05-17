@@ -2,230 +2,6 @@
 
 ## P0 - Trust-Breaking False Positives
 
-### [x] Fix `nextjs-no-side-effect-in-get-handler` false positives
-
-Status: fixed.
-
-Links:
-
-- Issue: https://github.com/millionco/react-doctor/issues/206
-- PRs: https://github.com/millionco/react-doctor/pull/209, https://github.com/millionco/react-doctor/pull/211, https://github.com/millionco/react-doctor/pull/233, https://github.com/millionco/react-doctor/pull/238, https://github.com/millionco/react-doctor/pull/251
-
-Repro:
-
-```ts
-export async function GET(req: NextRequest, ctx: RouteContext) {
-  const res = await v2GET(req, ctx);
-  res.headers.set("X-Deprecated", "Use /api/v2/documents/[id]");
-  return res;
-}
-```
-
-Why it matters:
-
-- One Next.js 14 codebase got 138 errors.
-- Reporter said 0 were real side effects.
-- Workaround required 138 inline suppressions.
-
-Done:
-
-- Skip `response.headers.set/append/delete`.
-- Skip local request-scoped `Map` / `Set` created inside the handler.
-- Decide and document `cookies().set()` / `headers().set()` semantics.
-- Keep reporting real DB/cache/process-global writes and mutating `fetch()`.
-- Add regressions for `Response`, `NextResponse`, local `Map`, real `db.update().set()`, mutating `fetch()`, and mutating route segments like `/logout`.
-- Implemented one fix path; duplicate PR cleanup is no longer blocking the rule fix.
-
-### [x] Fix `server-auth-actions` member-expression auth calls
-
-Status: fixed.
-
-Links:
-
-- Issue: https://github.com/millionco/react-doctor/issues/239
-- PR: https://github.com/millionco/react-doctor/pull/240
-
-Repro:
-
-```ts
-await auth0.getSession();
-```
-
-Why it matters:
-
-- Reporter saw 139 false positives.
-- Current check only accepts bare identifiers:
-
-```ts
-isNodeOfType(callNode?.callee, "Identifier") && AUTH_FUNCTION_NAMES.has(callNode.callee.name);
-```
-
-Done:
-
-- Accept member calls whose final property is in `AUTH_FUNCTION_NAMES`.
-- Cover `auth0.getSession()`, `ctx.auth.getUser()`, `clerkClient.getUser()`, `session.auth()`.
-- Add project config allowlist for custom auth guards.
-- Avoid unrelated false positives like `analytics.getUser()`.
-
-### [x] Fix `async-defer-await` destructuring false positive
-
-Status: fixed.
-
-Link: https://github.com/millionco/react-doctor/issues/241
-
-Repro:
-
-```ts
-const [flowRow] = await db.select().from(flowsTable).where(eq(flowsTable.seq, flowSeq)).limit(1);
-
-if (!flowRow) return [];
-```
-
-Done:
-
-- Add recursive binding collection for `ArrayPattern`, nested patterns, rest elements, and assignment patterns.
-- Add tests for `[row]`, `[, row]`, `[row = fallback]`, `{ rows: [row] }`.
-
-### [x] Suppress async parallelization advice in tests and ordered UI flows
-
-Status: fixed.
-
-Sources:
-
-- Screenshot: `async-parallel` in `SettingsPanels.browser.tsx`.
-- Screenshot: ordered test-like `render -> expect -> click -> expect`.
-- Dogfood issues: https://github.com/millionco/react-doctor/issues/216, https://github.com/millionco/react-doctor/issues/219
-- Related PR: https://github.com/millionco/react-doctor/pull/238
-
-Previous problem:
-
-- `async-parallel.ts` uses a narrow local `TEST_FILE_PATTERN`.
-- It misses `tests/`, `test/`, `__tests__/`, `e2e/`, `playwright/`, `cypress/`, fixtures, mocks, and `.browser.tsx`.
-- It is not tagged `test-noise`, so shared test suppression does not apply.
-- Dogfood warnings also include intentional `async-await-in-loop` animation/delay sequences.
-
-Done:
-
-- Tag `async-parallel` as `test-noise` or use shared `isTestFilePath()`.
-- Suppress in files importing Playwright, Testing Library, Vitest, Jest, or browser test helpers.
-- Do not parallelize `render`, `expect`, `locator.click`, `page.click`, setup/teardown, or ordered UI assertions.
-- Allow intentional animation/demo sequencing or require documented inline suppression.
-- Add regression for render/assert/click/assert.
-
-### [x] Stop React Native rules in web-only packages
-
-Status: fixed.
-
-Sources:
-
-- Screenshot: `rn-no-raw-text` in `apps/web/src/components/ThreadTerminalDrawer.tsx`.
-- Issues: https://github.com/millionco/react-doctor/issues/93, https://github.com/millionco/react-doctor/issues/100, https://github.com/millionco/react-doctor/issues/180, https://github.com/millionco/react-doctor/issues/183
-
-Previous problem:
-
-- `rn-no-raw-text.ts` only skips `.web.[jt]sx?` and `"use dom"`.
-- It does not understand `apps/web/**` or package framework boundaries.
-- `rawTextWrapperComponents` helps RN wrappers, not web-package scoping.
-
-Done:
-
-- Scope RN rules to packages detected as React Native / Expo.
-- Skip RN rules in web, docs, Storybook, Docusaurus, Next/Vite/React DOM packages.
-- Add mixed-monorepo fixture: `apps/web` plus `apps/native`.
-- Add `Platform.OS === "web"` branch handling for cross-platform files.
-
-### [x] Make `no-prevent-default` framework-aware
-
-Status: landed on `main`.
-
-Source:
-
-- Screenshot: SPA/client-only app got server-action advice for `<form onSubmit preventDefault()>`.
-
-Done:
-
-- Split form-variant diagnostic by framework capability:
-  - server-capable (`nextjs` / `tanstack-start` / `remix`) → fire with the existing "server action" wording.
-  - client-only / SPA / mobile (`vite` / `cra` / `gatsby` / `react-native` / `expo`) → suppress the `<form>` warning entirely (`preventDefault()` is the canonical SPA pattern).
-  - `unknown` framework → still fire, but with framework-neutral wording (no "server action" jargon).
-- Kept `<a onClick preventDefault()>` guidance unchanged across all frameworks.
-- Added `packages/react-doctor/tests/regressions/no-prevent-default.test.ts` covering Vite SPA (form/anchor/dialog/local-only/capitalized `<Form>`/handler-without-preventDefault), Next.js App Router (server-action wording, dialog precision-debt pin, anchor inside conditional handler), TanStack Start, Remix, CRA, Gatsby, Expo (react-native-web), bare React Native, and `unknown` (neutral wording + arrow-concise-body coverage).
-
-### [x] Fix `js-length-check-first` guard detection
-
-Status: fixed.
-
-Source:
-
-- Screenshot: `.every()` warning fired even though the same condition already checked length equality.
-
-Previous problem:
-
-- Rule checked only the nearest logical expression's immediate `left`.
-- It missed length guards inside larger `&&` chains.
-
-Fix:
-
-- Walk up `&&` (and transparently-walk-through `||`/`??`/`ChainExpression`) ancestors so any short-circuiting guard is visible.
-- Flatten the collected `&&` chain so each operand can be inspected independently.
-- Match the guard's `length`-equality operands structurally against the `.every()` receiver and the array indexed inside the callback.
-- Regression covers the multi-operand `&&` chain shape from the screenshot plus member-receiver, swapped-side, nested-`||`, and negative cases.
-
-### [x] Fix `js-combine-iterations` on lazy Iterator helpers
-
-Status: fixed.
-
-Links:
-
-- Issue: https://github.com/millionco/react-doctor/issues/205
-- Superseded PR: https://github.com/millionco/react-doctor/pull/212
-
-Repro:
-
-```ts
-const oddDoubles = numbers
-  .values()
-  .filter((value) => value % 2 === 1)
-  .map((value) => 2 * value)
-  .toArray();
-```
-
-Done:
-
-- Walks the chain inward from the inner call's receiver, treating `.values()`/`.keys()`/`.entries()` (on non-`Object` receivers), `Iterator.from(...)`, and syntactically-declared generators (`function* gen() {}`, `const gen = function*() {}`) as iterator-rooted and skipping the rule.
-- Continues past chainable iteration methods (`map`/`filter`/`flatMap`/`forEach`); stops at unknown / materializing calls (`.toArray()`, `Array.from(...)`, plain identifiers) so eager array chains keep firing.
-- Excludes `Object.values/keys/entries(...)` from iterator detection because they return arrays.
-- Regression coverage in `tests/regressions/js-performance-rules.test.ts` for eager arrays (still flagged), `.values/.keys/.entries` on Map/Set/array (not flagged), `Object.*` (still flagged), `.toArray()` and `Array.from()` materialization (still flagged), `Iterator.from()`, hoisted and const-bound generators, optional chaining, `.flatMap()` walks, the existing Boolean / identity filter exclusions, and a documented imported-generator false positive.
-
-### [x] Demote design/Tailwind cleanup from default PR comments
-
-Status: landed.
-
-Source:
-
-- Screenshot: `w-5 h-5 -> size-5` from `design-no-redundant-size-axes`.
-- Feedback: weak signal from a "React reviewer."
-
-Done:
-
-- Added a `DiagnosticSurface` model with four channels — `cli`,
-  `prComment`, `score`, `ciFailure` — and a `surfaces` config block
-  accepting `includeTags` / `excludeTags` / `includeCategories` /
-  `excludeCategories` / `includeRules` / `excludeRules` per surface
-  (include wins over exclude).
-- Defaulted the `design` tag to excluded from `prComment`, `score`,
-  and `ciFailure`. `cli` still shows everything so local devs keep
-  seeing design hints.
-- Added a `--pr-comment` CLI flag that prints the `prComment`-filtered
-  list with a "N demoted — run locally for the full list" footer.
-- The score path filters by the `score` surface before posting to the
-  score API; the fail-on gate filters by the `ciFailure` surface.
-- Updated `action.yml` to pass `--pr-comment` when posting the sticky
-  PR comment so the GitHub Action picks up the new defaults
-  automatically.
-- Kept Tailwind version gating intact (`design-no-redundant-size-axes`
-  still requires `tailwind:3.4`).
-
 ### [ ] Separate PR regressions from baseline health in React Review
 
 Status: hosted/product, confirmed by screenshot.
@@ -273,23 +49,6 @@ Fix:
 
 - Implement local score calculation or update `action.yml` and marketplace docs.
 - Add tests for `--offline`, `--score --offline`, Action offline score output, and CI auto-offline.
-
-### [x] Remove stale dead-code claims after Knip removal
-
-Status: resolved by docs updates after #246.
-
-Link: https://github.com/millionco/react-doctor/pull/246
-
-Current problem:
-
-- PR #246 removed Knip/dead-code analysis.
-- README still says React Doctor reports dead code.
-- `skills/react-doctor/SKILL.md` still advertises dead code coverage.
-
-Fix:
-
-- Remove current dead-code claims from README, marketplace copy, hosted copy, and skill docs.
-- Add migration note: dead-code analysis was removed; use Knip directly.
 
 ### [ ] Stop recommending `millionco/react-doctor@main`
 
@@ -344,10 +103,6 @@ Sources:
 - Team disabled `react-doctor/no-barrel-import` because barrel files are an intentional public API pattern and not a Vite perf concern.
 - Team disabled 8 CSS/animation perf rules after autofixes degraded `prefers-reduced-motion` behavior by making animations complete instantly and look stuck.
 - Team built custom pre-commit, CI, PR comment, dashboard, parallel worker, and per-module config plumbing around React Doctor.
-
-Already done:
-
-- [x] Land/adopt `customRulesOnly` from #109 so teams can run only React Doctor-specific rules without duplicate ESLint noise.
 
 Remaining:
 
@@ -438,37 +193,6 @@ Fix:
 - Improve error text with nearest detected package and suggested `--package-json` / `--project` fix.
 - Do not regress root-project and monorepo package discovery.
 
-### [x] Review `no-secrets-in-client-code` scoping before landing #252
-
-Status: landed in #252.
-
-Link: https://github.com/millionco/react-doctor/pull/252
-
-Done:
-
-- Scoped the weak variable-name heuristic to client-exposed files while keeping value-pattern secret detection active.
-- Added regression coverage for Vite, Next.js App Router/Pages API, Expo, TanStack Start server functions, server/config/test exclusions, server-suffixed files, and ambiguous TypeScript files.
-- Follow up only if we want explicit CRA/Gatsby fixtures beyond the current generic/Vite-style client coverage.
-
-### [x] Audit React version and library-pattern false positives
-
-Status: landed in #254.
-
-Links:
-
-- https://github.com/millionco/react-doctor/pull/254
-- https://github.com/millionco/react-doctor/pull/186
-
-Sources:
-
-- Users reported `forwardRef` and React 18-compatible library patterns being penalized.
-
-Done:
-
-- Do not apply React 19-only advice to React 18 packages.
-- Respect library peer dependency ranges and upper-bound-only ranges.
-- Add fixtures for `forwardRef`, local `use`, React 18/19 split behavior, and mixed peer upper-bound support.
-
 ### [ ] Track large-codebase crash and resource failure modes
 
 Status: partially addressed by #262.
@@ -479,12 +203,6 @@ Sources:
 - High RAM / OOM / SIGABRT reports on large monorepos.
 - Historical dead-code crashes: #77, #132, #135, #149.
 - Historical large command/path issue: #46.
-
-Already done:
-
-- [x] Materialize full-scan file lists into batches instead of one giant oxlint invocation.
-- [x] Recover diagnostics from successful batches when a large/pathological batch times out or fails.
-- [x] Surface dropped-file partial failures instead of silently returning zero diagnostics.
 
 Fix:
 
@@ -608,32 +326,6 @@ Fix:
 - Document local-only report workflow.
 - Add SARIF or generic report path if needed for non-GitHub CI.
 
-### [x] Make PR blocking and `fail-on` semantics explicit
-
-Status: landed.
-
-Sources:
-
-- Users asked for simple "block merge if score < X" behavior.
-- Existing scoring/delta feedback shows absolute thresholds can be misleading.
-
-Done:
-
-- Added a `## PR blocking and exit codes` README section that
-  separates diagnostic-level gating (`--fail-on`) from absolute-score
-  gating (the `score` action output + a follow-up step), and documents
-  annotations and PR comments alongside both.
-- Spelled out that combining `--fail-on` with `--diff` is the
-  built-in way to fail only on new regressions vs. failing on the
-  baseline (no separate `--fail-on-new` flag).
-- Added three worked recipes: advisory mode (`fail-on: none`),
-  regression-only mode (`diff: main` + `fail-on: warning`), and
-  strict threshold mode (`fail-on: error` + score-floor step
-  reading `steps.<id>.outputs.score`).
-- Tightened `action.yml`'s `fail-on` description so it states the
-  gate runs on diagnostics, not on the score, and points at the
-  composable patterns above.
-
 ## P2 - Platform and Product Expansion
 
 ### [ ] Decide dangerous CI/security config detection
@@ -750,170 +442,70 @@ Decision:
 
 ## Open PR Triage
 
-- [x] #257 `fix: suppress local use hook false positives` - landed in main.
-- [x] #256 `fix: narrow effect event handler detection` - landed in main.
-- [x] #255 `fix: treat return guards as render state reads` - landed in main.
-- [x] #254 `fix: avoid React 19 rule false positives on React 18` - landed in main.
-- [x] #253 `Fix no-barrel-import index false positives` - landed in main.
-- [x] #252 `fix: scope client secret diagnostics` - landed in main.
 - [ ] #251 `feat: port PR 217 lint rule coverage` - large rule expansion; do not land before false-positive defaults are settled.
 - [ ] #243 ReDoS glob pattern fix - prioritize security review.
-- [x] #240 auth member expressions - fixed by equivalent implementation.
 - [ ] #238 React Review audit - reconcile with #206 fix path.
-- [x] #233 / #211 / #209 GET side-effect fixes - fixed by equivalent implementation; close duplicate PRs if still open.
 - [ ] #217 v2 Rasmus precision branch - port useful fixes intentionally.
 - [ ] #214 / #32 `--package-json` - pick one API and close duplicate.
 - [ ] #213 Husky/lint-staged docs - land or replace.
-- [x] #212 Iterator helpers - superseded by the landed `js-combine-iterations` fix.
 - [ ] #210 `fix` - retitle/body or close.
 - [ ] #207 Molten Hub coverage - triage likely unrelated.
-- [ ] #192 Bun grouped catalogs - close if obsolete.
 - [ ] #189 Simplified Chinese README - docs decision.
 - [ ] #186 library-aware React 19/test scoping/build-entry/string lookup - partly obsolete after Knip removal; port useful parts.
-- [x] #185 stacked disable docs - README already covers stacked suppressions.
 - [ ] #179 index-derived key locals - decide priority.
 - [ ] #173 TUI - product priority.
 - [ ] #164 HIR port - precision research; high review burden.
 
 ## Open Issue Triage
 
-- [x] #241 async-defer-await false positives - fixed by P0.
-- [x] #239 auth member-expression false positives - fixed by P0.
 - [ ] #219 React Review audit - covered by async/test noise, baseline semantics, and #238.
 - [ ] #216 React Review default-branch diagnostics - covered by async/test noise, baseline semantics, and #238.
 - [ ] #215 `Hello` - close unless reporter adds actionable detail.
-- [x] #206 GET side-effect false positives - fixed by P0.
-- [x] #205 Iterator helper false positive - fixed by P0.
 - [ ] #203 Husky/lint-staged docs - covered by P1.
 
 ## Historical Regression Ledger
 
 ### Monorepo and discovery
 
-- [x] #73 monorepo root project/config issues.
-- [x] #67 root project not offered.
-- [x] #48 workspace pattern selection missed packages.
-- [x] #62 custom aliases caused dead-code false positives; obsolete after Knip removal.
-- [x] #136 workspace-local Knip config ignored; obsolete after Knip removal.
 - [ ] #82 Action/docs still need stale docs and release pinning fixes.
-
-### Dead-code and Knip
-
-- [x] #77 dead-code abort.
-- [x] #132 `issues.files is not iterable`.
-- [x] #135 Knip plugin failure recovery.
-- [x] #149 empty pattern crash.
-- [x] #246 removed Knip/dead-code integration.
-- [x] Remove remaining stale dead-code docs.
-
-### Dependency detection
-
-- [x] #87 Bun `catalog:`.
-- [x] #191 Bun grouped catalogs in current code.
-- [x] #116 pnpm `catalog:`.
-- [x] #101 pnpm workspace catalog regression.
-- [x] #105 React in peer/dev deps plus catalogs.
-- [x] #27 React in `peerDependencies`.
 
 ### GitHub Action and CI
 
-- [x] #66 warnings-only / no-error GHA failure.
-- [x] #190 score step non-zero on Needs Work.
 - [ ] #75 / #79 release tags addressed historically, but README still uses `@main`.
-- [x] #80 / #78 ANSI escape codes in comments.
-- [x] #61 / #63 Action `diff` input.
 - [ ] #107 Action offline input exists but description is wrong.
 - [ ] #81 annotations exist in CLI but not `action.yml`.
-- [x] #113 / #119 missing bundled jsx-a11y rule.
 
 ### CLI and agent workflow
 
-- [x] #31 specific path/diff scans.
 - [ ] #74 / #115 / #203 pre-commit docs and staged semantics.
-- [x] #43 silent global install removed.
-- [x] #39 Ami prompt automation issue.
-- [x] #106 full-project scan command.
 - [ ] #45 changed-file scan summary still needs clear baseline/diff wording.
 - [ ] #89 offline score still inconsistent.
-- [x] #92 share link opt-out.
-- [x] #262 large-monorepo batch recovery and partial-failure reporting.
 - [ ] #47 / #60 / #88 local reports: verify current support/docs.
-- [x] #117 namespace hook calls.
-- [x] #49 corporate proxy.
 - [ ] #214 / #32 custom package JSON path.
-
-### Config and suppressions
-
-- [x] #86 / #41 ignore files/folders.
-- [x] #91 / #110 ignore file fixes.
-- [x] #144 JSX block suppressions.
-- [x] #158 multi-line JSX suppressions.
-- [x] #159 stacked disable comments.
-- [x] #160 per-file rule ignore.
-- [x] #98 config overrides.
-- [x] #51 invalid config warning.
-- [ ] #85 config docs exist; category/surface controls missing.
-- [x] #161 / #198 `--why` / suppression audit.
-- [x] #185 stacked disable docs covered by README.
 
 ### Rule quality
 
-- [x] #146 `useState -> useRef` transitive usage.
-- [x] #126 React Compiler / Next router misdetection.
 - [ ] #127 `no-usememo-simple-expression` needs clearer rationale/threshold docs.
 - [ ] #95 `set-state-in-effect` precision remains worth tracking.
-- [x] #19 `no-derived-state-effect` reset-state message.
-- [x] #83 `nextjs-no-client-side-redirect` message.
-- [x] #93 / #100 / #180 / #183 RN wrapper components and web scoping addressed.
-- [x] #55 Next `<Script>` JSON-LD.
-- [x] #76 `@expo/vector-icons`.
-- [x] #138 / #139 passive event listener caveat.
-- [x] #152 / #186 React 19 library patterns addressed by #254.
-- [x] #253 `no-barrel-import` index false positives.
-- [x] #255 state-only-in-handlers return guard read.
-- [x] #256 narrow `prefer-use-effect-event` handler detection.
-- [x] #257 local `use` hook false positives.
 - [ ] #179 index-derived key locals open.
 
 ### Product and docs
 
-- [x] #40 architecture/how-it-works docs.
 - [ ] #99 offline docs stale because Action description conflicts.
 - [ ] #188 / #97 Action docs and PR blocking partially addressed; need stable tags and delta semantics.
 - [ ] #189 Simplified Chinese README open.
 - [ ] #203 Husky/lint-staged docs open.
 - [ ] #65 / #21 / #64 RN support exists; precision/scoping remains open.
-- [x] #53 non-git source file count.
-- [x] #33 Expo React Compiler detection.
 
 ### Shipped enhancements
 
-- [x] #143 / #96 / #151 standalone plugin distribution.
-- [x] #187 / #201 `eslint-plugin-react-you-might-not-need-an-effect`.
-- [x] #94 reduced motion detection.
 - [ ] #164 HIR port open.
 - [ ] #173 TUI open.
-- [x] #162 `prefer-use-effect-event`.
-- [x] #156 `no-effect-chain`.
-- [x] #155 `no-event-trigger-state`.
-- [x] #154 `prefer-use-sync-external-store`.
 - [ ] #57 configurable accessibility presets closed without clear current support.
-- [x] #109 custom rules only.
-- [x] #124 TanStack Start rules.
-- [x] #131 design rules shipped; default PR surfacing demoted via
-      the new `surfaces` config and `--pr-comment` flag.
-- [x] #202 Tailwind `size-N` shipped; demoted from PR comments,
-      score, and CI failure by default with the surface controls.
 
 ## Immediate Order
 
-1. [x] Land #240 or equivalent for auth member expressions.
-2. [x] Choose and land one #206 GET side-effect fix.
-3. [x] Land #212 or equivalent Iterator helper guard.
-4. [x] Patch #241 array destructuring in `async-defer-await`.
-5. [x] Add `async-parallel` test-file suppression.
-6. [ ] Add remaining JS micro-perf test-file suppression.
-7. [x] Add package-level framework scoping for RN/web and SPA/server-action rules.
-8. [ ] Change React Review PR comment semantics to delta-first.
-9. [ ] Update docs for stable action tags, offline score behavior, dead-code removal, and annotations.
-10. [ ] Triage stale PRs #192, #210, and #207.
+1. [ ] Add remaining JS micro-perf test-file suppression.
+2. [ ] Change React Review PR comment semantics to delta-first.
+3. [ ] Update docs for stable action tags, offline score behavior, dead-code removal, and annotations.
+4. [ ] Triage stale PRs #210 and #207.
