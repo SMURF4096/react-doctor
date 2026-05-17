@@ -22,7 +22,7 @@
   ([#274](https://github.com/millionco/react-doctor/pull/274)). See
   the oxlint plugin changelog for per-rule detail.
 
-- [#266](https://github.com/millionco/react-doctor/pull/266) [`529015d`](https://github.com/millionco/react-doctor/commit/529015d1d89441c4708f49413ecd540db7c04255) Thanks [@aidenybai](https://github.com/aidenybai)! - Scope React Native rules to per-package boundaries. Previously every
+- [#266](https://github.com/millionco/react-doctor/pull/266) [`529015d`](https://github.com/millionco/react-doctor/commit/529015d1d89441c4708f49413ecd540db7c04255) - Scope React Native rules to per-package boundaries. Previously every
   `rn-*` rule fired on every file in a project whose top-level framework
   was detected as React Native or Expo — even on sibling workspaces that
   were clearly web targets. In a mixed RN + web monorepo (`apps/mobile`

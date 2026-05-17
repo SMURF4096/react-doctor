@@ -4,7 +4,7 @@
 
 ### Patch Changes
 
-- [#266](https://github.com/millionco/react-doctor/pull/266) [`529015d`](https://github.com/millionco/react-doctor/commit/529015d1d89441c4708f49413ecd540db7c04255) Thanks [@aidenybai](https://github.com/aidenybai)! - Scope React Native rules to per-package boundaries. Previously every
+- [#266](https://github.com/millionco/react-doctor/pull/266) [`529015d`](https://github.com/millionco/react-doctor/commit/529015d1d89441c4708f49413ecd540db7c04255) - Scope React Native rules to per-package boundaries. Previously every
   `rn-*` rule fired on every file in a project whose top-level framework
   was detected as React Native or Expo — even on sibling workspaces that
   were clearly web targets. In a mixed RN + web monorepo (`apps/mobile`
@@ -43,7 +43,7 @@
   keep the rule active even when the surrounding package classification
   is ambiguous.
 
-- [#262](https://github.com/millionco/react-doctor/pull/262) [`bca5d30`](https://github.com/millionco/react-doctor/commit/bca5d30fc549a16c4628001dcd2c5a83e85c04f8) Thanks [@aidenybai](https://github.com/aidenybai)! - `list-workspace-packages.ts` enumerates each workspace's declared
+- [#262](https://github.com/millionco/react-doctor/pull/262) [`bca5d30`](https://github.com/millionco/react-doctor/commit/bca5d30fc549a16c4628001dcd2c5a83e85c04f8) - `list-workspace-packages.ts` enumerates each workspace's declared
   framework so per-package rule scoping (used by the RN rules in
   beta.5) can short-circuit before the file walker runs.
 
@@ -54,7 +54,7 @@
 
 ### Minor Changes
 
-- [#249](https://github.com/millionco/react-doctor/pull/249) [`f0198e2`](https://github.com/millionco/react-doctor/commit/f0198e2f2d9560a15bdb4a78f4a378ca2ac5fcdd) Thanks [@aidenybai](https://github.com/aidenybai)! - **New public package.** Project / dependency / framework detection,
+- [#249](https://github.com/millionco/react-doctor/pull/249) [`f0198e2`](https://github.com/millionco/react-doctor/commit/f0198e2f2d9560a15bdb4a78f4a378ca2ac5fcdd) - **New public package.** Project / dependency / framework detection,
   extracted from the `react-doctor` monolith in
   [#249](https://github.com/millionco/react-doctor/pull/249). Public
   surface: `discover-project`, `extract-dependency-info`,
@@ -73,7 +73,7 @@
   catalogs) so monorepos using Bun for dependency hoisting still get
   an accurate React major back from `resolve-catalog-version`.
 
-- [#254](https://github.com/millionco/react-doctor/pull/254) [`bfaf9c9`](https://github.com/millionco/react-doctor/commit/bfaf9c9530a9f8761df6e2d69abcf44c1699ff77) Thanks [@aidenybai](https://github.com/aidenybai)! - React major-version resolution hardens against the shapes that
+- [#254](https://github.com/millionco/react-doctor/pull/254) [`bfaf9c9`](https://github.com/millionco/react-doctor/commit/bfaf9c9530a9f8761df6e2d69abcf44c1699ff77) - React major-version resolution hardens against the shapes that
   showed up in beta-tester repros. Shared dependency-version-spec
   parsing replaces the per-call regexes
   (`utils/dependency-version-spec.ts`); monorepo-root traversal walks

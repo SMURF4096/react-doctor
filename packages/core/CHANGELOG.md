@@ -4,7 +4,7 @@
 
 ### Patch Changes
 
-- [#252](https://github.com/millionco/react-doctor/pull/252) [`2d90c1c`](https://github.com/millionco/react-doctor/commit/2d90c1c5ae6d901913a575d40a784058478479ec) Thanks [@aidenybai](https://github.com/aidenybai)! - Add public env-prefix detection (`get-public-env-prefix.ts`) and a
+- [#252](https://github.com/millionco/react-doctor/pull/252) [`2d90c1c`](https://github.com/millionco/react-doctor/commit/2d90c1c5ae6d901913a575d40a784058478479ec) - Add public env-prefix detection (`get-public-env-prefix.ts`) and a
   recommendation builder (`build-no-secrets-recommendation.ts`) so
   client-secret diagnostics are scoped to actually client-reachable
   bindings instead of every string literal in the project.
@@ -17,7 +17,7 @@
   handler rule so `response.headers` and locally-constructed `Map` /
   `Set` / `Headers` no longer fail the Next.js GET-handler diagnostic.
 
-- [#271](https://github.com/millionco/react-doctor/pull/271) [`7a7ec84`](https://github.com/millionco/react-doctor/commit/7a7ec84fad631d96f70279394be5f086b8424d17) Thanks [@aidenybai](https://github.com/aidenybai)! - **Per-surface diagnostic filtering.** New public API:
+- [#271](https://github.com/millionco/react-doctor/pull/271) [`7a7ec84`](https://github.com/millionco/react-doctor/commit/7a7ec84fad631d96f70279394be5f086b8424d17) - **Per-surface diagnostic filtering.** New public API:
   `diagnostic-surface.ts` (the `DiagnosticSurface` type — `pr-comment`,
   `cli`, `ci-failure-gate`), `filter-for-surface.ts` (filter a
   diagnostic list to those allowed on a given surface), and extended
@@ -26,7 +26,7 @@
   PR comments while keeping them visible in the CLI report and the
   CI gate. Exported from `packages/core/src/index.ts`.
 
-- [#266](https://github.com/millionco/react-doctor/pull/266) [`529015d`](https://github.com/millionco/react-doctor/commit/529015d1d89441c4708f49413ecd540db7c04255) Thanks [@aidenybai](https://github.com/aidenybai)! - Scope React Native rules to per-package boundaries. Previously every
+- [#266](https://github.com/millionco/react-doctor/pull/266) [`529015d`](https://github.com/millionco/react-doctor/commit/529015d1d89441c4708f49413ecd540db7c04255) - Scope React Native rules to per-package boundaries. Previously every
   `rn-*` rule fired on every file in a project whose top-level framework
   was detected as React Native or Expo — even on sibling workspaces that
   were clearly web targets. In a mixed RN + web monorepo (`apps/mobile`
@@ -88,7 +88,7 @@
 
 ### Minor Changes
 
-- [#249](https://github.com/millionco/react-doctor/pull/249) [`f0198e2`](https://github.com/millionco/react-doctor/commit/f0198e2f2d9560a15bdb4a78f4a378ca2ac5fcdd) Thanks [@aidenybai](https://github.com/aidenybai)! - **New public package.** Extracted from the `react-doctor` monolith
+- [#249](https://github.com/millionco/react-doctor/pull/249) [`f0198e2`](https://github.com/millionco/react-doctor/commit/f0198e2f2d9560a15bdb4a78f4a378ca2ac5fcdd) - **New public package.** Extracted from the `react-doctor` monolith
   in [#249](https://github.com/millionco/react-doctor/pull/249).
   Public surface: the oxlint runner family
   (`runners/oxlint/{config,capabilities,resolve-use-call-binding}.ts`,
@@ -105,22 +105,22 @@
 
 ### Patch Changes
 
-- [#208](https://github.com/millionco/react-doctor/pull/208) [`8556b31`](https://github.com/millionco/react-doctor/commit/8556b31d8e4e165f791db0aa60a6b038b18ec777) Thanks [@aidenybai](https://github.com/aidenybai)! - **User-feedback sweep.** Surface each rule's contribution to the
+- [#208](https://github.com/millionco/react-doctor/pull/208) [`8556b31`](https://github.com/millionco/react-doctor/commit/8556b31d8e4e165f791db0aa60a6b038b18ec777) - **User-feedback sweep.** Surface each rule's contribution to the
   project score via the new scoring transparency hooks, accept
   per-rule severity overrides, and accept a `ruleSet` selector from
   config — all without changing the public `diagnose()` signature.
 
-- [#254](https://github.com/millionco/react-doctor/pull/254) [`bfaf9c9`](https://github.com/millionco/react-doctor/commit/bfaf9c9530a9f8761df6e2d69abcf44c1699ff77) Thanks [@aidenybai](https://github.com/aidenybai)! - `runners/oxlint/capabilities.ts` now consults the detected React
+- [#254](https://github.com/millionco/react-doctor/pull/254) [`bfaf9c9`](https://github.com/millionco/react-doctor/commit/bfaf9c9530a9f8761df6e2d69abcf44c1699ff77) - `runners/oxlint/capabilities.ts` now consults the detected React
   major version when deciding which capability flags to enable. The
   React-19-only rule families are switched off on React 18 projects
   so the runner stops emitting rules the project can't act on.
 
-- [#257](https://github.com/millionco/react-doctor/pull/257) [`ffbd20f`](https://github.com/millionco/react-doctor/commit/ffbd20f3d0ebda2221d2ea93f87342165da90fdb) Thanks [@aidenybai](https://github.com/aidenybai)! - Adds `runners/oxlint/resolve-use-call-binding.ts` (619 LOC binding
+- [#257](https://github.com/millionco/react-doctor/pull/257) [`ffbd20f`](https://github.com/millionco/react-doctor/commit/ffbd20f3d0ebda2221d2ea93f87342165da90fdb) - Adds `runners/oxlint/resolve-use-call-binding.ts` (619 LOC binding
   resolver) and `runners/oxlint/should-suppress-local-use-hook-diagnostic.ts`
   so the runner can post-filter rules-of-hooks diagnostics that point
   at locally-defined `useX` helpers (not actually React hooks).
 
-- [#262](https://github.com/millionco/react-doctor/pull/262) [`bca5d30`](https://github.com/millionco/react-doctor/commit/bca5d30fc549a16c4628001dcd2c5a83e85c04f8) Thanks [@aidenybai](https://github.com/aidenybai)! - Eval-driven oxlint robustness pass. `run-oxlint.ts` now batches
+- [#262](https://github.com/millionco/react-doctor/pull/262) [`bca5d30`](https://github.com/millionco/react-doctor/commit/bca5d30fc549a16c4628001dcd2c5a83e85c04f8) - Eval-driven oxlint robustness pass. `run-oxlint.ts` now batches
   include paths via the new `list-source-files` helper instead of
   globbing the universe, `utils/dedupe-diagnostics.ts` collapses
   duplicate diagnostics emitted across batched runs, and the runner

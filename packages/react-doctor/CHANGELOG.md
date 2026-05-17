@@ -4,7 +4,7 @@
 
 ### Patch Changes
 
-- [#271](https://github.com/millionco/react-doctor/pull/271) [`7a7ec84`](https://github.com/millionco/react-doctor/commit/7a7ec84fad631d96f70279394be5f086b8424d17) Thanks [@aidenybai](https://github.com/aidenybai)! - **Per-surface diagnostic controls (CLI).** New
+- [#271](https://github.com/millionco/react-doctor/pull/271) [`7a7ec84`](https://github.com/millionco/react-doctor/commit/7a7ec84fad631d96f70279394be5f086b8424d17) - **Per-surface diagnostic controls (CLI).** New
   `cli/utils/inspect-flags.ts` flag + companion
   `cli/utils/resolve-cli-inspect-options.ts` and
   `cli/utils/validate-mode-flags.ts` plumbing wire the new
@@ -33,7 +33,7 @@
   `no-prevent-default` framework awareness
   ([#274](https://github.com/millionco/react-doctor/pull/274)).
 
-- [#266](https://github.com/millionco/react-doctor/pull/266) [`529015d`](https://github.com/millionco/react-doctor/commit/529015d1d89441c4708f49413ecd540db7c04255) Thanks [@aidenybai](https://github.com/aidenybai)! - Scope React Native rules to per-package boundaries. Previously every
+- [#266](https://github.com/millionco/react-doctor/pull/266) [`529015d`](https://github.com/millionco/react-doctor/commit/529015d1d89441c4708f49413ecd540db7c04255) - Scope React Native rules to per-package boundaries. Previously every
   `rn-*` rule fired on every file in a project whose top-level framework
   was detected as React Native or Expo — even on sibling workspaces that
   were clearly web targets. In a mixed RN + web monorepo (`apps/mobile`
@@ -112,7 +112,7 @@
 
 ### Minor Changes
 
-- [#249](https://github.com/millionco/react-doctor/pull/249) [`f0198e2`](https://github.com/millionco/react-doctor/commit/f0198e2f2d9560a15bdb4a78f4a378ca2ac5fcdd) Thanks [@aidenybai](https://github.com/aidenybai)! - **Internal-package extraction.** The CLI no longer vendors project
+- [#249](https://github.com/millionco/react-doctor/pull/249) [`f0198e2`](https://github.com/millionco/react-doctor/commit/f0198e2f2d9560a15bdb4a78f4a378ca2ac5fcdd) - **Internal-package extraction.** The CLI no longer vendors project
   detection, the oxlint runner, scoring, or the shared type layer
   inline — those modules now live in
   `@react-doctor/types`, `@react-doctor/project-info`, and
@@ -123,14 +123,14 @@
   and `react-doctor install` binaries are surface-compatible with
   0.1.6.
 
-- [#250](https://github.com/millionco/react-doctor/pull/250) [`6e2ee9d`](https://github.com/millionco/react-doctor/commit/6e2ee9d474fddbde4c1246ff65b2f3e5bb3a42fc) Thanks [@aidenybai](https://github.com/aidenybai)! - **CLI reorganised.** `src/cli/` is now split into `commands/` +
+- [#250](https://github.com/millionco/react-doctor/pull/250) [`6e2ee9d`](https://github.com/millionco/react-doctor/commit/6e2ee9d474fddbde4c1246ff65b2f3e5bb3a42fc) - **CLI reorganised.** `src/cli/` is now split into `commands/` +
   `utils/`, mirroring the layout ported from `react-grab`. Each
   subcommand has a dedicated module (`inspect`, `install`, version /
   help). No user-visible change to flags or output.
 
 ### Patch Changes
 
-- [#208](https://github.com/millionco/react-doctor/pull/208) [`8556b31`](https://github.com/millionco/react-doctor/commit/8556b31d8e4e165f791db0aa60a6b038b18ec777) Thanks [@aidenybai](https://github.com/aidenybai)! - **User-feedback sweep.** Reduce false positives across the design /
+- [#208](https://github.com/millionco/react-doctor/pull/208) [`8556b31`](https://github.com/millionco/react-doctor/commit/8556b31d8e4e165f791db0aa60a6b038b18ec777) - **User-feedback sweep.** Reduce false positives across the design /
   Tailwind / state-and-effects rule groups, surface per-rule scoring
   contributions in `react-doctor inspect`, and add `--severity` /
   `--rule-set` CLI options plus their `react-doctor.config.json`
@@ -142,7 +142,7 @@
   (Vercel AI Code Review sandbox and friends) get the same React-19
   rule gating the CLI gets.
 
-- [#202](https://github.com/millionco/react-doctor/pull/202) [`53fa4df`](https://github.com/millionco/react-doctor/commit/53fa4dffe837e0157fb850fef700fccaaec191ea) Thanks [@aidenybai](https://github.com/aidenybai)! - Detect the project's Tailwind version (`tailwindcss` in `package.json`,
+- [#202](https://github.com/millionco/react-doctor/pull/202) [`53fa4df`](https://github.com/millionco/react-doctor/commit/53fa4dffe837e0157fb850fef700fccaaec191ea) - Detect the project's Tailwind version (`tailwindcss` in `package.json`,
   including pnpm and Bun catalog references) and gate Tailwind-aware
   rules on it. `design-no-redundant-size-axes` (which suggests collapsing
   `w-N h-N` → `size-N`) now stays silent on Tailwind v3.0 … v3.3 — those

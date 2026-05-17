@@ -4,7 +4,7 @@
 
 ### Patch Changes
 
-- [#252](https://github.com/millionco/react-doctor/pull/252) [`2d90c1c`](https://github.com/millionco/react-doctor/commit/2d90c1c5ae6d901913a575d40a784058478479ec) Thanks [@aidenybai](https://github.com/aidenybai)! - `no-secrets-in-client-code` is scoped to client-reachable bindings.
+- [#252](https://github.com/millionco/react-doctor/pull/252) [`2d90c1c`](https://github.com/millionco/react-doctor/commit/2d90c1c5ae6d901913a575d40a784058478479ec) - `no-secrets-in-client-code` is scoped to client-reachable bindings.
   The rule no longer reports on values inside `server-only` /
   `"use server"` modules, on identifiers behind a public env-var prefix
   (`NEXT_PUBLIC_*`, `VITE_*`, `PUBLIC_*`, etc.), or on bindings
@@ -22,7 +22,7 @@
   the three. The rule still flags writes to module-scoped bindings,
   cookie stores, and external clients.
 
-- [#265](https://github.com/millionco/react-doctor/pull/265) [`18b7033`](https://github.com/millionco/react-doctor/commit/18b7033e9e9e6f45a13c1545c8c505922bd4ab8f) Thanks [@aidenybai](https://github.com/aidenybai)! - `async-defer-await` no longer reports three legitimate shapes:
+- [#265](https://github.com/millionco/react-doctor/pull/265) [`18b7033`](https://github.com/millionco/react-doctor/commit/18b7033e9e9e6f45a13c1545c8c505922bd4ab8f) - `async-defer-await` no longer reports three legitimate shapes:
   awaits inside destructured patterns with defaults
   (`const { a = await fallback() } = …`), bare
   `await expressionStatement;` that early-returns, and awaits guarded
@@ -33,7 +33,7 @@
   `is-early-exit-if-statement` drive the analysis, with a 409-line
   regression suite.
 
-- [#269](https://github.com/millionco/react-doctor/pull/269) [`838c7f4`](https://github.com/millionco/react-doctor/commit/838c7f4174eaa9a7d0aea26d7e618bcc30818315) Thanks [@aidenybai](https://github.com/aidenybai)! - `js-length-check-first` detects length guards anywhere earlier in an
+- [#269](https://github.com/millionco/react-doctor/pull/269) [`838c7f4`](https://github.com/millionco/react-doctor/commit/838c7f4174eaa9a7d0aea26d7e618bcc30818315) - `js-length-check-first` detects length guards anywhere earlier in an
   `&&` chain, not just as the immediate left operand. A guard like
   `obj && obj.items && obj.items.length > 0 && obj.items[0].id` no
   longer false-positives on the `[0]` access because the chain is
@@ -41,7 +41,7 @@
   collected (`collect-earlier-and-guard-operands`) before the rule
   decides.
 
-- [#270](https://github.com/millionco/react-doctor/pull/270) [`4cbf436`](https://github.com/millionco/react-doctor/commit/4cbf4368485b91f85701b3eed177282006b69fbc) Thanks [@aidenybai](https://github.com/aidenybai)! - `async-parallel` is suppressed in three legitimate contexts: test
+- [#270](https://github.com/millionco/react-doctor/pull/270) [`4cbf436`](https://github.com/millionco/react-doctor/commit/4cbf4368485b91f85701b3eed177282006b69fbc) - `async-parallel` is suppressed in three legitimate contexts: test
   files (`*.test.*` / `*.spec.*` / `__tests__/`, plus calls under
   `describe` / `it` / `test` / `beforeEach` / `afterEach` /
   `vi.*` / `jest.*`), browser-fixture / Playwright helpers
@@ -50,7 +50,7 @@
   `is-test-library-import-source` helper recognises Vitest, Jest,
   Mocha, Playwright, and Cypress imports.
 
-- [#272](https://github.com/millionco/react-doctor/pull/272) [`d821ca2`](https://github.com/millionco/react-doctor/commit/d821ca2a82aa5e0eae0a8de0da32123fc1b89102) Thanks [@aidenybai](https://github.com/aidenybai)! - `js-combine-iterations` skips lazy `Iterator` helper chains.
+- [#272](https://github.com/millionco/react-doctor/pull/272) [`d821ca2`](https://github.com/millionco/react-doctor/commit/d821ca2a82aa5e0eae0a8de0da32123fc1b89102) - `js-combine-iterations` skips lazy `Iterator` helper chains.
   `Iterator.from(...)`, `(...).values()` /
   `(...).entries()` / `(...).keys()` followed by
   `Iterator.prototype.{map,filter,take,drop,flatMap,reduce,forEach,toArray}`
@@ -58,7 +58,7 @@
   observable behaviour. The previous heuristic mis-flagged these as
   eager `Array.prototype` chains. Resolves [#205](https://github.com/millionco/react-doctor/issues/205).
 
-- [#274](https://github.com/millionco/react-doctor/pull/274) [`3b7cc7c`](https://github.com/millionco/react-doctor/commit/3b7cc7c37336b21e4c0292dbb123b762b10a9a87) Thanks [@aidenybai](https://github.com/aidenybai)! - `no-prevent-default` is framework-aware. Remix and Next.js
+- [#274](https://github.com/millionco/react-doctor/pull/274) [`3b7cc7c`](https://github.com/millionco/react-doctor/commit/3b7cc7c37336b21e4c0292dbb123b762b10a9a87) - `no-prevent-default` is framework-aware. Remix and Next.js
   progressive-enhancement form handlers (where `event.preventDefault()`
   is required to keep the client-side handler in control), synthetic
   events that have no documented alternative, and form `onSubmit`
@@ -66,7 +66,7 @@
   longer flagged. Backed by a 775-line regression suite covering the
   framework-specific shapes.
 
-- [#266](https://github.com/millionco/react-doctor/pull/266) [`529015d`](https://github.com/millionco/react-doctor/commit/529015d1d89441c4708f49413ecd540db7c04255) Thanks [@aidenybai](https://github.com/aidenybai)! - Scope React Native rules to per-package boundaries. Previously every
+- [#266](https://github.com/millionco/react-doctor/pull/266) [`529015d`](https://github.com/millionco/react-doctor/commit/529015d1d89441c4708f49413ecd540db7c04255) - Scope React Native rules to per-package boundaries. Previously every
   `rn-*` rule fired on every file in a project whose top-level framework
   was detected as React Native or Expo — even on sibling workspaces that
   were clearly web targets. In a mixed RN + web monorepo (`apps/mobile`
@@ -114,7 +114,7 @@ No behavioural change in this package; published alongside the
 
 ### Patch Changes
 
-- [#253](https://github.com/millionco/react-doctor/pull/253) [`9783acf`](https://github.com/millionco/react-doctor/commit/9783acf525a30a4aa69b20bf37b893bb39b362b0) Thanks [@aidenybai](https://github.com/aidenybai)! - `no-barrel-import` resolves each `index.{ts,tsx,js,jsx,mjs,cjs}`
+- [#253](https://github.com/millionco/react-doctor/pull/253) [`9783acf`](https://github.com/millionco/react-doctor/commit/9783acf525a30a4aa69b20bf37b893bb39b362b0) - `no-barrel-import` resolves each `index.{ts,tsx,js,jsx,mjs,cjs}`
   module's actual export surface (`export * from …`,
   `export { x } from …`, default re-exports) and rewrites diagnostics
   to point at the relative path of the underlying file, instead of
@@ -130,7 +130,7 @@ No behavioural change in this package; published alongside the
 
 ### Minor Changes
 
-- [#249](https://github.com/millionco/react-doctor/pull/249) [`f0198e2`](https://github.com/millionco/react-doctor/commit/f0198e2f2d9560a15bdb4a78f4a378ca2ac5fcdd) Thanks [@aidenybai](https://github.com/aidenybai)! - **Plugin restructured into per-rule modules.** The kitchen-sink
+- [#249](https://github.com/millionco/react-doctor/pull/249) [`f0198e2`](https://github.com/millionco/react-doctor/commit/f0198e2f2d9560a15bdb4a78f4a378ca2ac5fcdd) - **Plugin restructured into per-rule modules.** The kitchen-sink
   `src/plugin/rules/**.ts` files have been split so each rule lives in
   its own file under
   `src/plugin/rules/<category>/<rule-name>.ts`, with a generated
@@ -159,13 +159,13 @@ No behavioural change in this package; published alongside the
 
 ### Patch Changes
 
-- [#208](https://github.com/millionco/react-doctor/pull/208) [`8556b31`](https://github.com/millionco/react-doctor/commit/8556b31d8e4e165f791db0aa60a6b038b18ec777) Thanks [@aidenybai](https://github.com/aidenybai)! - **User-feedback sweep.** Reduce false positives across the design /
+- [#208](https://github.com/millionco/react-doctor/pull/208) [`8556b31`](https://github.com/millionco/react-doctor/commit/8556b31d8e4e165f791db0aa60a6b038b18ec777) - **User-feedback sweep.** Reduce false positives across the design /
   Tailwind / state-and-effects rule families, surface each rule's
   contribution to the project score, and add per-rule severity +
   rule-set selection config options. Closes the bulk of the
   feedback collected on 0.1.x.
 
-- [#254](https://github.com/millionco/react-doctor/pull/254) [`bfaf9c9`](https://github.com/millionco/react-doctor/commit/bfaf9c9530a9f8761df6e2d69abcf44c1699ff77) Thanks [@aidenybai](https://github.com/aidenybai)! - React-19-only rules
+- [#254](https://github.com/millionco/react-doctor/pull/254) [`bfaf9c9`](https://github.com/millionco/react-doctor/commit/bfaf9c9530a9f8761df6e2d69abcf44c1699ff77) - React-19-only rules
   (`prefer-use-effect-event`, the React-19 migration rule family) are
   now gated on the project's detected React major version. They stay
   silent on React 18 projects, on workspaces whose direct `react`
@@ -175,7 +175,7 @@ No behavioural change in this package; published alongside the
   suite and additional `parse-react-major` /
   `parse-react-peer-range` coverage.
 
-- [#255](https://github.com/millionco/react-doctor/pull/255) [`6bc33c8`](https://github.com/millionco/react-doctor/commit/6bc33c8aab2be7c7254ce9f2a059acbcdad17a58) Thanks [@aidenybai](https://github.com/aidenybai)! - `rerender-state-only-in-handlers` /
+- [#255](https://github.com/millionco/react-doctor/pull/255) [`6bc33c8`](https://github.com/millionco/react-doctor/commit/6bc33c8aab2be7c7254ce9f2a059acbcdad17a58) - `rerender-state-only-in-handlers` /
   `no-event-trigger-state` treat early-return guards
   (`if (state) return …`) as render-reachable state reads. Values
   consumed only to gate the render output no longer get reclassified
@@ -188,7 +188,7 @@ No behavioural change in this package; published alongside the
   `collect-function-like-local-names`) and an 887-line regression
   suite.
 
-- [#256](https://github.com/millionco/react-doctor/pull/256) [`0cd9355`](https://github.com/millionco/react-doctor/commit/0cd93551a4a4600282378125d9aa237ef655835a) Thanks [@aidenybai](https://github.com/aidenybai)! - `no-effect-event-handler` narrows what counts as an event handler.
+- [#256](https://github.com/millionco/react-doctor/pull/256) [`0cd9355`](https://github.com/millionco/react-doctor/commit/0cd93551a4a4600282378125d9aa237ef655835a) - `no-effect-event-handler` narrows what counts as an event handler.
   DOM imperatives (`document.classList.add/remove/toggle`,
   `el.scrollIntoView`, …), prop callbacks invoked from inside an
   effect, and side effects routed through a stable ref are no longer
@@ -197,7 +197,7 @@ No behavioural change in this package; published alongside the
   `has-document-class-list-mutation` helpers and a 490-line
   regression suite.
 
-- [#257](https://github.com/millionco/react-doctor/pull/257) [`ffbd20f`](https://github.com/millionco/react-doctor/commit/ffbd20f3d0ebda2221d2ea93f87342165da90fdb) Thanks [@aidenybai](https://github.com/aidenybai)! - Locally-defined functions whose name starts with `use…` (custom
+- [#257](https://github.com/millionco/react-doctor/pull/257) [`ffbd20f`](https://github.com/millionco/react-doctor/commit/ffbd20f3d0ebda2221d2ea93f87342165da90fdb) - Locally-defined functions whose name starts with `use…` (custom
   helpers that are not React hooks) no longer trigger
   rules-of-hooks-style diagnostics. Also lands two new typography
   rules: `no-em-dash-in-jsx-text` (em / en dashes in JSX text are
