@@ -84,14 +84,37 @@ Fix:
 - Pass `--annotations` when enabled.
 - Document annotations-only, comments-only, or both.
 
-### [ ] Add category-level rule controls
+### [x] Add category-level rule controls
 
-Status: partially addressed.
+Status: landed.
 
-Fix:
+Done:
 
-- Add severity overrides.
-- Close any remaining gaps for server-action and migration-hint rule defaults.
+- Added the ESLint / oxlint-shaped severity surface: top-level
+  `rules` and `categories` fields on `ReactDoctorConfig`, each a
+  `Record<string, "error" | "warn" | "off">`. `rules` is the exact
+  ESLint `.eslintrc` / flat-config shape; `categories` mirrors
+  oxlint's `categories` field, keyed by React Doctor's display
+  categories. Per-rule wins over per-category. Applied at lint
+  registration time so `"off"` short-circuits before the rule runs,
+  and re-stamped post-lint so `--fail-on`, the score, the CLI
+  summary, and external-plugin rules all see the user-chosen
+  severity.
+- Composes with the existing `surfaces` controls (per-channel
+  visibility) and `ignore.tags` (whole-family suppression for
+  behavioral groupings like `"design"` / `"test-noise"` /
+  `"migration-hint"` that don't align with a single category). Use
+  `rules` / `categories` to change severity across every channel
+  at once.
+- Bucket-derived auto-tags so cross-cutting controls can target whole
+  families without each rule repeating the tag — `"react-native"` on
+  every rule in the `react-native/` bucket, `"server-action"` on every
+  rule in the `server/` bucket, and explicit `"migration-hint"` on
+  `no-react19-deprecated-apis`, `no-react-dom-deprecated-apis`,
+  `no-legacy-class-lifecycles`, and `no-legacy-context-api`.
+- README documents the five rule families called out in the original
+  fix (`design`, `test-noise`, `react-native`, `server-action`,
+  `migration-hint`) with copy-pasteable JSON examples.
 
 ### [ ] Support mature-codebase adoption workflows natively
 

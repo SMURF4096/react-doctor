@@ -27,6 +27,18 @@ const BUCKET_TO_FRAMEWORK = {
   "tanstack-query": "tanstack-query",
 };
 
+// Bucket directory → behavioral tags merged onto every rule in that
+// bucket at registry-build time. Lets cross-cutting controls
+// (`severity.tags`, `surfaces.*.excludeTags`,
+// `config.ignore.tags`) target whole rule families without each rule
+// needing to repeat the tag in its `defineRule({...})` call. Rule-
+// authored tags layer on top (deduped at runtime), so a rule can both
+// inherit a bucket tag and carry its own.
+const BUCKET_TO_AUTO_TAGS = {
+  "react-native": ["react-native"],
+  server: ["server-action"],
+};
+
 // Bucket directory → default category. A rule MAY override its category
 // with an explicit `category: "..."` field in its `defineRule({...})` call
 // (e.g. some `tanstack-start/` and `nextjs/` rules override to "Security").
@@ -96,7 +108,16 @@ for (const bucket of fs.readdirSync(PLUGIN_RULES_ROOT, { withFileTypes: true }))
         .relative(path.dirname(REGISTRY_OUTPUT), filePath)
         .replaceAll(path.sep, "/")
         .replace(/\.ts$/, ".js");
-    ruleEntries.push({ ruleId, identifier, relativeImport, framework, category, severity });
+    const autoTags = BUCKET_TO_AUTO_TAGS[bucket.name] ?? [];
+    ruleEntries.push({
+      ruleId,
+      identifier,
+      relativeImport,
+      framework,
+      category,
+      severity,
+      autoTags,
+    });
   }
 }
 
@@ -118,6 +139,19 @@ const importLines = ruleEntries
 // has nothing to rewrite. Single-line entries would be reformatted when
 // they exceed the 100-char default width, and the registry-overwrite-on-
 // codegen contract would loop forever.
+const formatAutoTagsLine = (entry) => {
+  if (entry.autoTags.length === 0) return "";
+  // Merge bucket-derived auto-tags with rule-authored tags at runtime,
+  // deduped so a rule that explicitly repeats the bucket tag doesn't
+  // end up with `["react-native", "react-native"]`. The `[...new Set(...)]`
+  // form keeps every emitted line under prettier's 100-char limit (the
+  // longest rule identifier in the project still fits comfortably) so
+  // we don't have to mirror prettier's wrap decision at codegen time
+  // — `gen:check` stays idempotent.
+  const autoTagLiteral = entry.autoTags.map((tag) => `"${tag}"`).join(", ");
+  return `      tags: [...new Set([${autoTagLiteral}, ...(${entry.identifier}.tags ?? [])])],\n`;
+};
+
 const ruleLines = ruleEntries
   .map(
     (entry) =>
@@ -132,6 +166,7 @@ const ruleLines = ruleEntries
       `      ...${entry.identifier},\n` +
       `      framework: "${entry.framework}",\n` +
       `      category: "${entry.category}",\n` +
+      formatAutoTagsLine(entry) +
       `    },\n` +
       `  },`,
   )

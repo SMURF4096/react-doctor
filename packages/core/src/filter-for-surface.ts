@@ -1,4 +1,3 @@
-import reactDoctorPlugin from "oxlint-plugin-react-doctor";
 import type {
   Diagnostic,
   DiagnosticSurface,
@@ -6,6 +5,7 @@ import type {
   SurfaceControls,
 } from "@react-doctor/types";
 import { DEFAULT_SURFACE_EXCLUDED_TAGS } from "./diagnostic-surface.js";
+import { getDiagnosticRuleIdentity } from "./get-diagnostic-rule-identity.js";
 
 interface ResolvedSurfaceControls {
   includeTags: ReadonlySet<string>;
@@ -18,26 +18,21 @@ interface ResolvedSurfaceControls {
 
 const toStringSet = (values: ReadonlyArray<string> | undefined): ReadonlySet<string> => {
   if (!values || values.length === 0) return new Set<string>();
-  const collected = new Set<string>();
-  for (const value of values) {
-    if (typeof value === "string" && value.length > 0) collected.add(value);
-  }
-  return collected;
+  return new Set(values.filter((value) => typeof value === "string" && value.length > 0));
 };
 
 const buildResolvedControls = (
   surface: DiagnosticSurface,
   userControls: SurfaceControls | undefined,
 ): ResolvedSurfaceControls => {
-  const baseExcludeTags = new Set<string>(DEFAULT_SURFACE_EXCLUDED_TAGS[surface]);
-  const userIncludeTags = toStringSet(userControls?.includeTags);
-  for (const includedTag of userIncludeTags) baseExcludeTags.delete(includedTag);
-  const userExcludeTags = toStringSet(userControls?.excludeTags);
-  for (const excludedTag of userExcludeTags) baseExcludeTags.add(excludedTag);
+  const excludeTags = new Set<string>(DEFAULT_SURFACE_EXCLUDED_TAGS[surface]);
+  const includeTags = toStringSet(userControls?.includeTags);
+  for (const tag of includeTags) excludeTags.delete(tag);
+  for (const tag of toStringSet(userControls?.excludeTags)) excludeTags.add(tag);
 
   return {
-    includeTags: userIncludeTags,
-    excludeTags: baseExcludeTags,
+    includeTags,
+    excludeTags,
     includeCategories: toStringSet(userControls?.includeCategories),
     excludeCategories: toStringSet(userControls?.excludeCategories),
     includeRuleKeys: toStringSet(userControls?.includeRules),
@@ -45,21 +40,8 @@ const buildResolvedControls = (
   };
 };
 
-const getRuleTags = (diagnostic: Diagnostic): ReadonlyArray<string> => {
-  if (diagnostic.plugin !== "react-doctor") return [];
-  const rule = reactDoctorPlugin.rules[diagnostic.rule];
-  return rule?.tags ?? [];
-};
-
-const intersectsAny = (
-  values: ReadonlyArray<string>,
-  candidateSet: ReadonlySet<string>,
-): boolean => {
-  for (const value of values) {
-    if (candidateSet.has(value)) return true;
-  }
-  return false;
-};
+const intersects = (values: ReadonlyArray<string>, candidates: ReadonlySet<string>): boolean =>
+  values.some((value) => candidates.has(value));
 
 export const isDiagnosticOnSurface = (
   diagnostic: Diagnostic,
@@ -67,16 +49,17 @@ export const isDiagnosticOnSurface = (
   config: ReactDoctorConfig | null,
 ): boolean => {
   const resolved = buildResolvedControls(surface, config?.surfaces?.[surface]);
-  const ruleKey = `${diagnostic.plugin}/${diagnostic.rule}`;
-  const tags = getRuleTags(diagnostic);
+  const { ruleKey, category, tags } = getDiagnosticRuleIdentity(diagnostic);
 
+  // Include wins over exclude — checked first so a single rule can be
+  // promoted back into a surface even when its tag / category is hidden.
   if (resolved.includeRuleKeys.has(ruleKey)) return true;
-  if (resolved.includeCategories.has(diagnostic.category)) return true;
-  if (intersectsAny(tags, resolved.includeTags)) return true;
+  if (resolved.includeCategories.has(category)) return true;
+  if (intersects(tags, resolved.includeTags)) return true;
 
   if (resolved.excludeRuleKeys.has(ruleKey)) return false;
-  if (resolved.excludeCategories.has(diagnostic.category)) return false;
-  if (intersectsAny(tags, resolved.excludeTags)) return false;
+  if (resolved.excludeCategories.has(category)) return false;
+  if (intersects(tags, resolved.excludeTags)) return false;
 
   return true;
 };

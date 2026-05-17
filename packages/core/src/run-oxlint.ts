@@ -9,6 +9,7 @@ import {
   SOURCE_FILE_PATTERN,
 } from "./constants.js";
 import { batchIncludePaths } from "./batch-include-paths.js";
+import { buildRuleSeverityControls } from "./build-rule-severity-controls.js";
 import { canOxlintExtendConfig } from "./can-oxlint-extend-config.js";
 import { collectIgnorePatterns } from "./collect-ignore-patterns.js";
 import { detectUserLintConfigPaths } from "./detect-user-lint-config.js";
@@ -424,6 +425,7 @@ export const runOxlint = async (options: RunOxlintOptions): Promise<Diagnostic[]
         (entry): entry is string => typeof entry === "string" && entry.length > 0,
       )
     : undefined;
+  const severityControls = buildRuleSeverityControls(userConfig);
 
   validateRuleRegistration();
 
@@ -461,6 +463,7 @@ export const runOxlint = async (options: RunOxlintOptions): Promise<Diagnostic[]
     extendsPaths,
     ignoredTags,
     serverAuthFunctionNames,
+    severityControls,
   });
   // HACK: only neutralize disable comments in audit mode. Default
   // behavior respects the user's existing `// eslint-disable*` /
@@ -594,6 +597,7 @@ export const runOxlint = async (options: RunOxlintOptions): Promise<Diagnostic[]
         extendsPaths: [],
         ignoredTags,
         serverAuthFunctionNames,
+        severityControls,
       });
       writeOxlintConfig(fallbackConfig);
       return await spawnLintBatches();

@@ -46,6 +46,7 @@ export const noLegacyContextApi = defineRule<Rule>({
   id: "no-legacy-context-api",
   severity: "error",
   category: "Correctness",
+  tags: ["migration-hint"],
   recommendation:
     "Replace `childContextTypes` + `getChildContext` with `const MyContext = createContext(...)` + `<MyContext.Provider value={...}>`; replace `contextTypes` with `static contextType = MyContext` (single context) or `useContext()` / `use()` from a function component. The provider and every consumer must migrate together — partial migrations leave consumers reading the wrong context.",
   create: (context: RuleContext) => {

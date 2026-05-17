@@ -1,5 +1,12 @@
-import type { DiagnosticSurface, ReactDoctorConfig, SurfaceControls } from "@react-doctor/types";
+import type {
+  DiagnosticSurface,
+  ReactDoctorConfig,
+  RuleSeverityOverride,
+  SurfaceControls,
+} from "@react-doctor/types";
 import { DIAGNOSTIC_SURFACES, isDiagnosticSurface } from "./diagnostic-surface.js";
+
+const VALID_RULE_SEVERITIES: ReadonlyArray<RuleSeverityOverride> = ["error", "warn", "off"];
 
 // Boolean fields where the user might write `"true"` / `"false"` strings
 // in JSON by mistake. We coerce-and-warn rather than silently accept the
@@ -16,6 +23,19 @@ const BOOLEAN_FIELD_NAMES = [
 
 const STRING_FIELD_NAMES = ["rootDir"] as const satisfies ReadonlyArray<keyof ReactDoctorConfig>;
 
+const SURFACE_CONTROL_FIELD_NAMES = [
+  "includeTags",
+  "excludeTags",
+  "includeCategories",
+  "excludeCategories",
+  "includeRules",
+  "excludeRules",
+] as const satisfies ReadonlyArray<keyof SurfaceControls>;
+
+const SEVERITY_FIELD_NAMES = ["rules", "categories"] as const satisfies ReadonlyArray<
+  keyof ReactDoctorConfig
+>;
+
 // HACK: write to stderr directly so the warning is visible even in
 // `--json` mode (where the logger is silenced to keep stdout a single
 // valid JSON document). Same pattern as `coerceDiffValue` in cli.ts.
@@ -23,17 +43,23 @@ const warnConfigField = (message: string): void => {
   process.stderr.write(`[react-doctor] ${message}\n`);
 };
 
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const formatType = (value: unknown): string =>
+  typeof value === "string" ? `"${value}"` : typeof value;
+
+const isRuleSeverity = (value: unknown): value is RuleSeverityOverride =>
+  typeof value === "string" && (VALID_RULE_SEVERITIES as ReadonlyArray<string>).includes(value);
+
 const coerceMaybeBooleanString = (fieldName: string, value: unknown): boolean | undefined => {
-  if (typeof value === "boolean" || value === undefined) return value as boolean | undefined;
-  if (value === "true") {
-    warnConfigField(`config field "${fieldName}" is the string "true"; treating as boolean true.`);
-    return true;
-  }
-  if (value === "false") {
+  if (typeof value === "boolean") return value;
+  if (value === "true" || value === "false") {
+    const coerced = value === "true";
     warnConfigField(
-      `config field "${fieldName}" is the string "false"; treating as boolean false.`,
+      `config field "${fieldName}" is the string "${value}"; treating as boolean ${coerced}.`,
     );
-    return false;
+    return coerced;
   }
   warnConfigField(
     `config field "${fieldName}" must be a boolean (got ${typeof value}); ignoring this field.`,
@@ -49,42 +75,27 @@ const validateString = (fieldName: string, value: unknown): string | undefined =
   return undefined;
 };
 
-const SURFACE_CONTROL_FIELD_NAMES = [
-  "includeTags",
-  "excludeTags",
-  "includeCategories",
-  "excludeCategories",
-  "includeRules",
-  "excludeRules",
-] as const satisfies ReadonlyArray<keyof SurfaceControls>;
-
 const validateStringArrayField = (fieldName: string, value: unknown): string[] | undefined => {
-  if (value === undefined) return undefined;
   if (!Array.isArray(value)) {
     warnConfigField(
       `config field "${fieldName}" must be an array of strings (got ${typeof value}); ignoring this field.`,
     );
     return undefined;
   }
-  const collected: string[] = [];
-  for (const entry of value) {
-    if (typeof entry !== "string") {
-      warnConfigField(
-        `config field "${fieldName}" contains a non-string entry (${typeof entry}); ignoring the entry.`,
-      );
-      continue;
-    }
-    collected.push(entry);
-  }
-  return collected;
+  return value.filter((entry): entry is string => {
+    if (typeof entry === "string") return true;
+    warnConfigField(
+      `config field "${fieldName}" contains a non-string entry (${typeof entry}); ignoring the entry.`,
+    );
+    return false;
+  });
 };
 
 const validateSurfaceControls = (
   surface: DiagnosticSurface,
   rawControls: unknown,
 ): SurfaceControls | undefined => {
-  if (rawControls === undefined) return undefined;
-  if (typeof rawControls !== "object" || rawControls === null || Array.isArray(rawControls)) {
+  if (!isPlainObject(rawControls)) {
     warnConfigField(
       `config field "surfaces.${surface}" must be an object (got ${typeof rawControls}); ignoring this surface.`,
     );
@@ -92,11 +103,12 @@ const validateSurfaceControls = (
   }
   const validated: SurfaceControls = {};
   for (const fieldName of SURFACE_CONTROL_FIELD_NAMES) {
-    const value = (rawControls as Record<string, unknown>)[fieldName];
-    const validatedValue = validateStringArrayField(`surfaces.${surface}.${fieldName}`, value);
-    if (validatedValue !== undefined) {
-      (validated as Record<string, string[]>)[fieldName] = validatedValue;
-    }
+    if (rawControls[fieldName] === undefined) continue;
+    const result = validateStringArrayField(
+      `surfaces.${surface}.${fieldName}`,
+      rawControls[fieldName],
+    );
+    if (result !== undefined) validated[fieldName] = result;
   }
   return validated;
 };
@@ -104,8 +116,7 @@ const validateSurfaceControls = (
 const validateSurfacesField = (
   rawSurfaces: unknown,
 ): Partial<Record<DiagnosticSurface, SurfaceControls>> | undefined => {
-  if (rawSurfaces === undefined) return undefined;
-  if (typeof rawSurfaces !== "object" || rawSurfaces === null || Array.isArray(rawSurfaces)) {
+  if (!isPlainObject(rawSurfaces)) {
     warnConfigField(
       `config field "surfaces" must be an object (got ${typeof rawSurfaces}); ignoring this field.`,
     );
@@ -125,39 +136,75 @@ const validateSurfacesField = (
   return validated;
 };
 
+// Validates one of the three top-level severity maps (`rules` /
+// `categories` / `tags`) — ESLint / oxlint-shaped severity surface.
+// Returns the validated map, dropping invalid entries with a warning.
+const validateSeverityMap = (
+  fieldName: string,
+  rawMap: unknown,
+): Record<string, RuleSeverityOverride> | undefined => {
+  if (!isPlainObject(rawMap)) {
+    warnConfigField(
+      `config field "${fieldName}" must be an object (got ${typeof rawMap}); ignoring this field.`,
+    );
+    return undefined;
+  }
+  const validated: Record<string, RuleSeverityOverride> = {};
+  for (const [key, value] of Object.entries(rawMap)) {
+    if (key.length === 0) {
+      warnConfigField(`config field "${fieldName}" has an empty key; ignoring the entry.`);
+      continue;
+    }
+    if (!isRuleSeverity(value)) {
+      warnConfigField(
+        `config field "${fieldName}.${key}" must be one of: ${VALID_RULE_SEVERITIES.join(", ")} (got ${formatType(value)}); ignoring the entry.`,
+      );
+      continue;
+    }
+    validated[key] = value;
+  }
+  return validated;
+};
+
+// Applies a validator to one config field: undefined skips, an `undefined`
+// return strips the field, anything else replaces it. Keeps the main
+// loop free of the repeating "if (raw === undefined) continue; result =
+// validator(...); if (result === undefined) delete; else assign" dance.
+const applyFieldValidator = <Key extends keyof ReactDoctorConfig>(
+  config: ReactDoctorConfig,
+  validated: ReactDoctorConfig,
+  fieldName: Key,
+  validator: (value: unknown) => ReactDoctorConfig[Key] | undefined,
+): void => {
+  const raw = (config as Record<string, unknown>)[fieldName];
+  if (raw === undefined) return;
+  const result = validator(raw);
+  if (result === undefined) {
+    delete (validated as Record<string, unknown>)[fieldName];
+  } else {
+    (validated as Record<string, unknown>)[fieldName] = result;
+  }
+};
+
 // Returns a config with boolean fields coerced from common JSON-typing
 // mistakes (string "true"/"false") and other invalid types stripped.
-// Non-boolean fields pass through untouched — the consumer still does
-// its own runtime checks for those.
+// Non-validated fields pass through untouched — consumers still do their
+// own runtime checks for those.
 export const validateConfigTypes = (config: ReactDoctorConfig): ReactDoctorConfig => {
   const validated: ReactDoctorConfig = { ...config };
   for (const fieldName of BOOLEAN_FIELD_NAMES) {
-    const original = (config as Record<string, unknown>)[fieldName];
-    if (original === undefined) continue;
-    const coerced = coerceMaybeBooleanString(fieldName, original);
-    if (coerced === undefined) {
-      delete (validated as Record<string, unknown>)[fieldName];
-    } else {
-      (validated as Record<string, unknown>)[fieldName] = coerced;
-    }
+    applyFieldValidator(config, validated, fieldName, (value) =>
+      coerceMaybeBooleanString(fieldName, value),
+    );
   }
   for (const fieldName of STRING_FIELD_NAMES) {
-    const original = (config as Record<string, unknown>)[fieldName];
-    if (original === undefined) continue;
-    const validatedString = validateString(fieldName, original);
-    if (validatedString === undefined) {
-      delete (validated as Record<string, unknown>)[fieldName];
-    } else {
-      (validated as Record<string, unknown>)[fieldName] = validatedString;
-    }
+    applyFieldValidator(config, validated, fieldName, (value) => validateString(fieldName, value));
   }
-  if ((config as Record<string, unknown>).surfaces !== undefined) {
-    const validatedSurfaces = validateSurfacesField((config as Record<string, unknown>).surfaces);
-    if (validatedSurfaces === undefined) {
-      delete (validated as Record<string, unknown>).surfaces;
-    } else {
-      (validated as Record<string, unknown>).surfaces = validatedSurfaces;
-    }
+  applyFieldValidator(config, validated, "surfaces", validateSurfacesField);
+  for (const fieldName of SEVERITY_FIELD_NAMES) {
+    applyFieldValidator(config, validated, fieldName, (value) =>
+      validateSeverityMap(fieldName, value),
+    );
   }
   return validated;
 };

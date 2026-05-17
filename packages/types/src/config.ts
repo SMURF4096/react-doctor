@@ -34,6 +34,30 @@ interface ReactDoctorIgnoreConfig {
  */
 export type DiagnosticSurface = "cli" | "prComment" | "score" | "ciFailure";
 
+/**
+ * Severity value accepted by the top-level `rules` and `categories`
+ * config fields. Exactly the same form ESLint and oxlint accept:
+ * `"off"` skips registration entirely (the rule never runs and
+ * never enters any surface); `"error"` / `"warn"` change the rule's
+ * registered severity.
+ *
+ * For visibility-only adjustments (silence on PR comments but keep
+ * on CLI / score), prefer `surfaces` instead — severity applies
+ * before lint runs and is the most aggressive control.
+ */
+export type RuleSeverityOverride = "error" | "warn" | "off";
+
+/**
+ * Internal shape consumed by `resolveRuleSeverityOverride` and
+ * `applySeverityControls`. Assembled at runtime from the top-level
+ * `rules` and `categories` fields on `ReactDoctorConfig`. Per-rule
+ * wins over per-category when both match the same diagnostic.
+ */
+export interface RuleSeverityControls {
+  rules?: Record<string, RuleSeverityOverride>;
+  categories?: Record<string, RuleSeverityOverride>;
+}
+
 export interface SurfaceControls {
   /**
    * Tag names whose diagnostics should be force-included on the surface,
@@ -179,4 +203,41 @@ export interface ReactDoctorConfig {
    * score or PR-comment surface.
    */
   surfaces?: Partial<Record<DiagnosticSurface, SurfaceControls>>;
+  /**
+   * Per-rule severity map — the exact ESLint / oxlint top-level
+   * `rules` field. Keys are fully-qualified rule keys
+   * (`"<plugin>/<rule>"`, e.g. `"react-doctor/no-array-index-as-key"`),
+   * values are `"error" | "warn" | "off"`.
+   *
+   * `"off"` skips registration in the generated lint config so the
+   * rule never runs; `"error"` / `"warn"` re-stamp the registered
+   * severity and the post-lint diagnostic, so downstream consumers
+   * (`--fail-on`, the score, the printed list) all see the
+   * user-chosen severity.
+   *
+   * For visibility-only changes (silence on PR comments but keep on
+   * CLI / score), prefer `surfaces` instead. Most specific control
+   * wins: `rules` > `categories` > `tags`.
+   *
+   * ```json
+   * { "rules": { "react-doctor/no-array-index-as-key": "error" } }
+   * ```
+   */
+  rules?: Record<string, RuleSeverityOverride>;
+  /**
+   * Per-category severity map. Mirrors oxlint's top-level
+   * `categories` field, but keyed by React Doctor's display
+   * categories (`"Server"`, `"React Native"`, `"Architecture"`,
+   * `"Bundle Size"`, `"State & Effects"`, `"Security"`,
+   * `"Accessibility"`, `"Performance"`, `"Correctness"`, …).
+   *
+   * ```json
+   * { "categories": { "React Native": "warn", "Server": "off" } }
+   * ```
+   *
+   * To silence a whole tag-defined rule family (e.g. `"design"`,
+   * `"test-noise"`, `"migration-hint"`) that doesn't align with a
+   * single category, use `ignore.tags` instead.
+   */
+  categories?: Record<string, RuleSeverityOverride>;
 }

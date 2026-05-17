@@ -6,7 +6,8 @@ import reactDoctorPlugin, {
   YOU_MIGHT_NOT_NEED_EFFECT_RULES,
 } from "oxlint-plugin-react-doctor";
 import type { OxlintRuleSeverity } from "oxlint-plugin-react-doctor";
-import type { ProjectInfo } from "@react-doctor/types";
+import type { ProjectInfo, RuleSeverityControls } from "@react-doctor/types";
+import { resolveRuleSeverityOverride } from "../../resolve-rule-severity-override.js";
 import { buildCapabilities, shouldEnableRule } from "./capabilities.js";
 import {
   filterRulesToAvailable,
@@ -23,6 +24,7 @@ export interface OxlintConfigOptions {
   extendsPaths?: string[];
   ignoredTags?: ReadonlySet<string>;
   serverAuthFunctionNames?: ReadonlyArray<string>;
+  severityControls?: RuleSeverityControls;
 }
 
 const resolveSettingsRootDirectory = (rootDirectory: string): string => {
@@ -37,6 +39,7 @@ export const createOxlintConfig = ({
   extendsPaths = [],
   ignoredTags = new Set<string>(),
   serverAuthFunctionNames,
+  severityControls,
 }: OxlintConfigOptions) => {
   const reactHooksJsPlugin = resolveReactHooksJsPlugin(project.hasReactCompiler, customRulesOnly);
   const reactCompilerRules = reactHooksJsPlugin
@@ -70,7 +73,16 @@ export const createOxlintConfig = ({
     // and activate unconditionally once any tag filters pass.
     if (rule.framework !== "global" && !rule.requires) continue;
     if (!shouldEnableRule(rule.requires, rule.tags, capabilities, ignoredTags)) continue;
-    enabledReactDoctorRules[fullKey] = rule.severity;
+    // `"off"` short-circuits the rule before registration (it never runs,
+    // never emits, never reaches any surface). `"error"` / `"warn"` flow
+    // straight into the oxlint config as the registered severity.
+    const severity =
+      resolveRuleSeverityOverride(
+        { ruleKey: fullKey, category: rule.category },
+        severityControls,
+      ) ?? rule.severity;
+    if (severity === "off") continue;
+    enabledReactDoctorRules[fullKey] = severity;
   }
 
   return {

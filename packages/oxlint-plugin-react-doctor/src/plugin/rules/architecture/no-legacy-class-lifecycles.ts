@@ -59,6 +59,7 @@ export const noLegacyClassLifecycles = defineRule<Rule>({
   id: "no-legacy-class-lifecycles",
   severity: "error",
   category: "Correctness",
+  tags: ["migration-hint"],
   recommendation:
     "Move side effects in `componentWillMount` to `componentDidMount`; replace `componentWillReceiveProps` with `componentDidUpdate` (compare prevProps) or the static `getDerivedStateFromProps` for pure state derivation; replace `componentWillUpdate` with `getSnapshotBeforeUpdate` paired with `componentDidUpdate`. The `UNSAFE_` prefix only silences the warning — React 19 removes both forms.",
   create: (context: RuleContext) => {

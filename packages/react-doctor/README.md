@@ -205,6 +205,19 @@ Diagnostics flow through four independent surfaces — `cli`, `prComment`, `scor
 
 Each surface accepts `includeTags`, `excludeTags`, `includeCategories`, `excludeCategories`, `includeRules`, and `excludeRules`. Include wins over exclude when both match. Run the CLI with `--pr-comment` (the GitHub Action passes it automatically when `github-token` is set) to apply the `prComment` surface to the printed output destined for sticky PR comments.
 
+#### Rule severity (`rules`, `categories`)
+
+Same shape as ESLint / oxlint. `rules` is ESLint's exact field; `categories` mirrors oxlint's, keyed by React Doctor display categories (`"React Native"`, `"Server"`, `"Architecture"`, …).
+
+```json
+{
+  "rules": { "react-doctor/no-array-index-as-key": "error" },
+  "categories": { "React Native": "warn" }
+}
+```
+
+Per-rule wins over per-category. `"off"` short-circuits before the rule runs; `"warn"` / `"error"` re-stamps the diagnostic so every channel — CLI, PR comment, score, `--fail-on` — sees the chosen severity, including for external-plugin rules. Use `surfaces` instead when you only want to hide a rule from one channel; use `ignore.tags` to silence a whole tag-defined family (`"design"`, `"test-noise"`, `"migration-hint"`) that doesn't align with a single category.
+
 #### Optional companion plugins
 
 When the following ESLint plugins are installed in the scanned project (or hoisted in your monorepo), React Doctor folds their rules into the same scan. Both are listed as **optional peer dependencies** — install only what you want.
