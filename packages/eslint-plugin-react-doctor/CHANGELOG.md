@@ -4,7 +4,23 @@
 
 ### Patch Changes
 
-- fix
+- Inherits the rule-fix wave from
+  `oxlint-plugin-react-doctor@0.2.0-beta.5` via the shared rule
+  registry: `no-secrets-in-client-code` scoping
+  ([#252](https://github.com/millionco/react-doctor/pull/252)),
+  `nextjs-no-side-effect-in-get-handler` safe local bindings
+  ([#260](https://github.com/millionco/react-doctor/pull/260)),
+  `async-defer-await` destructuring / bare-statement / early-return
+  fixes ([#265](https://github.com/millionco/react-doctor/pull/265)),
+  `js-length-check-first` `&&`-chain detection
+  ([#269](https://github.com/millionco/react-doctor/pull/269)),
+  `async-parallel` test / browser-fixture suppression
+  ([#270](https://github.com/millionco/react-doctor/pull/270)),
+  `js-combine-iterations` lazy `Iterator` skip
+  ([#272](https://github.com/millionco/react-doctor/pull/272)), and
+  `no-prevent-default` framework awareness
+  ([#274](https://github.com/millionco/react-doctor/pull/274)). See
+  the oxlint plugin changelog for per-rule detail.
 
 - [#266](https://github.com/millionco/react-doctor/pull/266) [`529015d`](https://github.com/millionco/react-doctor/commit/529015d1d89441c4708f49413ecd540db7c04255) Thanks [@aidenybai](https://github.com/aidenybai)! - Scope React Native rules to per-package boundaries. Previously every
   `rn-*` rule fired on every file in a project whose top-level framework
@@ -45,8 +61,6 @@
   keep the rule active even when the surrounding package classification
   is ambiguous.
 
-- fix
-
 - Updated dependencies [[`529015d`](https://github.com/millionco/react-doctor/commit/529015d1d89441c4708f49413ecd540db7c04255)]:
   - oxlint-plugin-react-doctor@0.2.0-beta.5
 
@@ -61,6 +75,10 @@
 
 ### Patch Changes
 
+- Inherits the `no-barrel-import` index-resolution fix from
+  [#253](https://github.com/millionco/react-doctor/pull/253) via the
+  shared rule registry. See the oxlint plugin changelog.
+
 - Updated dependencies []:
   - oxlint-plugin-react-doctor@0.2.0-beta.3
 
@@ -68,9 +86,29 @@
 
 ### Minor Changes
 
-- fix
+- Inherits the per-rule module restructuring from
+  `oxlint-plugin-react-doctor@0.2.0-beta.2`
+  ([#249](https://github.com/millionco/react-doctor/pull/249) and
+  follow-ups). The published ESLint plugin shape (flat-config-ready
+  `recommended` / framework presets, `react-doctor/*` rule namespace)
+  is unchanged — the bump is minor because rule authors writing
+  custom shims now consume per-file modules instead of the previous
+  kitchen-sink files.
 
 ### Patch Changes
+
+- Inherits the beta.2 false-positive sweep from
+  `oxlint-plugin-react-doctor@0.2.0-beta.2`:
+  user-feedback rule tuning + scoring transparency
+  ([#208](https://github.com/millionco/react-doctor/pull/208)),
+  React-19 rule version-gating
+  ([#254](https://github.com/millionco/react-doctor/pull/254)),
+  render-reachable state analysis
+  ([#255](https://github.com/millionco/react-doctor/pull/255)),
+  narrowed `no-effect-event-handler` detection
+  ([#256](https://github.com/millionco/react-doctor/pull/256)), and
+  local `useX` helper suppression + new typography rules
+  ([#257](https://github.com/millionco/react-doctor/pull/257)).
 
 - Updated dependencies []:
   - oxlint-plugin-react-doctor@0.2.0-beta.2
