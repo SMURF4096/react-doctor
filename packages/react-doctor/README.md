@@ -23,7 +23,9 @@ Run this at your project root:
 npx -y react-doctor@latest .
 ```
 
-You'll get a score (75+ Great, 50 to 74 Needs work, under 50 Critical) and a list of issues across state & effects, performance, architecture, security, accessibility, and dead code. Rules toggle automatically based on your framework and React version.
+You'll get a score (75+ Great, 50 to 74 Needs work, under 50 Critical) and a list of issues across state & effects, performance, architecture, security, and accessibility. Rules toggle automatically based on your framework and React version.
+
+> **Migration note:** React Doctor used to bundle [knip](https://knip.dev/) for dead-code detection. That integration was removed in v0.2 — if you want dead-code analysis, run `npx knip` directly as part of your own pre-commit or CI pipeline.
 
 https://github.com/user-attachments/assets/07cc88d9-9589-44c3-aa73-5d603cb1c570
 
