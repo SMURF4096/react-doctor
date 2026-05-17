@@ -1,13 +1,15 @@
 import type { ReactDoctorConfig } from "@react-doctor/types";
-import { compileGlobPattern } from "./utils/match-glob-pattern.js";
+import { compileGlobPatternsLenient } from "./utils/match-glob-pattern.js";
 import { toRelativePath } from "./utils/to-relative-path.js";
+import { warnConfigIssue } from "./utils/warn-config-issue.js";
 
 export const compileIgnoredFilePatterns = (userConfig: ReactDoctorConfig | null): RegExp[] => {
   const files = userConfig?.ignore?.files;
   if (!Array.isArray(files)) return [];
-  return files
-    .filter((entry): entry is string => typeof entry === "string")
-    .map(compileGlobPattern);
+  const stringPatterns = files.filter((entry): entry is string => typeof entry === "string");
+  return compileGlobPatternsLenient(stringPatterns, (error) =>
+    warnConfigIssue(`ignore.files: ${error.message}`),
+  );
 };
 
 export const isFileIgnoredByPatterns = (
@@ -15,10 +17,7 @@ export const isFileIgnoredByPatterns = (
   rootDirectory: string,
   patterns: RegExp[],
 ): boolean => {
-  if (patterns.length === 0) {
-    return false;
-  }
-
+  if (patterns.length === 0) return false;
   const relativePath = toRelativePath(filePath, rootDirectory);
   return patterns.some((pattern) => pattern.test(relativePath));
 };

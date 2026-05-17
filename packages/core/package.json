@@ -21,10 +21,12 @@
     "@react-doctor/types": "workspace:*",
     "oxlint": "^1.63.0",
     "oxlint-plugin-react-doctor": "workspace:*",
+    "picomatch": "^4.0.4",
     "typescript": "^6.0.3"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
+    "@types/picomatch": "^4.0.3",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-you-might-not-need-an-effect": "^0.10.1"
   },

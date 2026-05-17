@@ -85,3 +85,17 @@ export const RULE_NAME_COLUMN_WIDTH_CHARS = 36;
 export const OUTPUT_DETAIL_WRAP_WIDTH_CHARS = 88;
 
 export const SPINNER_INDENT_CHARS = 0;
+
+// Defense-in-depth caps for user-supplied glob patterns. Picomatch
+// itself is well-hardened against many bad inputs, but ALL glob →
+// JavaScript regex compilers emit backtracking-prone output when fed
+// densely interleaved wildcards (e.g. `a*a*a*a*…`). These limits
+// reject obviously pathological inputs with a clear config error
+// before any matcher compilation, bounding worst-case work even when
+// the underlying engine is robust. The wildcard cap intentionally
+// leaves headroom for realistic ignore patterns
+// (e.g. `**/foo/**/bar/**/baz/**/*.tsx` has 9 wildcards) while
+// rejecting deeply-stacked globstars and dense alternations.
+export const MAX_GLOB_PATTERN_LENGTH_CHARS = 1024;
+
+export const MAX_GLOB_PATTERN_WILDCARD_COUNT = 24;

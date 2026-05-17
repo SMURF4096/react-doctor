@@ -1,8 +1,15 @@
 import { describe, expect, it } from "vite-plus/test";
-import { compileGlobPattern } from "@react-doctor/core";
+import {
+  compileGlobPattern,
+  InvalidGlobPatternError,
+  MAX_GLOB_PATTERN_LENGTH_CHARS,
+  MAX_GLOB_PATTERN_WILDCARD_COUNT,
+} from "@react-doctor/core";
 
 const matchGlobPattern = (filePath: string, pattern: string): boolean =>
   compileGlobPattern(pattern).test(filePath.replace(/\\/g, "/"));
+
+const REDOS_TIME_BUDGET_MS = 100;
 
 describe("compileGlobPattern", () => {
   it("matches exact file paths", () => {
@@ -47,5 +54,52 @@ describe("compileGlobPattern", () => {
 
   it("normalizes backslashes to forward slashes", () => {
     expect(matchGlobPattern("src\\generated\\foo.tsx", "src/generated/**")).toBe(true);
+  });
+
+  it("rejects empty patterns with a clear config error", () => {
+    expect(() => compileGlobPattern("")).toThrow(InvalidGlobPatternError);
+  });
+
+  it("rejects patterns above the maximum length", () => {
+    const overlongPattern = `${"a".repeat(MAX_GLOB_PATTERN_LENGTH_CHARS)}/extra.tsx`;
+    expect(() => compileGlobPattern(overlongPattern)).toThrowError(
+      /exceeds the maximum of \d+ characters/,
+    );
+  });
+
+  it("accepts a long row of `*` at the wildcard cap (picomatch collapses runs of `*`)", () => {
+    const atCapPattern = "*".repeat(MAX_GLOB_PATTERN_WILDCARD_COUNT);
+    expect(() => compileGlobPattern(atCapPattern)).not.toThrow();
+  });
+
+  it("rejects patterns above the wildcard cap", () => {
+    const overWildcardPattern = "*".repeat(MAX_GLOB_PATTERN_WILDCARD_COUNT + 1);
+    expect(() => compileGlobPattern(overWildcardPattern)).toThrowError(/exceeding the maximum/);
+  });
+
+  it("rejects deeply-stacked `**/` globstars before compiling", () => {
+    const stackedGlobstarPattern = `${"**/".repeat(20)}file.tsx`;
+    expect(() => compileGlobPattern(stackedGlobstarPattern)).toThrow(InvalidGlobPatternError);
+  });
+
+  it("rejects dense `a*a*a*…` alternations before compiling (would otherwise backtrack)", () => {
+    const alternatingWildcardPattern = "a*".repeat(MAX_GLOB_PATTERN_WILDCARD_COUNT + 1) + "z.tsx";
+    expect(() => compileGlobPattern(alternatingWildcardPattern)).toThrow(InvalidGlobPatternError);
+  });
+
+  it("matches a borderline-stacked globstar pattern in near-constant time", () => {
+    // Use a globstar count well under the cap. The hand-rolled
+    // compiler we replaced hung > 30 s on this same input shape; the
+    // picomatch-backed compiler returns in single-digit milliseconds.
+    const stackedGlobstarPattern = `${"**/".repeat(8)}file.tsx`;
+    const compiledRegex = compileGlobPattern(stackedGlobstarPattern);
+    const nonMatchingDeepInput = `${"some-segment/".repeat(40)}other.ts`;
+
+    const startedAt = performance.now();
+    const matched = compiledRegex.test(nonMatchingDeepInput);
+    const elapsedMilliseconds = performance.now() - startedAt;
+
+    expect(matched).toBe(false);
+    expect(elapsedMilliseconds).toBeLessThan(REDOS_TIME_BUDGET_MS);
   });
 });

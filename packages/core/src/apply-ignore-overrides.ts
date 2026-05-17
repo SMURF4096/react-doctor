@@ -1,16 +1,13 @@
 import type { Diagnostic, ReactDoctorConfig, ReactDoctorIgnoreOverride } from "@react-doctor/types";
 import { isPlainObject } from "@react-doctor/project-info";
-import { compileGlobPattern } from "./utils/match-glob-pattern.js";
+import { compileGlobPatternsLenient } from "./utils/match-glob-pattern.js";
 import { toRelativePath } from "./utils/to-relative-path.js";
+import { warnConfigIssue } from "./utils/warn-config-issue.js";
 
 interface CompiledIgnoreOverride {
   filePatterns: RegExp[];
   ruleIds: ReadonlySet<string>;
 }
-
-const warnConfigField = (message: string): void => {
-  process.stderr.write(`[react-doctor] ${message}\n`);
-};
 
 const isStringArray = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((entry) => typeof entry === "string");
@@ -20,19 +17,19 @@ const collectStringList = (value: unknown): string[] =>
 
 const validateOverrideEntry = (entry: unknown, index: number): ReactDoctorIgnoreOverride | null => {
   if (!isPlainObject(entry)) {
-    warnConfigField(
+    warnConfigIssue(
       `ignore.overrides[${index}] must be an object with { files, rules }; ignoring this entry.`,
     );
     return null;
   }
   if (!isStringArray(entry.files)) {
-    warnConfigField(
+    warnConfigIssue(
       `ignore.overrides[${index}].files must be an array of strings; ignoring this entry.`,
     );
     return null;
   }
   if (entry.rules !== undefined && !isStringArray(entry.rules)) {
-    warnConfigField(
+    warnConfigIssue(
       `ignore.overrides[${index}].rules must be an array of "plugin/rule" strings or omitted; treating as missing (override would suppress every rule for the matched files).`,
     );
     return { files: entry.files };
@@ -48,14 +45,16 @@ export const compileIgnoreOverrides = (
   const overrides = userConfig?.ignore?.overrides;
   if (overrides === undefined) return [];
   if (!Array.isArray(overrides)) {
-    warnConfigField(`ignore.overrides must be an array of { files, rules } entries; ignoring.`);
+    warnConfigIssue(`ignore.overrides must be an array of { files, rules } entries; ignoring.`);
     return [];
   }
 
   return overrides.flatMap((entry, index) => {
     const validated = validateOverrideEntry(entry, index);
     if (!validated) return [];
-    const filePatterns = collectStringList(validated.files).map(compileGlobPattern);
+    const filePatterns = compileGlobPatternsLenient(collectStringList(validated.files), (error) =>
+      warnConfigIssue(`ignore.overrides[${index}]: ${error.message}`),
+    );
     if (filePatterns.length === 0) return [];
     const ruleIds = new Set(collectStringList(validated.rules));
     return [{ filePatterns, ruleIds }];
