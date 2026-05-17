@@ -4,7 +4,34 @@
 
 ### Patch Changes
 
-- fix
+- [#271](https://github.com/millionco/react-doctor/pull/271) [`7a7ec84`](https://github.com/millionco/react-doctor/commit/7a7ec84fad631d96f70279394be5f086b8424d17) Thanks [@aidenybai](https://github.com/aidenybai)! - **Per-surface diagnostic controls (CLI).** New
+  `cli/utils/inspect-flags.ts` flag + companion
+  `cli/utils/resolve-cli-inspect-options.ts` and
+  `cli/utils/validate-mode-flags.ts` plumbing wire the new
+  `@react-doctor/core` surface filter into `cli/commands/inspect.ts`
+  and `inspect.ts`. Design + Tailwind cleanup categories are demoted
+  from the default PR-comment surface so they no longer dominate code
+  review output, while still appearing in the CLI report and at the
+  CI failure gate. Documented in the package README and the new
+  `action.yml` knobs.
+
+- Inherits the rule-fix wave from
+  `oxlint-plugin-react-doctor@0.2.0-beta.5` (rules are bundled into
+  the CLI):
+  `no-secrets-in-client-code` scoping
+  ([#252](https://github.com/millionco/react-doctor/pull/252)),
+  `nextjs-no-side-effect-in-get-handler` safe local bindings
+  ([#260](https://github.com/millionco/react-doctor/pull/260)),
+  `async-defer-await` false-positive fixes
+  ([#265](https://github.com/millionco/react-doctor/pull/265)),
+  `js-length-check-first` `&&`-chain detection
+  ([#269](https://github.com/millionco/react-doctor/pull/269)),
+  `async-parallel` test / browser-fixture suppression
+  ([#270](https://github.com/millionco/react-doctor/pull/270)),
+  `js-combine-iterations` lazy `Iterator` skip
+  ([#272](https://github.com/millionco/react-doctor/pull/272)), and
+  `no-prevent-default` framework awareness
+  ([#274](https://github.com/millionco/react-doctor/pull/274)).
 
 - [#266](https://github.com/millionco/react-doctor/pull/266) [`529015d`](https://github.com/millionco/react-doctor/commit/529015d1d89441c4708f49413ecd540db7c04255) Thanks [@aidenybai](https://github.com/aidenybai)! - Scope React Native rules to per-package boundaries. Previously every
   `rn-*` rule fired on every file in a project whose top-level framework
@@ -45,8 +72,6 @@
   keep the rule active even when the surrounding package classification
   is ambiguous.
 
-- fix
-
 - Updated dependencies [[`529015d`](https://github.com/millionco/react-doctor/commit/529015d1d89441c4708f49413ecd540db7c04255)]:
   - oxlint-plugin-react-doctor@0.2.0-beta.5
 
@@ -65,17 +90,57 @@
 
 ### Patch Changes
 
-- Fix workspace packages not being bundled into dist, causing
+- [`10d5de8`](https://github.com/millionco/react-doctor/commit/10d5de804fe9c03fa9f18e5350bb26965a5108ac) — Fix workspace packages
+  (`@react-doctor/core`, `@react-doctor/project-info`,
+  `@react-doctor/types`) not being bundled into the published `dist/`
+  output, which caused
   `ERR_MODULE_NOT_FOUND: Cannot find package '@react-doctor/core'`
-  when running the published CLI.
+  on `npx react-doctor` after the package extraction in beta.2.
+  Vite config now treats the workspace dependencies as bundle-time
+  inputs.
+
+- Inherits the
+  [#253](https://github.com/millionco/react-doctor/pull/253) `no-barrel-import`
+  index-resolution fix from
+  `oxlint-plugin-react-doctor@0.2.0-beta.3` (rules are bundled into
+  the CLI).
+
+- Updated dependencies []:
+  - oxlint-plugin-react-doctor@0.2.0-beta.3
 
 ## 0.2.0-beta.2
 
 ### Minor Changes
 
-- fix
+- [#249](https://github.com/millionco/react-doctor/pull/249) [`f0198e2`](https://github.com/millionco/react-doctor/commit/f0198e2f2d9560a15bdb4a78f4a378ca2ac5fcdd) Thanks [@aidenybai](https://github.com/aidenybai)! - **Internal-package extraction.** The CLI no longer vendors project
+  detection, the oxlint runner, scoring, or the shared type layer
+  inline — those modules now live in
+  `@react-doctor/types`, `@react-doctor/project-info`, and
+  `@react-doctor/core` and are consumed as workspace dependencies.
+  Bundled into `dist/` on publish (see also
+  [#253](https://github.com/millionco/react-doctor/pull/253) bundler
+  follow-up in beta.3). The `react-doctor`, `react-doctor inspect`,
+  and `react-doctor install` binaries are surface-compatible with
+  0.1.6.
+
+- [#250](https://github.com/millionco/react-doctor/pull/250) [`6e2ee9d`](https://github.com/millionco/react-doctor/commit/6e2ee9d474fddbde4c1246ff65b2f3e5bb3a42fc) Thanks [@aidenybai](https://github.com/aidenybai)! - **CLI reorganised.** `src/cli/` is now split into `commands/` +
+  `utils/`, mirroring the layout ported from `react-grab`. Each
+  subcommand has a dedicated module (`inspect`, `install`, version /
+  help). No user-visible change to flags or output.
 
 ### Patch Changes
+
+- [#208](https://github.com/millionco/react-doctor/pull/208) [`8556b31`](https://github.com/millionco/react-doctor/commit/8556b31d8e4e165f791db0aa60a6b038b18ec777) Thanks [@aidenybai](https://github.com/aidenybai)! - **User-feedback sweep.** Reduce false positives across the design /
+  Tailwind / state-and-effects rule groups, surface per-rule scoring
+  contributions in `react-doctor inspect`, and add `--severity` /
+  `--rule-set` CLI options plus their `react-doctor.config.json`
+  counterparts. Closes the bulk of the feedback collected on 0.1.x.
+
+- [#174](https://github.com/millionco/react-doctor/pull/174) — Forward
+  `reactMajorVersion` through the programmatic `diagnose()` entry
+  point so embedders running react-doctor inside their own pipeline
+  (Vercel AI Code Review sandbox and friends) get the same React-19
+  rule gating the CLI gets.
 
 - [#202](https://github.com/millionco/react-doctor/pull/202) [`53fa4df`](https://github.com/millionco/react-doctor/commit/53fa4dffe837e0157fb850fef700fccaaec191ea) Thanks [@aidenybai](https://github.com/aidenybai)! - Detect the project's Tailwind version (`tailwindcss` in `package.json`,
   including pnpm and Bun catalog references) and gate Tailwind-aware
