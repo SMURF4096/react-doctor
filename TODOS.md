@@ -608,20 +608,31 @@ Fix:
 - Document local-only report workflow.
 - Add SARIF or generic report path if needed for non-GitHub CI.
 
-### [ ] Make PR blocking and `fail-on` semantics explicit
+### [x] Make PR blocking and `fail-on` semantics explicit
 
-Status: partially addressed.
+Status: landed.
 
 Sources:
 
 - Users asked for simple "block merge if score < X" behavior.
 - Existing scoring/delta feedback shows absolute thresholds can be misleading.
 
-Fix:
+Done:
 
-- Document `fail-on`, score thresholds, annotations, and PR comments together.
-- Separate "fail on new regressions" from "fail because baseline score is below threshold."
-- Add examples for advisory mode, regression-only mode, and strict threshold mode.
+- Added a `## PR blocking and exit codes` README section that
+  separates diagnostic-level gating (`--fail-on`) from absolute-score
+  gating (the `score` action output + a follow-up step), and documents
+  annotations and PR comments alongside both.
+- Spelled out that combining `--fail-on` with `--diff` is the
+  built-in way to fail only on new regressions vs. failing on the
+  baseline (no separate `--fail-on-new` flag).
+- Added three worked recipes: advisory mode (`fail-on: none`),
+  regression-only mode (`diff: main` + `fail-on: warning`), and
+  strict threshold mode (`fail-on: error` + score-floor step
+  reading `steps.<id>.outputs.score`).
+- Tightened `action.yml`'s `fail-on` description so it states the
+  gate runs on diagnostics, not on the score, and points at the
+  composable patterns above.
 
 ## P2 - Platform and Product Expansion
 

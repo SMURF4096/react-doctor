@@ -21,7 +21,7 @@ inputs:
     description: "GitHub token for posting PR comments. When set on pull_request events, findings are posted as a PR comment."
     required: false
   fail-on:
-    description: "Exit with error code on diagnostics: error, warning, none"
+    description: "Exit non-zero when diagnostics fire (error, warning, none). Gates on individual diagnostics in the scanned files, not on the score. Combine with `diff` for regression-only gating, or read the `score` output in a follow-up step to enforce an absolute score floor."
     default: "error"
   offline:
     description: "Skip sending diagnostics to the react.doctor API and calculate score locally"

@@ -80,6 +80,61 @@ Prefer not to add a marketplace action? The bare `npx` form works too:
 - run: npx react-doctor@latest --fail-on warning
 ```
 
+## PR blocking and exit codes
+
+Two independent gates can block a PR — pick one or both:
+
+- **`--fail-on <level>`** exits non-zero on diagnostics: `error` (default, any error-severity rule fires), `warning` (any diagnostic fires), or `none` (never). Runs against the `ciFailure` surface, so the default `design`-tag exclusion still applies.
+- **Score floor** — a follow-up step that reads the action's `score` output and `exit 1`s when it's below your threshold.
+
+Combine `--fail-on` with `--diff <base>` to scope the gate to the PR's changed files only — that's the built-in way to fail on **new** regressions without dragging in baseline backlog. There is no separate `--fail-on-new` flag.
+
+`--annotations` (bare `npx` only) and `github-token` (sticky PR comment) are visualization layers and never change the exit code.
+
+### Examples
+
+**Advisory mode** — never blocks, always comments:
+
+```yaml
+- uses: millionco/react-doctor@main
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    fail-on: none
+```
+
+**Regression-only mode** — fail only on new diagnostics introduced by the PR:
+
+```yaml
+- uses: actions/checkout@v5
+  with:
+    fetch-depth: 0 # required for `diff`
+- uses: millionco/react-doctor@main
+  with:
+    diff: main
+    fail-on: warning
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+**Strict threshold mode** — fail when the baseline score drops below a floor:
+
+```yaml
+- id: doctor
+  uses: millionco/react-doctor@main
+  with:
+    fail-on: error
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+- env:
+    SCORE: ${{ steps.doctor.outputs.score }}
+    FLOOR: "80"
+  run: |
+    if [ -n "$SCORE" ] && [ "$SCORE" -lt "$FLOOR" ]; then
+      echo "::error::React Doctor score $SCORE is below floor $FLOOR"
+      exit 1
+    fi
+```
+
+Pin a specific `react-doctor` version when using a score floor — new rule releases can lower the score even when your code hasn't changed (see [Scoring](#scoring)).
+
 ## Configuration
 
 Create a `react-doctor.config.json` in your project root:
@@ -328,8 +383,8 @@ React Doctor detects 50+ coding agents (Claude Code, Cursor, Codex, OpenCode, Wi
 - **Install for agents**: `npx react-doctor@latest install` writes agent-specific rule files (SKILL.md, AGENTS.md, .cursorrules) into your project so agents learn React best practices.
 - **JSON output**: `--json` produces a structured `JsonReport` on stdout. Errors still produce a valid JSON document with `ok: false`. Use `--json-compact` for minimal whitespace.
 - **Score-only output**: `--score` outputs just the numeric score (0-100), useful for threshold checks in agent loops.
-- **GitHub Actions annotations**: `--annotations` emits `::error` / `::warning` format for inline PR annotations.
-- **Exit codes**: `--fail-on error` (default) exits non-zero when error-severity diagnostics are found. Use `--fail-on warning` or `--fail-on none` to tune CI gating.
+- **GitHub Actions annotations**: `--annotations` emits `::error` / `::warning` format for inline PR annotations. Annotations don't change the exit code.
+- **Exit codes**: `--fail-on error` (default) exits non-zero when error-severity diagnostics are found. Use `--fail-on warning` or `--fail-on none` to tune CI gating. See [PR blocking and exit codes](#pr-blocking-and-exit-codes) for the full model — including how to fail only on new regressions vs. fail on the baseline score.
 - **Programmatic API**: `import { diagnose } from "react-doctor/api"` for direct integration in scripts and automation.
 
 In CI environments, prompts are automatically skipped and `--offline` is implied (no network round-trip; score is omitted from the output).
