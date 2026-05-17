@@ -66,7 +66,22 @@ describe("GitHub Action contract", () => {
     );
 
     expect(scanStep).toContain('if [ -n "$INPUT_GITHUB_TOKEN" ]; then');
-    expect(scanStep).toContain('"${FLAGS[@]}" --pr-comment | tee "$OUTPUT_FILE"');
+    expect(scanStep).toContain('"${FLAGS[@]}" --pr-comment | tee "$RAW_FILE"');
+    expect(scanStep).toContain('sed -E \'/^::(error|warning) /d\' "$RAW_FILE" > "$OUTPUT_FILE"');
     expect(scanStep).not.toContain('"${FLAGS[@]}" --pr-comment\n        else');
+  });
+
+  it("forwards --annotations to the CLI when the annotations input is true", () => {
+    const actionYaml = readActionYaml();
+    const inputsBlock = extractBlock(actionYaml, "inputs:", "\noutputs:");
+    const scanStep = normalizeWhitespace(
+      extractStep(actionYaml, "INPUT_FAIL_ON: ${{ inputs.fail-on }}"),
+    );
+
+    expect(inputsBlock).toContain("  annotations:");
+    expect(scanStep).toContain("INPUT_ANNOTATIONS: ${{ inputs.annotations }}");
+    expect(scanStep).toContain(
+      'if [ "$INPUT_ANNOTATIONS" = "true" ]; then FLAGS+=("--annotations"); fi',
+    );
   });
 });

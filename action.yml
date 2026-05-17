@@ -26,6 +26,9 @@ inputs:
   offline:
     description: "Skip sending diagnostics to the react.doctor API and calculate score locally"
     default: "false"
+  annotations:
+    description: "Emit diagnostics as GitHub Actions annotations so findings show inline in the PR's Files changed view. Combine with `github-token` for both annotations and a sticky comment."
+    default: "false"
   node-version:
     description: "Node.js version to use"
     default: "22"
@@ -64,6 +67,7 @@ runs:
         INPUT_GITHUB_TOKEN: ${{ inputs.github-token }}
         INPUT_FAIL_ON: ${{ inputs.fail-on }}
         INPUT_OFFLINE: ${{ inputs.offline }}
+        INPUT_ANNOTATIONS: ${{ inputs.annotations }}
         RUNNER_TEMP: ${{ runner.temp }}
         GITHUB_RUN_ID: ${{ github.run_id }}
       run: |
@@ -72,6 +76,7 @@ runs:
         if [ -n "$INPUT_PROJECT" ]; then FLAGS+=("--project" "$INPUT_PROJECT"); fi
         if [ -n "$INPUT_DIFF" ]; then FLAGS+=("--diff" "$INPUT_DIFF"); fi
         if [ "$INPUT_OFFLINE" = "true" ]; then FLAGS+=("--offline"); fi
+        if [ "$INPUT_ANNOTATIONS" = "true" ]; then FLAGS+=("--annotations"); fi
 
         OUTPUT_FILE="${RUNNER_TEMP:-/tmp}/react-doctor-output-${GITHUB_RUN_ID:-$$}.txt"
         echo "REACT_DOCTOR_OUTPUT_FILE=$OUTPUT_FILE" >> "$GITHUB_ENV"
@@ -82,7 +87,11 @@ runs:
           # so style cleanup doesn't dilute meaningful React findings
           # in the sticky PR comment. Configure overrides via
           # config.surfaces.{prComment,ciFailure} in react-doctor.config.json.
-          npx react-doctor@latest "$INPUT_DIRECTORY" "${FLAGS[@]}" --pr-comment | tee "$OUTPUT_FILE"
+          RAW_FILE="${RUNNER_TEMP:-/tmp}/react-doctor-raw-${GITHUB_RUN_ID:-$$}.txt"
+          npx react-doctor@latest "$INPUT_DIRECTORY" "${FLAGS[@]}" --pr-comment | tee "$RAW_FILE"
+          # Strip annotation workflow commands from the PR-comment body;
+          # the runner still parses them from the live step log.
+          sed -E '/^::(error|warning) /d' "$RAW_FILE" > "$OUTPUT_FILE"
         else
           npx react-doctor@latest "$INPUT_DIRECTORY" "${FLAGS[@]}"
         fi
