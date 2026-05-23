@@ -41,48 +41,7 @@ Works with Claude Code, Cursor, Codex, OpenCode, and 50+ other agents.
 
 ## GitHub Actions
 
-Two composite actions ship with this repository.
-
-### PR Review (recommended)
-
-The root action mirrors the hosted [react.review](https://react.review) bot's doctor-only flow as a self-hosted action: inline diagnostics on net-new violations, a sticky summary comment, automatic thread resolution when fixes land, and a check run on the PR head SHA. No hosted service required.
-
-```yaml
-name: React Doctor Review
-
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-
-permissions:
-  contents: read
-  pull-requests: write
-  checks: write
-  issues: write
-
-jobs:
-  review:
-    runs-on: ubuntu-latest
-    steps:
-      # The `ref` line is required: `actions/checkout` on `pull_request`
-      # defaults to the synthetic merge commit, so HEAD would
-      # disagree with `pull_request.head.sha` (the SHA the action
-      # annotates) and diagnostic line numbers wouldn't match what
-      # GitHub shows in the PR diff.
-      - uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-      - uses: millionco/react-doctor@main
-```
-
-**Inputs:** `token` (defaults to `${{ github.token }}`; pass a PAT or App installation token for fork PRs or branded identity), `directory` (project directory, defaults to `.`), `node-version` (defaults to `22`). See [`action.yml`](https://github.com/millionco/react-doctor/blob/main/action.yml) for full descriptions.
-
-The Review action diffs head diagnostics against the merge-base, posts inline comments only on errors that landed on `+` lines in the PR's diff, and resolves threads with `✅ Addressed in <sha>` when the underlying diagnostic disappears.
-
-### Scan + sticky comment (legacy)
-
-The older composite action (a single `npx react-doctor` scan with an optional sticky PR comment) lives at [`actions/inspect/action.yml`](https://github.com/millionco/react-doctor/blob/main/actions/inspect/action.yml):
+A composite action ships with this repository. Drop it into `.github/workflows/react-doctor.yml`:
 
 ```yaml
 name: React Doctor
@@ -103,7 +62,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0 # required for `diff`
-      - uses: millionco/react-doctor/actions/inspect@main
+      - uses: millionco/react-doctor@main
         with:
           diff: main
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -122,7 +81,7 @@ Pick one or both; they're independent.
 - **Both**: set `github-token` and `annotations: true`. Annotation lines are stripped from the comment body.
 
 ```yaml
-- uses: millionco/react-doctor/actions/inspect@main
+- uses: millionco/react-doctor@main
   with:
     diff: main
     github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -168,7 +127,7 @@ Combine `--fail-on` with `--diff <base>` to scope the gate to the PR's changed f
 **Advisory mode** — never blocks, always comments:
 
 ```yaml
-- uses: millionco/react-doctor/actions/inspect@main
+- uses: millionco/react-doctor@main
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     fail-on: none
@@ -180,7 +139,7 @@ Combine `--fail-on` with `--diff <base>` to scope the gate to the PR's changed f
 - uses: actions/checkout@v5
   with:
     fetch-depth: 0 # required for `diff`
-- uses: millionco/react-doctor/actions/inspect@main
+- uses: millionco/react-doctor@main
   with:
     diff: main
     fail-on: warning
@@ -191,7 +150,7 @@ Combine `--fail-on` with `--diff <base>` to scope the gate to the PR's changed f
 
 ```yaml
 - id: doctor
-  uses: millionco/react-doctor/actions/inspect@main
+  uses: millionco/react-doctor@main
   with:
     fail-on: error
     github-token: ${{ secrets.GITHUB_TOKEN }}
