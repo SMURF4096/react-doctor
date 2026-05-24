@@ -13,6 +13,8 @@ React Doctor deterministically scans your codebase and finds issues across state
 
 Works for all React frameworks and libraries - Next.js, Vite, TanStack, React Native, Expo, you name it.
 
+[Website →](https://react.doctor/docs)
+
 ## Install
 
 ### 1. Quick start
@@ -35,10 +37,6 @@ npx react-doctor@latest install
 
 Works with Claude Code, Cursor, Codex, OpenCode, and many more.
 
-If this is a Git repo, `install` also asks whether to add a non-blocking pre-commit hook. It runs `react-doctor --staged --fail-on none`, reuses common hook managers when present, and falls back to `.git/hooks/pre-commit`.
-
-For agents with native lifecycle hooks, the interactive installer offers automatic post-edit checks as an optional step. This defaults to **No**. To opt in from CI or scripts, pass:
-
 ```bash
 npx react-doctor@latest install --agent-hooks
 ```
@@ -51,11 +49,7 @@ This currently installs project hooks for Claude Code and Cursor that run after 
 
 Add the reusable GitHub Action from Marketplace to scan every pull request, show inline annotations, and leave findings where reviewers already look.
 
-## Docs
-
-Configuration, custom rules, standalone plugins, CLI reference, and API details live in the docs:
-
-https://react.doctor/docs
+[Add GitHub Action →](https://github.com/marketplace/actions/react-doctor)
 
 ## Contributing
 
