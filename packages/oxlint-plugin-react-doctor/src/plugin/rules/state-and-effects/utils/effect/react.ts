@@ -1,6 +1,5 @@
 import type { Reference, Scope } from "eslint-scope";
 import type { EsTreeNode } from "../../../../utils/es-tree-node.js";
-import type { EsTreeNodeOfType } from "../../../../utils/es-tree-node-of-type.js";
 import { isAstNode } from "../../../../utils/is-ast-node.js";
 import { isFunctionLike } from "../../../../utils/is-function-like.js";
 import { isNodeOfType } from "../../../../utils/is-node-of-type.js";

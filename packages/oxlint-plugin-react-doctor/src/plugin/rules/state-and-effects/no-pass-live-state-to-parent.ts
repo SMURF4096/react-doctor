@@ -2,7 +2,6 @@ import { defineRule } from "../../utils/define-rule.js";
 import type { EsTreeNode } from "../../utils/es-tree-node.js";
 import type { EsTreeNodeOfType } from "../../utils/es-tree-node-of-type.js";
 import { isNamespacedApiCallee } from "../../utils/is-namespaced-api-call.js";
-import { isNodeOfType } from "../../utils/is-node-of-type.js";
 import { DATA_SINK_METHOD_NAMES } from "../../constants/data-sink-method-names.js";
 import { getCallMethodName } from "../../utils/get-call-method-name.js";
 import type { Rule } from "../../utils/rule.js";

@@ -2,7 +2,6 @@ import { analyze, type Scope, type ScopeManager } from "eslint-scope";
 import type { EsTreeNode } from "../../../../utils/es-tree-node.js";
 import type { EsTreeNodeOfType } from "../../../../utils/es-tree-node-of-type.js";
 import { findProgramRoot } from "../../../../utils/find-program-root.js";
-import { isNodeOfType } from "../../../../utils/is-node-of-type.js";
 import { VISITOR_KEYS } from "./constants.js";
 
 export interface ProgramAnalysis {
