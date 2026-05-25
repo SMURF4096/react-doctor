@@ -28,7 +28,10 @@ import {
 } from "../utils/json-mode.js";
 import { printAnnotations } from "../utils/print-annotations.js";
 import { printBrandedHeader } from "../utils/print-branded-header.js";
-import { promptInstallSetup } from "../utils/prompt-install-setup.js";
+import {
+  promptInstallSetup,
+  resolveInstallSetupProjectRoot,
+} from "../utils/prompt-install-setup.js";
 import { resolveCliInspectOptions } from "../utils/resolve-cli-inspect-options.js";
 import { resolveDiffMode } from "../utils/resolve-diff-mode.js";
 import { resolveEffectiveDiff } from "../utils/resolve-effective-diff.js";
@@ -267,19 +270,25 @@ export const inspectAction = async (directory: string, flags: InspectFlags): Pro
       process.exitCode = 1;
     }
 
-    await promptInstallSetup({
-      projectRoot: resolvedDirectory,
-      hasScoredScan: completedScans.some((scan) => scan.result.score !== null),
-      issueCount: filterDiagnosticsForSurface(
-        allDiagnostics,
-        scanOptions.outputSurface ?? "cli",
-        userConfig,
-      ).length,
-      isJsonMode,
-      isScoreOnly,
-      isStaged: Boolean(flags.staged),
-      skipPrompts,
+    const setupProjectRoot = resolveInstallSetupProjectRoot({
+      scanRoot: resolvedDirectory,
+      completedScanDirectories: completedScans.map((scan) => scan.directory),
     });
+    if (setupProjectRoot !== null) {
+      await promptInstallSetup({
+        projectRoot: setupProjectRoot,
+        hasScoredScan: completedScans.some((scan) => scan.result.score !== null),
+        issueCount: filterDiagnosticsForSurface(
+          allDiagnostics,
+          scanOptions.outputSurface ?? "cli",
+          userConfig,
+        ).length,
+        isJsonMode,
+        isScoreOnly,
+        isStaged: Boolean(flags.staged),
+        skipPrompts,
+      });
+    }
   } catch (error) {
     if (isJsonMode) {
       writeJsonErrorReport(error);

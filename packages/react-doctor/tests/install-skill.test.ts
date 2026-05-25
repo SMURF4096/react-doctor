@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { runInstallSkill } from "../src/cli/utils/install-skill.js";
+import type { InstallReactDoctorDependencyRunnerInput } from "../src/cli/utils/install-skill.js";
 import { setSpinnerSilent } from "../src/cli/utils/spinner.js";
 import { silenceConsoleForTest } from "./helpers/silence-console.js";
 
@@ -40,6 +41,32 @@ const writePackageJson = (projectRoot: string, value: Record<string, unknown>): 
 const readFixturePackageJson = (projectRoot: string): Record<string, unknown> =>
   JSON.parse(readFileSync(path.join(projectRoot, "package.json"), "utf8"));
 
+let dependencyInstallCalls: InstallReactDoctorDependencyRunnerInput[] = [];
+
+const installDependencyForTest: NonNullable<
+  Parameters<typeof runInstallSkill>[0]
+>["installDependencyRunner"] = (input) => {
+  dependencyInstallCalls.push(input);
+  const packageJson = readFixturePackageJson(input.cwd);
+  writePackageJson(input.cwd, {
+    ...packageJson,
+    devDependencies: {
+      ...(typeof packageJson.devDependencies === "object" &&
+      packageJson.devDependencies !== null &&
+      !Array.isArray(packageJson.devDependencies)
+        ? packageJson.devDependencies
+        : {}),
+      "react-doctor": "latest",
+    },
+  });
+};
+
+const runInstallSkillForTest = (options: NonNullable<Parameters<typeof runInstallSkill>[0]>) =>
+  runInstallSkill({
+    installDependencyRunner: installDependencyForTest,
+    ...options,
+  });
+
 describe("runInstallSkill", () => {
   let fixture: InstallSkillFixture;
   let originalExitCode: number | string | null | undefined;
@@ -50,6 +77,7 @@ describe("runInstallSkill", () => {
     fixture = setupFixture();
     originalExitCode = process.exitCode;
     originalCi = process.env.CI;
+    dependencyInstallCalls = [];
     process.exitCode = 0;
     restoreConsole = silenceConsoleForTest();
     setSpinnerSilent(true);
@@ -69,25 +97,22 @@ describe("runInstallSkill", () => {
 
   it("exits with code 1 when the bundled SKILL.md is missing", async () => {
     writePackageJson(fixture.projectRoot, { scripts: {} });
-    await runInstallSkill({
+    await runInstallSkillForTest({
       yes: true,
       sourceDir: fixture.sourceDir,
       projectRoot: fixture.projectRoot,
       detectedAgents: ["cursor"],
     });
     expect(process.exitCode).toBe(1);
-    expect(readFixturePackageJson(fixture.projectRoot).scripts).toEqual({
-      doctor: "react-doctor",
-    });
-    expect(readFixturePackageJson(fixture.projectRoot).devDependencies).toEqual({
-      "react-doctor": "latest",
-    });
+    expect(readFixturePackageJson(fixture.projectRoot).scripts).toEqual({});
+    expect(readFixturePackageJson(fixture.projectRoot)).not.toHaveProperty("devDependencies");
+    expect(dependencyInstallCalls).toEqual([]);
   });
 
   it("exits with code 1 when no agents are detected", async () => {
     writeValidSkill(fixture.sourceDir);
     writePackageJson(fixture.projectRoot, { scripts: {} });
-    await runInstallSkill({
+    await runInstallSkillForTest({
       yes: true,
       sourceDir: fixture.sourceDir,
       projectRoot: fixture.projectRoot,
@@ -95,12 +120,9 @@ describe("runInstallSkill", () => {
     });
     expect(process.exitCode).toBe(1);
     expect(existsSync(path.join(fixture.projectRoot, ".agents"))).toBe(false);
-    expect(readFixturePackageJson(fixture.projectRoot).scripts).toEqual({
-      doctor: "react-doctor",
-    });
-    expect(readFixturePackageJson(fixture.projectRoot).devDependencies).toEqual({
-      "react-doctor": "latest",
-    });
+    expect(readFixturePackageJson(fixture.projectRoot).scripts).toEqual({});
+    expect(readFixturePackageJson(fixture.projectRoot)).not.toHaveProperty("devDependencies");
+    expect(dependencyInstallCalls).toEqual([]);
   });
 
   it("throws when SKILL.md exists but has no parseable frontmatter (H1 silent-success regression guard)", async () => {
@@ -113,7 +135,7 @@ describe("runInstallSkill", () => {
       "# Just a heading, no frontmatter\nNothing here.\n",
     );
     await expect(
-      runInstallSkill({
+      runInstallSkillForTest({
         yes: true,
         sourceDir: fixture.sourceDir,
         projectRoot: fixture.projectRoot,
@@ -128,7 +150,7 @@ describe("runInstallSkill", () => {
       "---\nname: react-doctor\n---\n# react-doctor\n",
     );
     await expect(
-      runInstallSkill({
+      runInstallSkillForTest({
         yes: true,
         sourceDir: fixture.sourceDir,
         projectRoot: fixture.projectRoot,
@@ -140,7 +162,7 @@ describe("runInstallSkill", () => {
   it("--dry-run writes nothing, even with valid SKILL.md and detected agents", async () => {
     writeValidSkill(fixture.sourceDir);
     writePackageJson(fixture.projectRoot, { scripts: {} });
-    await runInstallSkill({
+    await runInstallSkillForTest({
       yes: true,
       dryRun: true,
       agentHooks: true,
@@ -163,7 +185,7 @@ describe("runInstallSkill", () => {
       },
     });
 
-    await runInstallSkill({
+    await runInstallSkillForTest({
       yes: true,
       sourceDir: fixture.sourceDir,
       projectRoot: fixture.projectRoot,
@@ -173,11 +195,106 @@ describe("runInstallSkill", () => {
 
     expect(readFixturePackageJson(fixture.projectRoot).scripts).toEqual({
       test: "vite-plus test",
-      doctor: "react-doctor",
+      doctor: "npx react-doctor@latest",
     });
     expect(readFixturePackageJson(fixture.projectRoot).devDependencies).toEqual({
       "react-doctor": "latest",
     });
+  });
+
+  it("installs react-doctor with the detected package manager", async () => {
+    writeValidSkill(fixture.sourceDir);
+    writePackageJson(fixture.projectRoot, {
+      packageManager: "pnpm@10.29.1",
+      scripts: {},
+    });
+
+    await runInstallSkillForTest({
+      yes: true,
+      sourceDir: fixture.sourceDir,
+      projectRoot: fixture.projectRoot,
+      detectedAgents: ["cursor"],
+      gitHookPath: null,
+    });
+
+    expect(dependencyInstallCalls).toEqual([
+      {
+        command: "pnpm",
+        args: ["add", "--save-dev", "react-doctor@latest"],
+        cwd: fixture.projectRoot,
+      },
+    ]);
+  });
+
+  it("detects the package manager from an ancestor package.json", async () => {
+    writeValidSkill(fixture.sourceDir);
+    writePackageJson(fixture.projectRoot, {
+      packageManager: "pnpm@10.29.1",
+      workspaces: ["apps/*"],
+    });
+    writeFileSync(path.join(fixture.projectRoot, "pnpm-workspace.yaml"), "packages:\n  - apps/*\n");
+    const appDirectory = path.join(fixture.projectRoot, "apps", "web");
+    mkdirSync(appDirectory, { recursive: true });
+    writePackageJson(appDirectory, {
+      scripts: {},
+    });
+
+    await runInstallSkillForTest({
+      yes: true,
+      sourceDir: fixture.sourceDir,
+      projectRoot: appDirectory,
+      detectedAgents: ["cursor"],
+      gitHookPath: null,
+    });
+
+    expect(dependencyInstallCalls).toEqual([
+      {
+        command: "pnpm",
+        args: ["add", "--save-dev", "-w", "react-doctor@latest"],
+        cwd: appDirectory,
+      },
+    ]);
+  });
+
+  it("does not mutate package setup when skill parsing fails", async () => {
+    writeFileSync(path.join(fixture.sourceDir, "SKILL.md"), "# Invalid skill\n");
+    writePackageJson(fixture.projectRoot, { scripts: {} });
+
+    await expect(
+      runInstallSkillForTest({
+        yes: true,
+        sourceDir: fixture.sourceDir,
+        projectRoot: fixture.projectRoot,
+        detectedAgents: ["cursor"],
+      }),
+    ).rejects.toThrow(/Could not parse SKILL\.md/);
+
+    expect(readFixturePackageJson(fixture.projectRoot).scripts).toEqual({});
+    expect(readFixturePackageJson(fixture.projectRoot)).not.toHaveProperty("devDependencies");
+    expect(dependencyInstallCalls).toEqual([]);
+  });
+
+  it("installs package setup and skills at the nearest package root from a nested directory", async () => {
+    writeValidSkill(fixture.sourceDir);
+    writePackageJson(fixture.projectRoot, { scripts: {} });
+    const nestedDirectory = path.join(fixture.projectRoot, "src", "components");
+    mkdirSync(nestedDirectory, { recursive: true });
+
+    await runInstallSkillForTest({
+      yes: true,
+      sourceDir: fixture.sourceDir,
+      projectRoot: nestedDirectory,
+      detectedAgents: ["cursor"],
+      gitHookPath: null,
+    });
+
+    expect(readFixturePackageJson(fixture.projectRoot).scripts).toEqual({
+      doctor: "npx react-doctor@latest",
+    });
+    expect(existsSync(path.join(fixture.projectRoot, ".agents/skills/react-doctor/SKILL.md"))).toBe(
+      true,
+    );
+    expect(existsSync(path.join(nestedDirectory, ".agents"))).toBe(false);
   });
 
   it("does not overwrite an existing doctor package script", async () => {
@@ -188,7 +305,7 @@ describe("runInstallSkill", () => {
       },
     });
 
-    await runInstallSkill({
+    await runInstallSkillForTest({
       yes: true,
       sourceDir: fixture.sourceDir,
       projectRoot: fixture.projectRoot,
@@ -204,6 +321,31 @@ describe("runInstallSkill", () => {
     });
   });
 
+  it("adds a react-doctor package script when doctor is already taken", async () => {
+    writeValidSkill(fixture.sourceDir);
+    writePackageJson(fixture.projectRoot, {
+      scripts: {
+        doctor: "vitest --run",
+      },
+    });
+
+    await runInstallSkillForTest({
+      yes: true,
+      sourceDir: fixture.sourceDir,
+      projectRoot: fixture.projectRoot,
+      detectedAgents: ["cursor"],
+      gitHookPath: null,
+    });
+
+    expect(readFixturePackageJson(fixture.projectRoot).scripts).toEqual({
+      doctor: "vitest --run",
+      "react-doctor": "npx react-doctor@latest",
+    });
+    expect(readFixturePackageJson(fixture.projectRoot).devDependencies).toEqual({
+      "react-doctor": "latest",
+    });
+  });
+
   it("does not overwrite an existing react-doctor dependency", async () => {
     writeValidSkill(fixture.sourceDir);
     writePackageJson(fixture.projectRoot, {
@@ -213,7 +355,7 @@ describe("runInstallSkill", () => {
       scripts: {},
     });
 
-    await runInstallSkill({
+    await runInstallSkillForTest({
       yes: true,
       sourceDir: fixture.sourceDir,
       projectRoot: fixture.projectRoot,
@@ -222,7 +364,7 @@ describe("runInstallSkill", () => {
     });
 
     expect(readFixturePackageJson(fixture.projectRoot).scripts).toEqual({
-      doctor: "react-doctor",
+      doctor: "npx react-doctor@latest",
     });
     expect(readFixturePackageJson(fixture.projectRoot).devDependencies).toEqual({
       "react-doctor": "^1.2.3",
@@ -233,7 +375,7 @@ describe("runInstallSkill", () => {
     writeValidSkill(fixture.sourceDir);
     writeFileSync(path.join(fixture.projectRoot, "package.json"), "{ invalid json");
 
-    await runInstallSkill({
+    await runInstallSkillForTest({
       yes: true,
       sourceDir: fixture.sourceDir,
       projectRoot: fixture.projectRoot,
@@ -251,7 +393,7 @@ describe("runInstallSkill", () => {
 
   it("installs the skill into the universal .agents/skills directory for a universal agent", async () => {
     writeValidSkill(fixture.sourceDir);
-    await runInstallSkill({
+    await runInstallSkillForTest({
       yes: true,
       sourceDir: fixture.sourceDir,
       projectRoot: fixture.projectRoot,
@@ -264,7 +406,7 @@ describe("runInstallSkill", () => {
 
   it("installs the skill into a vendor-specific directory for a non-universal agent", async () => {
     writeValidSkill(fixture.sourceDir);
-    await runInstallSkill({
+    await runInstallSkillForTest({
       yes: true,
       sourceDir: fixture.sourceDir,
       projectRoot: fixture.projectRoot,
@@ -277,7 +419,7 @@ describe("runInstallSkill", () => {
 
   it("installs the skill into .factory/skills for the droid agent (upstream agent-install@0.0.3)", async () => {
     writeValidSkill(fixture.sourceDir);
-    await runInstallSkill({
+    await runInstallSkillForTest({
       yes: true,
       sourceDir: fixture.sourceDir,
       projectRoot: fixture.projectRoot,
@@ -292,7 +434,7 @@ describe("runInstallSkill", () => {
     writeValidSkill(fixture.sourceDir);
     const hookPath = path.join(fixture.projectRoot, ".git/hooks/pre-commit");
 
-    await runInstallSkill({
+    await runInstallSkillForTest({
       yes: true,
       sourceDir: fixture.sourceDir,
       projectRoot: fixture.projectRoot,
@@ -312,7 +454,7 @@ describe("runInstallSkill", () => {
   it("--agent-hooks installs native hooks for selected supported agents", async () => {
     writeValidSkill(fixture.sourceDir);
 
-    await runInstallSkill({
+    await runInstallSkillForTest({
       yes: true,
       agentHooks: true,
       sourceDir: fixture.sourceDir,
@@ -339,7 +481,7 @@ describe("runInstallSkill", () => {
   it("--yes does not install native agent hooks unless --agent-hooks is set", async () => {
     writeValidSkill(fixture.sourceDir);
 
-    await runInstallSkill({
+    await runInstallSkillForTest({
       yes: true,
       sourceDir: fixture.sourceDir,
       projectRoot: fixture.projectRoot,
@@ -362,7 +504,7 @@ describe("runInstallSkill", () => {
     process.env.CI = "1";
     execFileSync("git", ["init"], { cwd: fixture.projectRoot, stdio: "ignore" });
 
-    await runInstallSkill({
+    await runInstallSkillForTest({
       yes: true,
       agentHooks: true,
       sourceDir: fixture.sourceDir,
@@ -389,7 +531,7 @@ describe("runInstallSkill", () => {
     process.env.CI = "1";
     execFileSync("git", ["init"], { cwd: fixture.projectRoot, stdio: "ignore" });
 
-    await runInstallSkill({
+    await runInstallSkillForTest({
       agentHooks: true,
       sourceDir: fixture.sourceDir,
       projectRoot: fixture.projectRoot,

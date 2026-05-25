@@ -10,6 +10,7 @@ import {
   getSetupPromptProjectKey,
   hasDisabledSetupPrompt,
   promptInstallSetup,
+  resolveInstallSetupProjectRoot,
   SETUP_PROMPT_CHOICE_NEVER,
   SETUP_PROMPT_CHOICE_NO,
   SETUP_PROMPT_CHOICE_YES,
@@ -75,6 +76,67 @@ describe("shouldPromptInstallSetup", () => {
     ).toBe(true);
   });
 
+  it("resolves setup to the completed scan package instead of the monorepo root", () => {
+    const appDirectory = path.join(fixture.projectRoot, "apps", "web");
+    mkdirSync(appDirectory, { recursive: true });
+    writePackageJson(fixture.projectRoot, {
+      name: "monorepo",
+      workspaces: ["apps/*"],
+    });
+    writePackageJson(appDirectory, {
+      name: "web",
+      scripts: {},
+    });
+
+    expect(
+      resolveInstallSetupProjectRoot({
+        scanRoot: fixture.projectRoot,
+        completedScanDirectories: [appDirectory],
+      }),
+    ).toBe(appDirectory);
+  });
+
+  it("resolves setup from a nested scan directory to the nearest package", () => {
+    const appDirectory = path.join(fixture.projectRoot, "apps", "web");
+    const nestedDirectory = path.join(appDirectory, "src", "components");
+    mkdirSync(nestedDirectory, { recursive: true });
+    writePackageJson(fixture.projectRoot, {
+      name: "monorepo",
+      workspaces: ["apps/*"],
+    });
+    writePackageJson(appDirectory, {
+      name: "web",
+      scripts: {},
+    });
+
+    expect(
+      resolveInstallSetupProjectRoot({
+        scanRoot: fixture.projectRoot,
+        completedScanDirectories: [nestedDirectory],
+      }),
+    ).toBe(appDirectory);
+  });
+
+  it("skips setup when a scan completed in multiple package roots", () => {
+    const webDirectory = path.join(fixture.projectRoot, "apps", "web");
+    const adminDirectory = path.join(fixture.projectRoot, "apps", "admin");
+    mkdirSync(webDirectory, { recursive: true });
+    mkdirSync(adminDirectory, { recursive: true });
+    writePackageJson(fixture.projectRoot, {
+      name: "monorepo",
+      workspaces: ["apps/*"],
+    });
+    writePackageJson(webDirectory, { name: "web" });
+    writePackageJson(adminDirectory, { name: "admin" });
+
+    expect(
+      resolveInstallSetupProjectRoot({
+        scanRoot: fixture.projectRoot,
+        completedScanDirectories: [webDirectory, adminDirectory],
+      }),
+    ).toBeNull();
+  });
+
   it("skips when the doctor script already exists", () => {
     writePackageJson(fixture.projectRoot, {
       scripts: {
@@ -93,6 +155,68 @@ describe("shouldPromptInstallSetup", () => {
         store: { cwd: fixture.configRoot },
       }),
     ).toBe(false);
+  });
+
+  it("prompts when doctor is taken by another command and react-doctor is missing", () => {
+    writePackageJson(fixture.projectRoot, {
+      scripts: {
+        doctor: "vitest --run",
+      },
+    });
+
+    expect(
+      shouldPromptInstallSetup({
+        projectRoot: fixture.projectRoot,
+        hasScoredScan: true,
+        isJsonMode: false,
+        isScoreOnly: false,
+        isStaged: false,
+        skipPrompts: false,
+        store: { cwd: fixture.configRoot },
+      }),
+    ).toBe(true);
+  });
+
+  it("skips when the fallback react-doctor script already exists", () => {
+    writePackageJson(fixture.projectRoot, {
+      scripts: {
+        doctor: "vitest --run",
+        "react-doctor": "react-doctor",
+      },
+    });
+
+    expect(
+      shouldPromptInstallSetup({
+        projectRoot: fixture.projectRoot,
+        hasScoredScan: true,
+        isJsonMode: false,
+        isScoreOnly: false,
+        isStaged: false,
+        skipPrompts: false,
+        store: { cwd: fixture.configRoot },
+      }),
+    ).toBe(false);
+  });
+
+  it("prompts when both script names exist but neither runs React Doctor", () => {
+    writePackageJson(fixture.projectRoot, {
+      scripts: {
+        doctor: "vitest --run",
+        "react-doctor": "echo noop",
+      },
+    });
+
+    expect(
+      shouldPromptInstallSetup({
+        projectRoot: fixture.projectRoot,
+        hasScoredScan: true,
+        isJsonMode: false,
+        isScoreOnly: false,
+        isStaged: false,
+        skipPrompts: false,
+        store: { cwd: fixture.configRoot },
+      }),
+    ).toBe(true);
   });
 
   it("skips when setup prompt has been disabled for this project", () => {
@@ -165,9 +289,7 @@ describe("shouldPromptInstallSetup", () => {
     expect(waitedMilliseconds).toBe(SETUP_PROMPT_DELAY_MS);
     expect(writtenLines.join("\n")).toContain("2 issues");
     expect(writtenLines.join("\n")).toContain("humans and agents");
-    expect(writtenLines.join("\n")).toContain("`doctor` package script");
-    expect(writtenLines.join("\n")).toContain("skills for your coding agents");
-    expect(writtenLines.join("\n")).toContain("optional hooks");
+    expect(writtenLines.join("\n")).not.toContain("Setup will add");
     expect(selectMessage).toBe("Set up React Doctor for this project?");
     expect(didInstall).toBe(true);
   });
@@ -342,7 +464,6 @@ describe("shouldPromptInstallSetup", () => {
       shouldPromptInstallSetup({
         projectRoot: fixture.projectRoot,
         hasScoredScan: true,
-        issueCount: 1,
         isJsonMode: false,
         isScoreOnly: false,
         isStaged: false,

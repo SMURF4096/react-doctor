@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import path from "node:path";
 import Conf from "conf";
 import basePrompts from "prompts";
-import { hasDoctorScript } from "./install-doctor-script.js";
+import { findNearestPackageDirectory, hasDoctorScript } from "./install-doctor-script.js";
 import { SETUP_PROMPT_DELAY_MS } from "./constants.js";
 
 export interface InstallSkillRunnerOptions {
@@ -66,6 +66,11 @@ interface SetupPromptGlobalConfig {
   readonly projects?: Record<string, SetupPromptProjectConfig>;
 }
 
+export interface ResolveInstallSetupProjectRootOptions {
+  readonly scanRoot: string;
+  readonly completedScanDirectories: ReadonlyArray<string>;
+}
+
 const GLOBAL_CONFIG_PROJECT_NAME = "react-doctor";
 
 const getSetupPromptStore = (
@@ -119,6 +124,26 @@ export const shouldPromptInstallSetup = (options: ShouldPromptInstallSetupOption
   return !hasDoctorScript(options.projectRoot);
 };
 
+export const resolveInstallSetupProjectRoot = (
+  options: ResolveInstallSetupProjectRootOptions,
+): string | null => {
+  if (options.completedScanDirectories.length === 0) {
+    return findNearestPackageDirectory(options.scanRoot) ?? options.scanRoot;
+  }
+
+  const packageDirectories = new Set<string>();
+  for (const scanDirectory of options.completedScanDirectories) {
+    const packageDirectory =
+      findNearestPackageDirectory(scanDirectory, options.scanRoot) ??
+      findNearestPackageDirectory(scanDirectory) ??
+      scanDirectory;
+    packageDirectories.add(packageDirectory);
+  }
+
+  if (packageDirectories.size !== 1) return null;
+  return [...packageDirectories][0] ?? null;
+};
+
 const defaultWait: SetupPromptWait = (milliseconds) =>
   new Promise((resolve) => {
     setTimeout(resolve, milliseconds);
@@ -159,7 +184,6 @@ export const buildInstallSetupPitchLines = (issueCount: number): readonly string
   return [
     "",
     issueLine,
-    "Setup will add a `doctor` package script, install React Doctor skills for your coding agents, and offer optional hooks for pre-commit and post-edit checks.",
     "",
   ];
 };

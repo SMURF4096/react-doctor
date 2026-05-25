@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,8 +11,14 @@ import {
 import { highlighter, SKILL_NAME } from "@react-doctor/core";
 import { cliLogger as logger } from "./cli-logger.js";
 import { detectAvailableAgents } from "./detect-agents.js";
-import { installDoctorScript } from "./install-doctor-script.js";
+import {
+  DOCTOR_PACKAGE_NAME,
+  findNearestPackageDirectory,
+  hasDoctorDependency,
+  installDoctorScript,
+} from "./install-doctor-script.js";
 import { installReactDoctorAgentHooks } from "./install-agent-hooks.js";
+import { isRecord, readPackageJson } from "./git-hook-shared.js";
 import { GitHookKind, type GitHookTarget } from "./git-hook-types.js";
 import { detectGitHookTarget, installReactDoctorGitHook } from "./install-git-hook.js";
 import { prompts } from "./prompts.js";
@@ -30,6 +37,137 @@ const CONFIG_ONLY_GIT_HOOK_KINDS = new Set([
   GitHookKind.SimpleGitHooks,
   GitHookKind.Yorkie,
 ]);
+
+export interface InstallReactDoctorDependencyRunnerInput {
+  readonly command: string;
+  readonly args: ReadonlyArray<string>;
+  readonly cwd: string;
+}
+
+interface InstallReactDoctorDependencyOptions {
+  readonly projectRoot: string;
+  readonly runner?: (input: InstallReactDoctorDependencyRunnerInput) => void | Promise<void>;
+}
+
+interface InstallReactDoctorDependencyResult {
+  readonly dependencyStatus: "created" | "existing" | "skipped";
+  readonly dependencyReason?: "missing-or-invalid-package-json" | "invalid-dev-dependencies";
+}
+
+const PACKAGE_MANAGER_LOCKFILES = [
+  { packageManager: "pnpm", fileName: "pnpm-lock.yaml" },
+  { packageManager: "yarn", fileName: "yarn.lock" },
+  { packageManager: "bun", fileName: "bun.lockb" },
+  { packageManager: "bun", fileName: "bun.lock" },
+  { packageManager: "npm", fileName: "package-lock.json" },
+] as const;
+
+type PackageManager = (typeof PACKAGE_MANAGER_LOCKFILES)[number]["packageManager"] | "npm";
+
+const findNearestFileDirectory = (
+  startDirectory: string,
+  fileNames: ReadonlyArray<string>,
+): string | null => {
+  let currentDirectory = path.resolve(startDirectory);
+  while (true) {
+    if (fileNames.some((fileName) => existsSync(path.join(currentDirectory, fileName)))) {
+      return currentDirectory;
+    }
+    const parentDirectory = path.dirname(currentDirectory);
+    if (parentDirectory === currentDirectory) return null;
+    currentDirectory = parentDirectory;
+  }
+};
+
+const detectPackageManager = (projectRoot: string): PackageManager => {
+  let currentDirectory = path.resolve(projectRoot);
+  while (true) {
+    const packageJson = readPackageJson(currentDirectory);
+    if (isRecord(packageJson) && typeof packageJson.packageManager === "string") {
+      const packageManagerName = packageJson.packageManager.split("@")[0];
+      if (
+        packageManagerName === "pnpm" ||
+        packageManagerName === "yarn" ||
+        packageManagerName === "bun" ||
+        packageManagerName === "npm"
+      ) {
+        return packageManagerName;
+      }
+    }
+    const parentDirectory = path.dirname(currentDirectory);
+    if (parentDirectory === currentDirectory) break;
+    currentDirectory = parentDirectory;
+  }
+
+  const lockfileDirectory = findNearestFileDirectory(
+    projectRoot,
+    PACKAGE_MANAGER_LOCKFILES.map((lockfile) => lockfile.fileName),
+  );
+  const matchedLockfile = PACKAGE_MANAGER_LOCKFILES.find(
+    (lockfile) =>
+      lockfileDirectory !== null && existsSync(path.join(lockfileDirectory, lockfile.fileName)),
+  );
+  return matchedLockfile?.packageManager ?? "npm";
+};
+
+const packageManagerNeedsWorkspaceFlag = (projectRoot: string): boolean =>
+  existsSync(path.join(projectRoot, "pnpm-workspace.yaml")) ||
+  findNearestFileDirectory(projectRoot, ["pnpm-workspace.yaml"]) !== null;
+
+const buildInstallCommand = (projectRoot: string): InstallReactDoctorDependencyRunnerInput => {
+  const packageManager = detectPackageManager(projectRoot);
+  const packageSpecifier = `${DOCTOR_PACKAGE_NAME}@latest`;
+  if (packageManager === "npm") {
+    return { command: "npm", args: ["install", "--save-dev", packageSpecifier], cwd: projectRoot };
+  }
+  if (packageManager === "yarn") {
+    return { command: "yarn", args: ["add", "--dev", packageSpecifier], cwd: projectRoot };
+  }
+  if (packageManager === "bun") {
+    return { command: "bun", args: ["add", "--dev", packageSpecifier], cwd: projectRoot };
+  }
+  return {
+    command: "pnpm",
+    args: [
+      "add",
+      "--save-dev",
+      ...(packageManagerNeedsWorkspaceFlag(projectRoot) ? ["-w"] : []),
+      packageSpecifier,
+    ],
+    cwd: projectRoot,
+  };
+};
+
+const defaultInstallDependencyRunner = (input: InstallReactDoctorDependencyRunnerInput): void => {
+  execFileSync(input.command, [...input.args], {
+    cwd: input.cwd,
+    stdio: "inherit",
+    env: { ...process.env, REACT_DOCTOR_INSTALL: "1" },
+  });
+};
+
+const installReactDoctorDependency = async (
+  options: InstallReactDoctorDependencyOptions,
+): Promise<InstallReactDoctorDependencyResult> => {
+  const packageJson = readPackageJson(options.projectRoot);
+  if (!isRecord(packageJson)) {
+    return {
+      dependencyStatus: "skipped",
+      dependencyReason: "missing-or-invalid-package-json",
+    };
+  }
+  if (hasDoctorDependency(packageJson)) return { dependencyStatus: "existing" };
+  if (packageJson.devDependencies !== undefined && !isRecord(packageJson.devDependencies)) {
+    return {
+      dependencyStatus: "skipped",
+      dependencyReason: "invalid-dev-dependencies",
+    };
+  }
+
+  const runnerInput = buildInstallCommand(options.projectRoot);
+  await (options.runner ?? defaultInstallDependencyRunner)(runnerInput);
+  return { dependencyStatus: "created" };
+};
 
 const buildManualGitHookTarget = (hookPath: string, projectRoot: string): GitHookTarget => ({
   hookPath,
@@ -53,36 +191,63 @@ const formatDoctorScriptInstallMessage = (
   scriptResult: ReturnType<typeof installDoctorScript>,
 ): string => {
   const messages: string[] = [];
+  const scriptName = scriptResult.scriptName ?? "doctor";
   if (scriptResult.scriptStatus === "created") {
-    messages.push("Added package script: doctor.");
+    messages.push(`Added package script: ${scriptName}.`);
   } else if (scriptResult.scriptStatus === "existing") {
-    messages.push("Package script already exists: doctor.");
+    messages.push(`Package script already exists: ${scriptName}.`);
+  } else if (scriptResult.scriptReason === "script-names-taken") {
+    messages.push("Skipped package script: doctor and react-doctor are already taken.");
+  } else if (scriptResult.scriptReason === "doctor-script-taken") {
+    messages.push("Skipped package script: doctor and react-doctor scripts already exist.");
   } else if (scriptResult.scriptReason === "invalid-scripts") {
     messages.push(`Skipped package script: scripts field is not an object.`);
   } else {
     messages.push("Skipped package script: package.json missing or invalid.");
   }
 
-  if (scriptResult.dependencyStatus === "created") {
-    messages.push("Added dev dependency: react-doctor.");
-  } else if (scriptResult.dependencyStatus === "existing") {
-    messages.push("React Doctor dependency already exists.");
-  } else if (scriptResult.dependencyReason === "invalid-dev-dependencies") {
-    messages.push("Skipped dev dependency: devDependencies field is not an object.");
-  } else {
-    messages.push("Skipped dev dependency: package.json missing or invalid.");
-  }
-
   return messages.join(" ");
 };
 
-const installReactDoctorPackageSetup = (projectRoot: string): void => {
-  const scriptSpinner = spinner("Installing React Doctor package setup...").start();
+const formatDependencyInstallMessage = (result: InstallReactDoctorDependencyResult): string => {
+  if (result.dependencyStatus === "created") {
+    return "Installed dev dependency: react-doctor.";
+  }
+  if (result.dependencyStatus === "existing") {
+    return "React Doctor dependency already exists.";
+  }
+  if (result.dependencyReason === "invalid-dev-dependencies") {
+    return "Skipped dev dependency install: devDependencies field is not an object.";
+  }
+  return "Skipped dev dependency install: package.json missing or invalid.";
+};
+
+const installReactDoctorPackageSetup = async (
+  projectRoot: string,
+  dependencyRunner?: (input: InstallReactDoctorDependencyRunnerInput) => void | Promise<void>,
+): Promise<void> => {
+  const scriptSpinner = spinner("Installing React Doctor package script...").start();
   try {
     const scriptResult = installDoctorScript({ projectRoot });
     scriptSpinner.succeed(formatDoctorScriptInstallMessage(scriptResult));
   } catch (error) {
-    scriptSpinner.fail("Failed to install React Doctor package setup.");
+    scriptSpinner.fail("Failed to install React Doctor package script.");
+    throw error;
+  }
+
+  const dependencySpinner = spinner("Installing React Doctor package...").start();
+  try {
+    const dependencyResult = await installReactDoctorDependency({
+      projectRoot,
+      runner: dependencyRunner,
+    });
+    if (dependencyResult.dependencyStatus === "skipped") {
+      dependencySpinner.fail(formatDependencyInstallMessage(dependencyResult));
+      return;
+    }
+    dependencySpinner.succeed(formatDependencyInstallMessage(dependencyResult));
+  } catch (error) {
+    dependencySpinner.fail("Failed to install React Doctor package.");
     throw error;
   }
 };
@@ -97,6 +262,9 @@ interface InstallSkillOptions {
   detectedAgents?: SkillAgentType[];
   gitHookPath?: string | null;
   onPromptCancel?: () => void;
+  installDependencyRunner?: (
+    input: InstallReactDoctorDependencyRunnerInput,
+  ) => void | Promise<void>;
 }
 
 const getSkillSourceDirectory = (): string => {
@@ -105,12 +273,9 @@ const getSkillSourceDirectory = (): string => {
 };
 
 export const runInstallSkill = async (options: InstallSkillOptions = {}): Promise<void> => {
-  const projectRoot = options.projectRoot ?? process.cwd();
+  const requestedProjectRoot = options.projectRoot ?? process.cwd();
+  const projectRoot = findNearestPackageDirectory(requestedProjectRoot) ?? requestedProjectRoot;
   const sourceDir = options.sourceDir ?? getSkillSourceDirectory();
-
-  if (!options.dryRun) {
-    installReactDoctorPackageSetup(projectRoot);
-  }
 
   if (!existsSync(path.join(sourceDir, SKILL_MANIFEST_FILE))) {
     logger.error(`Could not locate the ${SKILL_NAME} skill bundled with this package.`);
@@ -205,7 +370,7 @@ export const runInstallSkill = async (options: InstallSkillOptions = {}): Promis
       logger.dim(`  - ${getSkillAgentConfig(agent).displayName}`);
     }
     logger.dim(`  Source: ${sourceDir}`);
-    logger.dim("  Package script: doctor");
+    logger.dim("  Package script: doctor (or react-doctor if doctor exists)");
     logger.dim("  Dev dependency: react-doctor");
     if (shouldInstallGitHook) {
       logger.dim(`  Git hook: ${gitHookPath}`);
@@ -245,6 +410,8 @@ export const runInstallSkill = async (options: InstallSkillOptions = {}): Promis
     installSpinner.fail(`Failed to install ${SKILL_NAME} skill.`);
     throw error;
   }
+
+  await installReactDoctorPackageSetup(projectRoot, options.installDependencyRunner);
 
   if (shouldInstallGitHook && gitHookTarget !== null && gitHookTarget !== undefined) {
     const hookSpinner = spinner("Installing React Doctor pre-commit hook...").start();
