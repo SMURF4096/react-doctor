@@ -4,6 +4,7 @@ import type { EsTreeNode } from "../../utils/es-tree-node.js";
 import type { Rule } from "../../utils/rule.js";
 import type { RuleContext } from "../../utils/rule-context.js";
 import { isAllLiteralArrayExpression } from "../../utils/is-all-literal-array-expression.js";
+import { isFunctionLike } from "../../utils/is-function-like.js";
 import { isNodeOfType } from "../../utils/is-node-of-type.js";
 import type { EsTreeNodeOfType } from "../../utils/es-tree-node-of-type.js";
 import {
@@ -173,12 +174,8 @@ const isInsideStaticPlaceholderMap = (node: EsTreeNode): boolean => {
   let current = node;
   while (current.parent) {
     const parent = current.parent;
-    const isCrossingFunctionBoundary =
-      isNodeOfType(current, "ArrowFunctionExpression") ||
-      isNodeOfType(current, "FunctionExpression") ||
-      isNodeOfType(current, "FunctionDeclaration");
     if (
-      isCrossingFunctionBoundary &&
+      isFunctionLike(current) &&
       isNodeOfType(parent, "CallExpression") &&
       parent.arguments.includes(current as never)
     ) {
@@ -218,13 +215,8 @@ const findIteratorItemName = (node: EsTreeNode): string | null => {
 
     // Stop crossing function boundaries unless we're crossing INTO the
     // iterator callback itself.
-    const isCrossingFunctionBoundary =
-      isNodeOfType(current, "ArrowFunctionExpression") ||
-      isNodeOfType(current, "FunctionExpression") ||
-      isNodeOfType(current, "FunctionDeclaration");
-
     if (
-      isCrossingFunctionBoundary &&
+      isFunctionLike(current) &&
       isNodeOfType(parent, "CallExpression") &&
       parent.arguments.includes(current as never)
     ) {
