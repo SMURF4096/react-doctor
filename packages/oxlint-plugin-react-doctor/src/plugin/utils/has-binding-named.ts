@@ -1,39 +1,6 @@
+import { collectPatternNames } from "./collect-pattern-names.js";
 import type { EsTreeNode } from "./es-tree-node.js";
 import { isAstNode } from "./is-ast-node.js";
-
-const collectBindingNamesFromPattern = (pattern: EsTreeNode, into: Set<string>): void => {
-  if (pattern.type === "Identifier" && "name" in pattern && typeof pattern.name === "string") {
-    into.add(pattern.name);
-    return;
-  }
-  if (
-    pattern.type === "ObjectPattern" &&
-    "properties" in pattern &&
-    Array.isArray(pattern.properties)
-  ) {
-    for (const property of pattern.properties as ReadonlyArray<EsTreeNode>) {
-      if (property.type === "RestElement" && "argument" in property && property.argument) {
-        collectBindingNamesFromPattern(property.argument as EsTreeNode, into);
-      } else if (property.type === "Property" && "value" in property && property.value) {
-        collectBindingNamesFromPattern(property.value as EsTreeNode, into);
-      }
-    }
-    return;
-  }
-  if (pattern.type === "ArrayPattern" && "elements" in pattern && Array.isArray(pattern.elements)) {
-    for (const element of pattern.elements as ReadonlyArray<EsTreeNode | null>) {
-      if (element) collectBindingNamesFromPattern(element, into);
-    }
-    return;
-  }
-  if (pattern.type === "RestElement" && "argument" in pattern && pattern.argument) {
-    collectBindingNamesFromPattern(pattern.argument as EsTreeNode, into);
-    return;
-  }
-  if (pattern.type === "AssignmentPattern" && "left" in pattern && pattern.left) {
-    collectBindingNamesFromPattern(pattern.left as EsTreeNode, into);
-  }
-};
 
 // Walks the AST collecting every identifier name that appears as a
 // binding — `var`/`let`/`const`/parameter/import/function/class name,
@@ -51,7 +18,7 @@ export const hasBindingNamed = (root: EsTreeNode, bindingName: string): boolean 
     switch (node.type) {
       case "VariableDeclarator":
         if ("id" in node && node.id)
-          collectBindingNamesFromPattern(node.id as EsTreeNode, collected);
+          collectPatternNames(node.id as EsTreeNode, collected);
         break;
       case "FunctionDeclaration":
       case "FunctionExpression":
@@ -93,7 +60,7 @@ export const hasBindingNamed = (root: EsTreeNode, bindingName: string): boolean 
       Array.isArray((node as { params?: ReadonlyArray<EsTreeNode> }).params)
     ) {
       for (const param of (node as { params: ReadonlyArray<EsTreeNode> }).params) {
-        collectBindingNamesFromPattern(param, collected);
+        collectPatternNames(param, collected);
       }
     }
     if (collected.has(bindingName)) return;
