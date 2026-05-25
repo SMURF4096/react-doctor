@@ -2,13 +2,20 @@ import { reactDoctorRules } from "./plugin/rule-registry.js";
 import type { RuleFramework } from "./plugin/utils/rule.js";
 import type { OxlintRuleSeverity } from "./types.js";
 
-interface RuleMapEntry {
-  key: string;
-  severity: OxlintRuleSeverity;
+type RegistryEntry = (typeof reactDoctorRules)[number];
+
+interface KeyedSeverity {
+  readonly key: string;
+  readonly severity: OxlintRuleSeverity;
 }
 
-const toRuleMap = (rules: ReadonlyArray<RuleMapEntry>): Record<string, OxlintRuleSeverity> =>
-  Object.fromEntries(rules.map((rule) => [rule.key, rule.severity]));
+const toRuleMap = (
+  entries: ReadonlyArray<KeyedSeverity>,
+): Record<string, OxlintRuleSeverity> =>
+  Object.fromEntries(entries.map((entry) => [entry.key, entry.severity]));
+
+const toKeyedSeverity = (entries: ReadonlyArray<RegistryEntry>): ReadonlyArray<KeyedSeverity> =>
+  entries.map((entry) => ({ key: entry.key, severity: entry.rule.severity }));
 
 // Skips rules with `defaultEnabled: false` — these ship in the plugin
 // for opt-in but are not part of any recommended preset. The oxlint
@@ -16,12 +23,12 @@ const toRuleMap = (rules: ReadonlyArray<RuleMapEntry>): Record<string, OxlintRul
 // `severityControls` override path; presets exported from this package
 // (used by the ESLint `recommended` flat config) must respect it too,
 // or ESLint users would silently get every default-disabled rule.
-const isRecommendedByDefault = (rule: (typeof reactDoctorRules)[number]): boolean =>
-  rule.rule.defaultEnabled !== false;
+const isRecommendedByDefault = (entry: RegistryEntry): boolean =>
+  entry.rule.defaultEnabled !== false;
 
 const collectReactDoctorRulesByFramework = (frameworkName: RuleFramework) =>
   reactDoctorRules.filter(
-    (rule) => rule.framework === frameworkName && isRecommendedByDefault(rule),
+    (entry) => entry.rule.framework === frameworkName && isRecommendedByDefault(entry),
   );
 
 const collectExternalRulesBySource = (source: string) =>
@@ -29,8 +36,8 @@ const collectExternalRulesBySource = (source: string) =>
 
 const collectFrameworkSpecificRuleKeys = (): ReadonlySet<string> => {
   const collected = new Set<string>();
-  for (const rule of reactDoctorRules) {
-    if (rule.framework !== "global") collected.add(rule.key);
+  for (const entry of reactDoctorRules) {
+    if (entry.rule.framework !== "global") collected.add(entry.key);
   }
   return collected;
 };
@@ -69,12 +76,22 @@ export const EXTERNAL_RULES = [
 
 export const RULES = [...REACT_DOCTOR_RULES, ...EXTERNAL_RULES] as const;
 
-export const RECOMMENDED_RULES = toRuleMap(collectReactDoctorRulesByFramework("global"));
-export const NEXTJS_RULES = toRuleMap(collectReactDoctorRulesByFramework("nextjs"));
-export const REACT_NATIVE_RULES = toRuleMap(collectReactDoctorRulesByFramework("react-native"));
-export const TANSTACK_START_RULES = toRuleMap(collectReactDoctorRulesByFramework("tanstack-start"));
-export const TANSTACK_QUERY_RULES = toRuleMap(collectReactDoctorRulesByFramework("tanstack-query"));
-export const ALL_REACT_DOCTOR_RULES = toRuleMap(REACT_DOCTOR_RULES);
+export const RECOMMENDED_RULES = toRuleMap(
+  toKeyedSeverity(collectReactDoctorRulesByFramework("global")),
+);
+export const NEXTJS_RULES = toRuleMap(
+  toKeyedSeverity(collectReactDoctorRulesByFramework("nextjs")),
+);
+export const REACT_NATIVE_RULES = toRuleMap(
+  toKeyedSeverity(collectReactDoctorRulesByFramework("react-native")),
+);
+export const TANSTACK_START_RULES = toRuleMap(
+  toKeyedSeverity(collectReactDoctorRulesByFramework("tanstack-start")),
+);
+export const TANSTACK_QUERY_RULES = toRuleMap(
+  toKeyedSeverity(collectReactDoctorRulesByFramework("tanstack-query")),
+);
+export const ALL_REACT_DOCTOR_RULES = toRuleMap(toKeyedSeverity(REACT_DOCTOR_RULES));
 export const ALL_REACT_DOCTOR_RULE_KEYS: ReadonlySet<string> = new Set(
   REACT_DOCTOR_RULES.map((rule) => rule.key),
 );

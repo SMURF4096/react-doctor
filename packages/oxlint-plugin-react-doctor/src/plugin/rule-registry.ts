@@ -300,9 +300,6 @@ export const reactDoctorRules = [
     id: "advanced-event-handler-refs",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...advancedEventHandlerRefs,
       framework: "global",
@@ -314,9 +311,6 @@ export const reactDoctorRules = [
     id: "alt-text",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "error",
     rule: {
       ...altText,
       framework: "global",
@@ -328,9 +322,6 @@ export const reactDoctorRules = [
     id: "anchor-ambiguous-text",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...anchorAmbiguousText,
       framework: "global",
@@ -342,9 +333,6 @@ export const reactDoctorRules = [
     id: "anchor-has-content",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...anchorHasContent,
       framework: "global",
@@ -356,9 +344,6 @@ export const reactDoctorRules = [
     id: "anchor-is-valid",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...anchorIsValid,
       framework: "global",
@@ -370,9 +355,6 @@ export const reactDoctorRules = [
     id: "aria-activedescendant-has-tabindex",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...ariaActivedescendantHasTabindex,
       framework: "global",
@@ -384,9 +366,6 @@ export const reactDoctorRules = [
     id: "aria-props",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "error",
     rule: {
       ...ariaProps,
       framework: "global",
@@ -398,9 +377,6 @@ export const reactDoctorRules = [
     id: "aria-proptypes",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "error",
     rule: {
       ...ariaProptypes,
       framework: "global",
@@ -412,9 +388,6 @@ export const reactDoctorRules = [
     id: "aria-role",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "error",
     rule: {
       ...ariaRole,
       framework: "global",
@@ -426,9 +399,6 @@ export const reactDoctorRules = [
     id: "aria-unsupported-elements",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "error",
     rule: {
       ...ariaUnsupportedElements,
       framework: "global",
@@ -440,9 +410,6 @@ export const reactDoctorRules = [
     id: "async-await-in-loop",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...asyncAwaitInLoop,
       framework: "global",
@@ -454,9 +421,6 @@ export const reactDoctorRules = [
     id: "async-defer-await",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...asyncDeferAwait,
       framework: "global",
@@ -468,9 +432,6 @@ export const reactDoctorRules = [
     id: "async-parallel",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...asyncParallel,
       framework: "global",
@@ -482,9 +443,6 @@ export const reactDoctorRules = [
     id: "autocomplete-valid",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...autocompleteValid,
       framework: "global",
@@ -496,9 +454,6 @@ export const reactDoctorRules = [
     id: "button-has-type",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...buttonHasType,
       framework: "global",
@@ -510,9 +465,6 @@ export const reactDoctorRules = [
     id: "checked-requires-onchange-or-readonly",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...checkedRequiresOnchangeOrReadonly,
       framework: "global",
@@ -524,9 +476,6 @@ export const reactDoctorRules = [
     id: "click-events-have-key-events",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...clickEventsHaveKeyEvents,
       framework: "global",
@@ -538,9 +487,6 @@ export const reactDoctorRules = [
     id: "client-localstorage-no-version",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...clientLocalstorageNoVersion,
       framework: "global",
@@ -552,9 +498,6 @@ export const reactDoctorRules = [
     id: "client-passive-event-listeners",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...clientPassiveEventListeners,
       framework: "global",
@@ -566,9 +509,6 @@ export const reactDoctorRules = [
     id: "control-has-associated-label",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...controlHasAssociatedLabel,
       framework: "global",
@@ -580,9 +520,6 @@ export const reactDoctorRules = [
     id: "design-no-em-dash-in-jsx-text",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noEmDashInJsxText,
       framework: "global",
@@ -594,9 +531,6 @@ export const reactDoctorRules = [
     id: "design-no-redundant-padding-axes",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noRedundantPaddingAxes,
       framework: "global",
@@ -608,9 +542,6 @@ export const reactDoctorRules = [
     id: "design-no-redundant-size-axes",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noRedundantSizeAxes,
       framework: "global",
@@ -622,9 +553,6 @@ export const reactDoctorRules = [
     id: "design-no-space-on-flex-children",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noSpaceOnFlexChildren,
       framework: "global",
@@ -636,9 +564,6 @@ export const reactDoctorRules = [
     id: "design-no-three-period-ellipsis",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noThreePeriodEllipsis,
       framework: "global",
@@ -650,9 +575,6 @@ export const reactDoctorRules = [
     id: "design-no-vague-button-label",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...noVagueButtonLabel,
       framework: "global",
@@ -664,9 +586,6 @@ export const reactDoctorRules = [
     id: "display-name",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...displayName,
       framework: "global",
@@ -678,9 +597,6 @@ export const reactDoctorRules = [
     id: "effect-needs-cleanup",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "State & Effects",
-    severity: "error",
     rule: {
       ...effectNeedsCleanup,
       framework: "global",
@@ -692,9 +608,6 @@ export const reactDoctorRules = [
     id: "exhaustive-deps",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...exhaustiveDeps,
       framework: "global",
@@ -706,9 +619,6 @@ export const reactDoctorRules = [
     id: "forbid-component-props",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...forbidComponentProps,
       framework: "global",
@@ -720,9 +630,6 @@ export const reactDoctorRules = [
     id: "forbid-dom-props",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...forbidDomProps,
       framework: "global",
@@ -734,9 +641,6 @@ export const reactDoctorRules = [
     id: "forbid-elements",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...forbidElements,
       framework: "global",
@@ -748,9 +652,6 @@ export const reactDoctorRules = [
     id: "forward-ref-uses-ref",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...forwardRefUsesRef,
       framework: "global",
@@ -762,9 +663,6 @@ export const reactDoctorRules = [
     id: "heading-has-content",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...headingHasContent,
       framework: "global",
@@ -776,9 +674,6 @@ export const reactDoctorRules = [
     id: "hook-use-state",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...hookUseState,
       framework: "global",
@@ -790,9 +685,6 @@ export const reactDoctorRules = [
     id: "html-has-lang",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...htmlHasLang,
       framework: "global",
@@ -804,9 +696,6 @@ export const reactDoctorRules = [
     id: "iframe-has-title",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...iframeHasTitle,
       framework: "global",
@@ -818,9 +707,6 @@ export const reactDoctorRules = [
     id: "iframe-missing-sandbox",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Security",
-    severity: "warn",
     rule: {
       ...iframeMissingSandbox,
       framework: "global",
@@ -832,9 +718,6 @@ export const reactDoctorRules = [
     id: "img-redundant-alt",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...imgRedundantAlt,
       framework: "global",
@@ -846,9 +729,6 @@ export const reactDoctorRules = [
     id: "interactive-supports-focus",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...interactiveSupportsFocus,
       framework: "global",
@@ -860,9 +740,6 @@ export const reactDoctorRules = [
     id: "js-batch-dom-css",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...jsBatchDomCss,
       framework: "global",
@@ -874,9 +751,6 @@ export const reactDoctorRules = [
     id: "js-cache-property-access",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...jsCachePropertyAccess,
       framework: "global",
@@ -888,9 +762,6 @@ export const reactDoctorRules = [
     id: "js-cache-storage",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...jsCacheStorage,
       framework: "global",
@@ -902,9 +773,6 @@ export const reactDoctorRules = [
     id: "js-combine-iterations",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...jsCombineIterations,
       framework: "global",
@@ -916,9 +784,6 @@ export const reactDoctorRules = [
     id: "js-early-exit",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...jsEarlyExit,
       framework: "global",
@@ -930,9 +795,6 @@ export const reactDoctorRules = [
     id: "js-flatmap-filter",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...jsFlatmapFilter,
       framework: "global",
@@ -944,9 +806,6 @@ export const reactDoctorRules = [
     id: "js-hoist-intl",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...jsHoistIntl,
       framework: "global",
@@ -958,9 +817,6 @@ export const reactDoctorRules = [
     id: "js-hoist-regexp",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...jsHoistRegexp,
       framework: "global",
@@ -972,9 +828,6 @@ export const reactDoctorRules = [
     id: "js-index-maps",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...jsIndexMaps,
       framework: "global",
@@ -986,9 +839,6 @@ export const reactDoctorRules = [
     id: "js-length-check-first",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...jsLengthCheckFirst,
       framework: "global",
@@ -1000,9 +850,6 @@ export const reactDoctorRules = [
     id: "js-min-max-loop",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...jsMinMaxLoop,
       framework: "global",
@@ -1014,9 +861,6 @@ export const reactDoctorRules = [
     id: "js-set-map-lookups",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...jsSetMapLookups,
       framework: "global",
@@ -1028,9 +872,6 @@ export const reactDoctorRules = [
     id: "js-tosorted-immutable",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...jsTosortedImmutable,
       framework: "global",
@@ -1042,9 +883,6 @@ export const reactDoctorRules = [
     id: "jsx-boolean-value",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...jsxBooleanValue,
       framework: "global",
@@ -1056,9 +894,6 @@ export const reactDoctorRules = [
     id: "jsx-curly-brace-presence",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...jsxCurlyBracePresence,
       framework: "global",
@@ -1070,9 +905,6 @@ export const reactDoctorRules = [
     id: "jsx-filename-extension",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...jsxFilenameExtension,
       framework: "global",
@@ -1084,9 +916,6 @@ export const reactDoctorRules = [
     id: "jsx-fragments",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...jsxFragments,
       framework: "global",
@@ -1098,9 +927,6 @@ export const reactDoctorRules = [
     id: "jsx-handler-names",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...jsxHandlerNames,
       framework: "global",
@@ -1112,9 +938,6 @@ export const reactDoctorRules = [
     id: "jsx-key",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "error",
     rule: {
       ...jsxKey,
       framework: "global",
@@ -1126,9 +949,6 @@ export const reactDoctorRules = [
     id: "jsx-max-depth",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...jsxMaxDepth,
       framework: "global",
@@ -1140,9 +960,6 @@ export const reactDoctorRules = [
     id: "jsx-no-comment-textnodes",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...jsxNoCommentTextnodes,
       framework: "global",
@@ -1154,9 +971,6 @@ export const reactDoctorRules = [
     id: "jsx-no-constructed-context-values",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...jsxNoConstructedContextValues,
       framework: "global",
@@ -1168,9 +982,6 @@ export const reactDoctorRules = [
     id: "jsx-no-duplicate-props",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "error",
     rule: {
       ...jsxNoDuplicateProps,
       framework: "global",
@@ -1182,9 +993,6 @@ export const reactDoctorRules = [
     id: "jsx-no-jsx-as-prop",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...jsxNoJsxAsProp,
       framework: "global",
@@ -1196,9 +1004,6 @@ export const reactDoctorRules = [
     id: "jsx-no-new-array-as-prop",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...jsxNoNewArrayAsProp,
       framework: "global",
@@ -1210,9 +1015,6 @@ export const reactDoctorRules = [
     id: "jsx-no-new-function-as-prop",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...jsxNoNewFunctionAsProp,
       framework: "global",
@@ -1224,9 +1026,6 @@ export const reactDoctorRules = [
     id: "jsx-no-new-object-as-prop",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...jsxNoNewObjectAsProp,
       framework: "global",
@@ -1238,9 +1037,6 @@ export const reactDoctorRules = [
     id: "jsx-no-script-url",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Security",
-    severity: "error",
     rule: {
       ...jsxNoScriptUrl,
       framework: "global",
@@ -1252,9 +1048,6 @@ export const reactDoctorRules = [
     id: "jsx-no-target-blank",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Security",
-    severity: "warn",
     rule: {
       ...jsxNoTargetBlank,
       framework: "global",
@@ -1266,9 +1059,6 @@ export const reactDoctorRules = [
     id: "jsx-no-undef",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "error",
     rule: {
       ...jsxNoUndef,
       framework: "global",
@@ -1280,9 +1070,6 @@ export const reactDoctorRules = [
     id: "jsx-no-useless-fragment",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...jsxNoUselessFragment,
       framework: "global",
@@ -1294,9 +1081,6 @@ export const reactDoctorRules = [
     id: "jsx-pascal-case",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...jsxPascalCase,
       framework: "global",
@@ -1308,9 +1092,6 @@ export const reactDoctorRules = [
     id: "jsx-props-no-spread-multi",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...jsxPropsNoSpreadMulti,
       framework: "global",
@@ -1322,9 +1103,6 @@ export const reactDoctorRules = [
     id: "jsx-props-no-spreading",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...jsxPropsNoSpreading,
       framework: "global",
@@ -1336,9 +1114,6 @@ export const reactDoctorRules = [
     id: "label-has-associated-control",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...labelHasAssociatedControl,
       framework: "global",
@@ -1350,9 +1125,6 @@ export const reactDoctorRules = [
     id: "lang",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...lang,
       framework: "global",
@@ -1364,9 +1136,6 @@ export const reactDoctorRules = [
     id: "media-has-caption",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...mediaHasCaption,
       framework: "global",
@@ -1378,9 +1147,6 @@ export const reactDoctorRules = [
     id: "mouse-events-have-key-events",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...mouseEventsHaveKeyEvents,
       framework: "global",
@@ -1392,9 +1158,6 @@ export const reactDoctorRules = [
     id: "nextjs-async-client-component",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "nextjs",
-    category: "Next.js",
-    severity: "error",
     rule: {
       ...nextjsAsyncClientComponent,
       framework: "nextjs",
@@ -1406,9 +1169,6 @@ export const reactDoctorRules = [
     id: "nextjs-image-missing-sizes",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "nextjs",
-    category: "Next.js",
-    severity: "warn",
     rule: {
       ...nextjsImageMissingSizes,
       framework: "nextjs",
@@ -1420,9 +1180,6 @@ export const reactDoctorRules = [
     id: "nextjs-inline-script-missing-id",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "nextjs",
-    category: "Next.js",
-    severity: "warn",
     rule: {
       ...nextjsInlineScriptMissingId,
       framework: "nextjs",
@@ -1434,9 +1191,6 @@ export const reactDoctorRules = [
     id: "nextjs-missing-metadata",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "nextjs",
-    category: "Next.js",
-    severity: "warn",
     rule: {
       ...nextjsMissingMetadata,
       framework: "nextjs",
@@ -1448,9 +1202,6 @@ export const reactDoctorRules = [
     id: "nextjs-no-a-element",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "nextjs",
-    category: "Next.js",
-    severity: "warn",
     rule: {
       ...nextjsNoAElement,
       framework: "nextjs",
@@ -1462,9 +1213,6 @@ export const reactDoctorRules = [
     id: "nextjs-no-client-fetch-for-server-data",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "nextjs",
-    category: "Next.js",
-    severity: "warn",
     rule: {
       ...nextjsNoClientFetchForServerData,
       framework: "nextjs",
@@ -1476,9 +1224,6 @@ export const reactDoctorRules = [
     id: "nextjs-no-client-side-redirect",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "nextjs",
-    category: "Next.js",
-    severity: "warn",
     rule: {
       ...nextjsNoClientSideRedirect,
       framework: "nextjs",
@@ -1490,9 +1235,6 @@ export const reactDoctorRules = [
     id: "nextjs-no-css-link",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "nextjs",
-    category: "Next.js",
-    severity: "warn",
     rule: {
       ...nextjsNoCssLink,
       framework: "nextjs",
@@ -1504,9 +1246,6 @@ export const reactDoctorRules = [
     id: "nextjs-no-font-link",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "nextjs",
-    category: "Next.js",
-    severity: "warn",
     rule: {
       ...nextjsNoFontLink,
       framework: "nextjs",
@@ -1518,9 +1257,6 @@ export const reactDoctorRules = [
     id: "nextjs-no-head-import",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "nextjs",
-    category: "Next.js",
-    severity: "error",
     rule: {
       ...nextjsNoHeadImport,
       framework: "nextjs",
@@ -1532,9 +1268,6 @@ export const reactDoctorRules = [
     id: "nextjs-no-img-element",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "nextjs",
-    category: "Next.js",
-    severity: "warn",
     rule: {
       ...nextjsNoImgElement,
       framework: "nextjs",
@@ -1546,9 +1279,6 @@ export const reactDoctorRules = [
     id: "nextjs-no-native-script",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "nextjs",
-    category: "Next.js",
-    severity: "warn",
     rule: {
       ...nextjsNoNativeScript,
       framework: "nextjs",
@@ -1560,9 +1290,6 @@ export const reactDoctorRules = [
     id: "nextjs-no-polyfill-script",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "nextjs",
-    category: "Next.js",
-    severity: "warn",
     rule: {
       ...nextjsNoPolyfillScript,
       framework: "nextjs",
@@ -1574,9 +1301,6 @@ export const reactDoctorRules = [
     id: "nextjs-no-redirect-in-try-catch",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "nextjs",
-    category: "Next.js",
-    severity: "warn",
     rule: {
       ...nextjsNoRedirectInTryCatch,
       framework: "nextjs",
@@ -1588,9 +1312,6 @@ export const reactDoctorRules = [
     id: "nextjs-no-side-effect-in-get-handler",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "nextjs",
-    category: "Security",
-    severity: "error",
     rule: {
       ...nextjsNoSideEffectInGetHandler,
       framework: "nextjs",
@@ -1602,9 +1323,6 @@ export const reactDoctorRules = [
     id: "nextjs-no-use-search-params-without-suspense",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "nextjs",
-    category: "Next.js",
-    severity: "warn",
     rule: {
       ...nextjsNoUseSearchParamsWithoutSuspense,
       framework: "nextjs",
@@ -1616,9 +1334,6 @@ export const reactDoctorRules = [
     id: "no-access-key",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...noAccessKey,
       framework: "global",
@@ -1630,9 +1345,6 @@ export const reactDoctorRules = [
     id: "no-adjust-state-on-prop-change",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "State & Effects",
-    severity: "warn",
     rule: {
       ...noAdjustStateOnPropChange,
       framework: "global",
@@ -1644,9 +1356,6 @@ export const reactDoctorRules = [
     id: "no-aria-hidden-on-focusable",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...noAriaHiddenOnFocusable,
       framework: "global",
@@ -1658,9 +1367,6 @@ export const reactDoctorRules = [
     id: "no-array-index-as-key",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...noArrayIndexAsKey,
       framework: "global",
@@ -1672,9 +1378,6 @@ export const reactDoctorRules = [
     id: "no-array-index-key",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...noArrayIndexKey,
       framework: "global",
@@ -1686,9 +1389,6 @@ export const reactDoctorRules = [
     id: "no-autofocus",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...noAutofocus,
       framework: "global",
@@ -1700,9 +1400,6 @@ export const reactDoctorRules = [
     id: "no-barrel-import",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Bundle Size",
-    severity: "warn",
     rule: {
       ...noBarrelImport,
       framework: "global",
@@ -1714,9 +1411,6 @@ export const reactDoctorRules = [
     id: "no-cascading-set-state",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "State & Effects",
-    severity: "warn",
     rule: {
       ...noCascadingSetState,
       framework: "global",
@@ -1728,9 +1422,6 @@ export const reactDoctorRules = [
     id: "no-chain-state-updates",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "State & Effects",
-    severity: "warn",
     rule: {
       ...noChainStateUpdates,
       framework: "global",
@@ -1742,9 +1433,6 @@ export const reactDoctorRules = [
     id: "no-children-prop",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...noChildrenProp,
       framework: "global",
@@ -1756,9 +1444,6 @@ export const reactDoctorRules = [
     id: "no-clone-element",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noCloneElement,
       framework: "global",
@@ -1770,9 +1455,6 @@ export const reactDoctorRules = [
     id: "no-danger",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...noDanger,
       framework: "global",
@@ -1784,9 +1466,6 @@ export const reactDoctorRules = [
     id: "no-danger-with-children",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "error",
     rule: {
       ...noDangerWithChildren,
       framework: "global",
@@ -1798,9 +1477,6 @@ export const reactDoctorRules = [
     id: "no-dark-mode-glow",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noDarkModeGlow,
       framework: "global",
@@ -1812,9 +1488,6 @@ export const reactDoctorRules = [
     id: "no-default-props",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noDefaultProps,
       framework: "global",
@@ -1826,9 +1499,6 @@ export const reactDoctorRules = [
     id: "no-derived-state",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "State & Effects",
-    severity: "warn",
     rule: {
       ...noDerivedState,
       framework: "global",
@@ -1840,9 +1510,6 @@ export const reactDoctorRules = [
     id: "no-derived-state-effect",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "State & Effects",
-    severity: "warn",
     rule: {
       ...noDerivedStateEffect,
       framework: "global",
@@ -1854,9 +1521,6 @@ export const reactDoctorRules = [
     id: "no-derived-useState",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "State & Effects",
-    severity: "warn",
     rule: {
       ...noDerivedUseState,
       framework: "global",
@@ -1868,9 +1532,6 @@ export const reactDoctorRules = [
     id: "no-did-mount-set-state",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...noDidMountSetState,
       framework: "global",
@@ -1882,9 +1543,6 @@ export const reactDoctorRules = [
     id: "no-did-update-set-state",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...noDidUpdateSetState,
       framework: "global",
@@ -1896,9 +1554,6 @@ export const reactDoctorRules = [
     id: "no-direct-mutation-state",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "error",
     rule: {
       ...noDirectMutationState,
       framework: "global",
@@ -1910,9 +1565,6 @@ export const reactDoctorRules = [
     id: "no-direct-state-mutation",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "State & Effects",
-    severity: "warn",
     rule: {
       ...noDirectStateMutation,
       framework: "global",
@@ -1924,9 +1576,6 @@ export const reactDoctorRules = [
     id: "no-disabled-zoom",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Accessibility",
-    severity: "error",
     rule: {
       ...noDisabledZoom,
       framework: "global",
@@ -1938,9 +1587,6 @@ export const reactDoctorRules = [
     id: "no-distracting-elements",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "error",
     rule: {
       ...noDistractingElements,
       framework: "global",
@@ -1952,9 +1598,6 @@ export const reactDoctorRules = [
     id: "no-document-start-view-transition",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...noDocumentStartViewTransition,
       framework: "global",
@@ -1966,9 +1609,6 @@ export const reactDoctorRules = [
     id: "no-dynamic-import-path",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Bundle Size",
-    severity: "warn",
     rule: {
       ...noDynamicImportPath,
       framework: "global",
@@ -1980,9 +1620,6 @@ export const reactDoctorRules = [
     id: "no-effect-chain",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "State & Effects",
-    severity: "warn",
     rule: {
       ...noEffectChain,
       framework: "global",
@@ -1994,9 +1631,6 @@ export const reactDoctorRules = [
     id: "no-effect-event-handler",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "State & Effects",
-    severity: "warn",
     rule: {
       ...noEffectEventHandler,
       framework: "global",
@@ -2008,9 +1642,6 @@ export const reactDoctorRules = [
     id: "no-effect-event-in-deps",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "State & Effects",
-    severity: "error",
     rule: {
       ...noEffectEventInDeps,
       framework: "global",
@@ -2022,9 +1653,6 @@ export const reactDoctorRules = [
     id: "no-eval",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Security",
-    severity: "error",
     rule: {
       ...noEval,
       framework: "global",
@@ -2036,9 +1664,6 @@ export const reactDoctorRules = [
     id: "no-event-handler",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "State & Effects",
-    severity: "warn",
     rule: {
       ...noEventHandler,
       framework: "global",
@@ -2050,9 +1675,6 @@ export const reactDoctorRules = [
     id: "no-event-trigger-state",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "State & Effects",
-    severity: "warn",
     rule: {
       ...noEventTriggerState,
       framework: "global",
@@ -2064,9 +1686,6 @@ export const reactDoctorRules = [
     id: "no-fetch-in-effect",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "State & Effects",
-    severity: "warn",
     rule: {
       ...noFetchInEffect,
       framework: "global",
@@ -2078,9 +1697,6 @@ export const reactDoctorRules = [
     id: "no-find-dom-node",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...noFindDomNode,
       framework: "global",
@@ -2092,9 +1708,6 @@ export const reactDoctorRules = [
     id: "no-flush-sync",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...noFlushSync,
       framework: "global",
@@ -2106,9 +1719,6 @@ export const reactDoctorRules = [
     id: "no-full-lodash-import",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Bundle Size",
-    severity: "warn",
     rule: {
       ...noFullLodashImport,
       framework: "global",
@@ -2120,9 +1730,6 @@ export const reactDoctorRules = [
     id: "no-generic-handler-names",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noGenericHandlerNames,
       framework: "global",
@@ -2134,9 +1741,6 @@ export const reactDoctorRules = [
     id: "no-giant-component",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noGiantComponent,
       framework: "global",
@@ -2148,9 +1752,6 @@ export const reactDoctorRules = [
     id: "no-global-css-variable-animation",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "error",
     rule: {
       ...noGlobalCssVariableAnimation,
       framework: "global",
@@ -2162,9 +1763,6 @@ export const reactDoctorRules = [
     id: "no-gradient-text",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noGradientText,
       framework: "global",
@@ -2176,9 +1774,6 @@ export const reactDoctorRules = [
     id: "no-gray-on-colored-background",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...noGrayOnColoredBackground,
       framework: "global",
@@ -2190,9 +1785,6 @@ export const reactDoctorRules = [
     id: "no-initialize-state",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "State & Effects",
-    severity: "warn",
     rule: {
       ...noInitializeState,
       framework: "global",
@@ -2204,9 +1796,6 @@ export const reactDoctorRules = [
     id: "no-inline-bounce-easing",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...noInlineBounceEasing,
       framework: "global",
@@ -2218,9 +1807,6 @@ export const reactDoctorRules = [
     id: "no-inline-exhaustive-style",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noInlineExhaustiveStyle,
       framework: "global",
@@ -2232,9 +1818,6 @@ export const reactDoctorRules = [
     id: "no-inline-prop-on-memo-component",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...noInlinePropOnMemoComponent,
       framework: "global",
@@ -2246,9 +1829,6 @@ export const reactDoctorRules = [
     id: "no-interactive-element-to-noninteractive-role",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...noInteractiveElementToNoninteractiveRole,
       framework: "global",
@@ -2260,9 +1840,6 @@ export const reactDoctorRules = [
     id: "no-is-mounted",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...noIsMounted,
       framework: "global",
@@ -2274,9 +1851,6 @@ export const reactDoctorRules = [
     id: "no-justified-text",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...noJustifiedText,
       framework: "global",
@@ -2288,9 +1862,6 @@ export const reactDoctorRules = [
     id: "no-large-animated-blur",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...noLargeAnimatedBlur,
       framework: "global",
@@ -2302,9 +1873,6 @@ export const reactDoctorRules = [
     id: "no-layout-property-animation",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "error",
     rule: {
       ...noLayoutPropertyAnimation,
       framework: "global",
@@ -2316,9 +1884,6 @@ export const reactDoctorRules = [
     id: "no-layout-transition-inline",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...noLayoutTransitionInline,
       framework: "global",
@@ -2330,9 +1895,6 @@ export const reactDoctorRules = [
     id: "no-legacy-class-lifecycles",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Correctness",
-    severity: "error",
     rule: {
       ...noLegacyClassLifecycles,
       framework: "global",
@@ -2344,9 +1906,6 @@ export const reactDoctorRules = [
     id: "no-legacy-context-api",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Correctness",
-    severity: "error",
     rule: {
       ...noLegacyContextApi,
       framework: "global",
@@ -2358,9 +1917,6 @@ export const reactDoctorRules = [
     id: "no-long-transition-duration",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...noLongTransitionDuration,
       framework: "global",
@@ -2372,9 +1928,6 @@ export const reactDoctorRules = [
     id: "no-many-boolean-props",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noManyBooleanProps,
       framework: "global",
@@ -2386,9 +1939,6 @@ export const reactDoctorRules = [
     id: "no-mirror-prop-effect",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "State & Effects",
-    severity: "warn",
     rule: {
       ...noMirrorPropEffect,
       framework: "global",
@@ -2400,9 +1950,6 @@ export const reactDoctorRules = [
     id: "no-moment",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Bundle Size",
-    severity: "warn",
     rule: {
       ...noMoment,
       framework: "global",
@@ -2414,9 +1961,6 @@ export const reactDoctorRules = [
     id: "no-multi-comp",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noMultiComp,
       framework: "global",
@@ -2428,9 +1972,6 @@ export const reactDoctorRules = [
     id: "no-mutable-in-deps",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "State & Effects",
-    severity: "error",
     rule: {
       ...noMutableInDeps,
       framework: "global",
@@ -2442,9 +1983,6 @@ export const reactDoctorRules = [
     id: "no-namespace",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...noNamespace,
       framework: "global",
@@ -2456,9 +1994,6 @@ export const reactDoctorRules = [
     id: "no-nested-component-definition",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Correctness",
-    severity: "error",
     rule: {
       ...noNestedComponentDefinition,
       framework: "global",
@@ -2470,9 +2005,6 @@ export const reactDoctorRules = [
     id: "no-noninteractive-element-interactions",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...noNoninteractiveElementInteractions,
       framework: "global",
@@ -2484,9 +2016,6 @@ export const reactDoctorRules = [
     id: "no-noninteractive-element-to-interactive-role",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...noNoninteractiveElementToInteractiveRole,
       framework: "global",
@@ -2498,9 +2027,6 @@ export const reactDoctorRules = [
     id: "no-noninteractive-tabindex",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...noNoninteractiveTabindex,
       framework: "global",
@@ -2512,9 +2038,6 @@ export const reactDoctorRules = [
     id: "no-outline-none",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...noOutlineNone,
       framework: "global",
@@ -2526,9 +2049,6 @@ export const reactDoctorRules = [
     id: "no-pass-data-to-parent",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "State & Effects",
-    severity: "warn",
     rule: {
       ...noPassDataToParent,
       framework: "global",
@@ -2540,9 +2060,6 @@ export const reactDoctorRules = [
     id: "no-pass-live-state-to-parent",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "State & Effects",
-    severity: "warn",
     rule: {
       ...noPassLiveStateToParent,
       framework: "global",
@@ -2554,9 +2071,6 @@ export const reactDoctorRules = [
     id: "no-permanent-will-change",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...noPermanentWillChange,
       framework: "global",
@@ -2568,9 +2082,6 @@ export const reactDoctorRules = [
     id: "no-polymorphic-children",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noPolymorphicChildren,
       framework: "global",
@@ -2582,9 +2093,6 @@ export const reactDoctorRules = [
     id: "no-prevent-default",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...noPreventDefault,
       framework: "global",
@@ -2596,9 +2104,6 @@ export const reactDoctorRules = [
     id: "no-prop-callback-in-effect",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "State & Effects",
-    severity: "warn",
     rule: {
       ...noPropCallbackInEffect,
       framework: "global",
@@ -2610,9 +2115,6 @@ export const reactDoctorRules = [
     id: "no-pure-black-background",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noPureBlackBackground,
       framework: "global",
@@ -2624,9 +2126,6 @@ export const reactDoctorRules = [
     id: "no-react-children",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noReactChildren,
       framework: "global",
@@ -2638,9 +2137,6 @@ export const reactDoctorRules = [
     id: "no-react-dom-deprecated-apis",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noReactDomDeprecatedApis,
       framework: "global",
@@ -2652,9 +2148,6 @@ export const reactDoctorRules = [
     id: "no-react19-deprecated-apis",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noReact19DeprecatedApis,
       framework: "global",
@@ -2666,9 +2159,6 @@ export const reactDoctorRules = [
     id: "no-redundant-roles",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...noRedundantRoles,
       framework: "global",
@@ -2680,9 +2170,6 @@ export const reactDoctorRules = [
     id: "no-redundant-should-component-update",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noRedundantShouldComponentUpdate,
       framework: "global",
@@ -2694,9 +2181,6 @@ export const reactDoctorRules = [
     id: "no-render-in-render",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noRenderInRender,
       framework: "global",
@@ -2708,9 +2192,6 @@ export const reactDoctorRules = [
     id: "no-render-prop-children",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noRenderPropChildren,
       framework: "global",
@@ -2722,9 +2203,6 @@ export const reactDoctorRules = [
     id: "no-render-return-value",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...noRenderReturnValue,
       framework: "global",
@@ -2736,9 +2214,6 @@ export const reactDoctorRules = [
     id: "no-reset-all-state-on-prop-change",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "State & Effects",
-    severity: "warn",
     rule: {
       ...noResetAllStateOnPropChange,
       framework: "global",
@@ -2750,9 +2225,6 @@ export const reactDoctorRules = [
     id: "no-scale-from-zero",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...noScaleFromZero,
       framework: "global",
@@ -2764,9 +2236,6 @@ export const reactDoctorRules = [
     id: "no-secrets-in-client-code",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Security",
-    severity: "warn",
     rule: {
       ...noSecretsInClientCode,
       framework: "global",
@@ -2778,9 +2247,6 @@ export const reactDoctorRules = [
     id: "no-set-state",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noSetState,
       framework: "global",
@@ -2792,9 +2258,6 @@ export const reactDoctorRules = [
     id: "no-set-state-in-render",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "State & Effects",
-    severity: "warn",
     rule: {
       ...noSetStateInRender,
       framework: "global",
@@ -2806,9 +2269,6 @@ export const reactDoctorRules = [
     id: "no-side-tab-border",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noSideTabBorder,
       framework: "global",
@@ -2820,9 +2280,6 @@ export const reactDoctorRules = [
     id: "no-static-element-interactions",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...noStaticElementInteractions,
       framework: "global",
@@ -2834,9 +2291,6 @@ export const reactDoctorRules = [
     id: "no-string-refs",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...noStringRefs,
       framework: "global",
@@ -2848,9 +2302,6 @@ export const reactDoctorRules = [
     id: "no-this-in-sfc",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...noThisInSfc,
       framework: "global",
@@ -2862,9 +2313,6 @@ export const reactDoctorRules = [
     id: "no-tiny-text",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...noTinyText,
       framework: "global",
@@ -2876,9 +2324,6 @@ export const reactDoctorRules = [
     id: "no-transition-all",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...noTransitionAll,
       framework: "global",
@@ -2890,9 +2335,6 @@ export const reactDoctorRules = [
     id: "no-uncontrolled-input",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...noUncontrolledInput,
       framework: "global",
@@ -2904,9 +2346,6 @@ export const reactDoctorRules = [
     id: "no-undeferred-third-party",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Bundle Size",
-    severity: "warn",
     rule: {
       ...noUndeferredThirdParty,
       framework: "global",
@@ -2918,9 +2357,6 @@ export const reactDoctorRules = [
     id: "no-unescaped-entities",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...noUnescapedEntities,
       framework: "global",
@@ -2932,9 +2368,6 @@ export const reactDoctorRules = [
     id: "no-unknown-property",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...noUnknownProperty,
       framework: "global",
@@ -2946,9 +2379,6 @@ export const reactDoctorRules = [
     id: "no-unsafe",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...noUnsafe,
       framework: "global",
@@ -2960,9 +2390,6 @@ export const reactDoctorRules = [
     id: "no-unstable-nested-components",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...noUnstableNestedComponents,
       framework: "global",
@@ -2974,9 +2401,6 @@ export const reactDoctorRules = [
     id: "no-usememo-simple-expression",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...noUsememoSimpleExpression,
       framework: "global",
@@ -2988,9 +2412,6 @@ export const reactDoctorRules = [
     id: "no-wide-letter-spacing",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noWideLetterSpacing,
       framework: "global",
@@ -3002,9 +2423,6 @@ export const reactDoctorRules = [
     id: "no-will-update-set-state",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...noWillUpdateSetState,
       framework: "global",
@@ -3016,9 +2434,6 @@ export const reactDoctorRules = [
     id: "no-z-index-9999",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...noZIndex9999,
       framework: "global",
@@ -3030,9 +2445,6 @@ export const reactDoctorRules = [
     id: "only-export-components",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "error",
     rule: {
       ...onlyExportComponents,
       framework: "global",
@@ -3044,9 +2456,6 @@ export const reactDoctorRules = [
     id: "prefer-dynamic-import",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Bundle Size",
-    severity: "warn",
     rule: {
       ...preferDynamicImport,
       framework: "global",
@@ -3058,9 +2467,6 @@ export const reactDoctorRules = [
     id: "prefer-es6-class",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...preferEs6Class,
       framework: "global",
@@ -3072,9 +2478,6 @@ export const reactDoctorRules = [
     id: "prefer-function-component",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...preferFunctionComponent,
       framework: "global",
@@ -3086,9 +2489,6 @@ export const reactDoctorRules = [
     id: "prefer-tag-over-role",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...preferTagOverRole,
       framework: "global",
@@ -3100,9 +2500,6 @@ export const reactDoctorRules = [
     id: "prefer-use-effect-event",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "State & Effects",
-    severity: "warn",
     rule: {
       ...preferUseEffectEvent,
       framework: "global",
@@ -3114,9 +2511,6 @@ export const reactDoctorRules = [
     id: "prefer-use-sync-external-store",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "State & Effects",
-    severity: "warn",
     rule: {
       ...preferUseSyncExternalStore,
       framework: "global",
@@ -3128,9 +2522,6 @@ export const reactDoctorRules = [
     id: "prefer-useReducer",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "State & Effects",
-    severity: "warn",
     rule: {
       ...preferUseReducer,
       framework: "global",
@@ -3142,9 +2533,6 @@ export const reactDoctorRules = [
     id: "query-mutation-missing-invalidation",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "tanstack-query",
-    category: "TanStack Query",
-    severity: "warn",
     rule: {
       ...queryMutationMissingInvalidation,
       framework: "tanstack-query",
@@ -3156,9 +2544,6 @@ export const reactDoctorRules = [
     id: "query-no-query-in-effect",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "tanstack-query",
-    category: "TanStack Query",
-    severity: "warn",
     rule: {
       ...queryNoQueryInEffect,
       framework: "tanstack-query",
@@ -3170,9 +2555,6 @@ export const reactDoctorRules = [
     id: "query-no-rest-destructuring",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "tanstack-query",
-    category: "TanStack Query",
-    severity: "warn",
     rule: {
       ...queryNoRestDestructuring,
       framework: "tanstack-query",
@@ -3184,9 +2566,6 @@ export const reactDoctorRules = [
     id: "query-no-usequery-for-mutation",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "tanstack-query",
-    category: "TanStack Query",
-    severity: "warn",
     rule: {
       ...queryNoUseQueryForMutation,
       framework: "tanstack-query",
@@ -3198,9 +2577,6 @@ export const reactDoctorRules = [
     id: "query-no-void-query-fn",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "tanstack-query",
-    category: "TanStack Query",
-    severity: "warn",
     rule: {
       ...queryNoVoidQueryFn,
       framework: "tanstack-query",
@@ -3212,9 +2588,6 @@ export const reactDoctorRules = [
     id: "query-stable-query-client",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "tanstack-query",
-    category: "TanStack Query",
-    severity: "warn",
     rule: {
       ...queryStableQueryClient,
       framework: "tanstack-query",
@@ -3226,9 +2599,6 @@ export const reactDoctorRules = [
     id: "react-compiler-destructure-method",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...reactCompilerDestructureMethod,
       framework: "global",
@@ -3240,9 +2610,6 @@ export const reactDoctorRules = [
     id: "react-in-jsx-scope",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...reactInJsxScope,
       framework: "global",
@@ -3254,9 +2621,6 @@ export const reactDoctorRules = [
     id: "rendering-animate-svg-wrapper",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...renderingAnimateSvgWrapper,
       framework: "global",
@@ -3268,9 +2632,6 @@ export const reactDoctorRules = [
     id: "rendering-conditional-render",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...renderingConditionalRender,
       framework: "global",
@@ -3282,9 +2643,6 @@ export const reactDoctorRules = [
     id: "rendering-hoist-jsx",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...renderingHoistJsx,
       framework: "global",
@@ -3296,9 +2654,6 @@ export const reactDoctorRules = [
     id: "rendering-hydration-mismatch-time",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...renderingHydrationMismatchTime,
       framework: "global",
@@ -3310,9 +2665,6 @@ export const reactDoctorRules = [
     id: "rendering-hydration-no-flicker",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...renderingHydrationNoFlicker,
       framework: "global",
@@ -3324,9 +2676,6 @@ export const reactDoctorRules = [
     id: "rendering-script-defer-async",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...renderingScriptDeferAsync,
       framework: "global",
@@ -3338,9 +2687,6 @@ export const reactDoctorRules = [
     id: "rendering-svg-precision",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...renderingSvgPrecision,
       framework: "global",
@@ -3352,9 +2698,6 @@ export const reactDoctorRules = [
     id: "rendering-usetransition-loading",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...renderingUsetransitionLoading,
       framework: "global",
@@ -3366,9 +2709,6 @@ export const reactDoctorRules = [
     id: "require-render-return",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "error",
     rule: {
       ...requireRenderReturn,
       framework: "global",
@@ -3380,9 +2720,6 @@ export const reactDoctorRules = [
     id: "rerender-defer-reads-hook",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...rerenderDeferReadsHook,
       framework: "global",
@@ -3394,9 +2731,6 @@ export const reactDoctorRules = [
     id: "rerender-dependencies",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "State & Effects",
-    severity: "error",
     rule: {
       ...rerenderDependencies,
       framework: "global",
@@ -3408,9 +2742,6 @@ export const reactDoctorRules = [
     id: "rerender-derived-state-from-hook",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...rerenderDerivedStateFromHook,
       framework: "global",
@@ -3422,9 +2753,6 @@ export const reactDoctorRules = [
     id: "rerender-functional-setstate",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...rerenderFunctionalSetstate,
       framework: "global",
@@ -3436,9 +2764,6 @@ export const reactDoctorRules = [
     id: "rerender-lazy-state-init",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...rerenderLazyStateInit,
       framework: "global",
@@ -3450,9 +2775,6 @@ export const reactDoctorRules = [
     id: "rerender-memo-before-early-return",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...rerenderMemoBeforeEarlyReturn,
       framework: "global",
@@ -3464,9 +2786,6 @@ export const reactDoctorRules = [
     id: "rerender-memo-with-default-value",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...rerenderMemoWithDefaultValue,
       framework: "global",
@@ -3478,9 +2797,6 @@ export const reactDoctorRules = [
     id: "rerender-state-only-in-handlers",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...rerenderStateOnlyInHandlers,
       framework: "global",
@@ -3492,9 +2808,6 @@ export const reactDoctorRules = [
     id: "rerender-transitions-scroll",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...rerenderTransitionsScroll,
       framework: "global",
@@ -3506,9 +2819,6 @@ export const reactDoctorRules = [
     id: "rn-animate-layout-property",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "error",
     rule: {
       ...rnAnimateLayoutProperty,
       framework: "react-native",
@@ -3521,9 +2831,6 @@ export const reactDoctorRules = [
     id: "rn-animation-reaction-as-derived",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "warn",
     rule: {
       ...rnAnimationReactionAsDerived,
       framework: "react-native",
@@ -3536,9 +2843,6 @@ export const reactDoctorRules = [
     id: "rn-bottom-sheet-prefer-native",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "warn",
     rule: {
       ...rnBottomSheetPreferNative,
       framework: "react-native",
@@ -3551,9 +2855,6 @@ export const reactDoctorRules = [
     id: "rn-list-callback-per-row",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "warn",
     rule: {
       ...rnListCallbackPerRow,
       framework: "react-native",
@@ -3566,9 +2867,6 @@ export const reactDoctorRules = [
     id: "rn-list-data-mapped",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "warn",
     rule: {
       ...rnListDataMapped,
       framework: "react-native",
@@ -3581,9 +2879,6 @@ export const reactDoctorRules = [
     id: "rn-list-recyclable-without-types",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "warn",
     rule: {
       ...rnListRecyclableWithoutTypes,
       framework: "react-native",
@@ -3596,9 +2891,6 @@ export const reactDoctorRules = [
     id: "rn-no-deprecated-modules",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "error",
     rule: {
       ...rnNoDeprecatedModules,
       framework: "react-native",
@@ -3611,9 +2903,6 @@ export const reactDoctorRules = [
     id: "rn-no-dimensions-get",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "warn",
     rule: {
       ...rnNoDimensionsGet,
       framework: "react-native",
@@ -3626,9 +2915,6 @@ export const reactDoctorRules = [
     id: "rn-no-inline-flatlist-renderitem",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "warn",
     rule: {
       ...rnNoInlineFlatlistRenderitem,
       framework: "react-native",
@@ -3641,9 +2927,6 @@ export const reactDoctorRules = [
     id: "rn-no-inline-object-in-list-item",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "warn",
     rule: {
       ...rnNoInlineObjectInListItem,
       framework: "react-native",
@@ -3656,9 +2939,6 @@ export const reactDoctorRules = [
     id: "rn-no-legacy-expo-packages",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "warn",
     rule: {
       ...rnNoLegacyExpoPackages,
       framework: "react-native",
@@ -3671,9 +2951,6 @@ export const reactDoctorRules = [
     id: "rn-no-legacy-shadow-styles",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "warn",
     rule: {
       ...rnNoLegacyShadowStyles,
       framework: "react-native",
@@ -3686,9 +2963,6 @@ export const reactDoctorRules = [
     id: "rn-no-non-native-navigator",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "warn",
     rule: {
       ...rnNoNonNativeNavigator,
       framework: "react-native",
@@ -3701,9 +2975,6 @@ export const reactDoctorRules = [
     id: "rn-no-raw-text",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "error",
     rule: {
       ...rnNoRawText,
       framework: "react-native",
@@ -3716,9 +2987,6 @@ export const reactDoctorRules = [
     id: "rn-no-scroll-state",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "error",
     rule: {
       ...rnNoScrollState,
       framework: "react-native",
@@ -3731,9 +2999,6 @@ export const reactDoctorRules = [
     id: "rn-no-scrollview-mapped-list",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "warn",
     rule: {
       ...rnNoScrollviewMappedList,
       framework: "react-native",
@@ -3746,9 +3011,6 @@ export const reactDoctorRules = [
     id: "rn-no-single-element-style-array",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "warn",
     rule: {
       ...rnNoSingleElementStyleArray,
       framework: "react-native",
@@ -3761,9 +3023,6 @@ export const reactDoctorRules = [
     id: "rn-prefer-content-inset-adjustment",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "warn",
     rule: {
       ...rnPreferContentInsetAdjustment,
       framework: "react-native",
@@ -3776,9 +3035,6 @@ export const reactDoctorRules = [
     id: "rn-prefer-expo-image",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "warn",
     rule: {
       ...rnPreferExpoImage,
       framework: "react-native",
@@ -3791,9 +3047,6 @@ export const reactDoctorRules = [
     id: "rn-prefer-pressable",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "warn",
     rule: {
       ...rnPreferPressable,
       framework: "react-native",
@@ -3806,9 +3059,6 @@ export const reactDoctorRules = [
     id: "rn-prefer-reanimated",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "warn",
     rule: {
       ...rnPreferReanimated,
       framework: "react-native",
@@ -3821,9 +3071,6 @@ export const reactDoctorRules = [
     id: "rn-pressable-shared-value-mutation",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "warn",
     rule: {
       ...rnPressableSharedValueMutation,
       framework: "react-native",
@@ -3836,9 +3083,6 @@ export const reactDoctorRules = [
     id: "rn-scrollview-dynamic-padding",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "warn",
     rule: {
       ...rnScrollviewDynamicPadding,
       framework: "react-native",
@@ -3851,9 +3095,6 @@ export const reactDoctorRules = [
     id: "rn-style-prefer-boxshadow",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "react-native",
-    category: "React Native",
-    severity: "warn",
     rule: {
       ...rnStylePreferBoxShadow,
       framework: "react-native",
@@ -3866,9 +3107,6 @@ export const reactDoctorRules = [
     id: "role-has-required-aria-props",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "error",
     rule: {
       ...roleHasRequiredAriaProps,
       framework: "global",
@@ -3880,9 +3118,6 @@ export const reactDoctorRules = [
     id: "role-supports-aria-props",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...roleSupportsAriaProps,
       framework: "global",
@@ -3894,9 +3129,6 @@ export const reactDoctorRules = [
     id: "rules-of-hooks",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "error",
     rule: {
       ...rulesOfHooks,
       framework: "global",
@@ -3908,9 +3140,6 @@ export const reactDoctorRules = [
     id: "scope",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...scope,
       framework: "global",
@@ -3922,9 +3151,6 @@ export const reactDoctorRules = [
     id: "self-closing-comp",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...selfClosingComp,
       framework: "global",
@@ -3936,9 +3162,6 @@ export const reactDoctorRules = [
     id: "server-after-nonblocking",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Server",
-    severity: "warn",
     rule: {
       ...serverAfterNonblocking,
       framework: "global",
@@ -3951,9 +3174,6 @@ export const reactDoctorRules = [
     id: "server-auth-actions",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Server",
-    severity: "error",
     rule: {
       ...serverAuthActions,
       framework: "global",
@@ -3966,9 +3186,6 @@ export const reactDoctorRules = [
     id: "server-cache-with-object-literal",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Server",
-    severity: "warn",
     rule: {
       ...serverCacheWithObjectLiteral,
       framework: "global",
@@ -3981,9 +3198,6 @@ export const reactDoctorRules = [
     id: "server-dedup-props",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Server",
-    severity: "warn",
     rule: {
       ...serverDedupProps,
       framework: "global",
@@ -3996,9 +3210,6 @@ export const reactDoctorRules = [
     id: "server-fetch-without-revalidate",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Server",
-    severity: "warn",
     rule: {
       ...serverFetchWithoutRevalidate,
       framework: "global",
@@ -4011,9 +3222,6 @@ export const reactDoctorRules = [
     id: "server-hoist-static-io",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Server",
-    severity: "warn",
     rule: {
       ...serverHoistStaticIo,
       framework: "global",
@@ -4026,9 +3234,6 @@ export const reactDoctorRules = [
     id: "server-no-mutable-module-state",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Server",
-    severity: "error",
     rule: {
       ...serverNoMutableModuleState,
       framework: "global",
@@ -4041,9 +3246,6 @@ export const reactDoctorRules = [
     id: "server-sequential-independent-await",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Server",
-    severity: "warn",
     rule: {
       ...serverSequentialIndependentAwait,
       framework: "global",
@@ -4056,9 +3258,6 @@ export const reactDoctorRules = [
     id: "state-in-constructor",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Architecture",
-    severity: "warn",
     rule: {
       ...stateInConstructor,
       framework: "global",
@@ -4070,9 +3269,6 @@ export const reactDoctorRules = [
     id: "style-prop-object",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...stylePropObject,
       framework: "global",
@@ -4084,9 +3280,6 @@ export const reactDoctorRules = [
     id: "tabindex-no-positive",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Accessibility",
-    severity: "warn",
     rule: {
       ...tabindexNoPositive,
       framework: "global",
@@ -4098,9 +3291,6 @@ export const reactDoctorRules = [
     id: "tanstack-start-get-mutation",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "tanstack-start",
-    category: "Security",
-    severity: "warn",
     rule: {
       ...tanstackStartGetMutation,
       framework: "tanstack-start",
@@ -4112,9 +3302,6 @@ export const reactDoctorRules = [
     id: "tanstack-start-loader-parallel-fetch",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "tanstack-start",
-    category: "Performance",
-    severity: "warn",
     rule: {
       ...tanstackStartLoaderParallelFetch,
       framework: "tanstack-start",
@@ -4126,9 +3313,6 @@ export const reactDoctorRules = [
     id: "tanstack-start-missing-head-content",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "tanstack-start",
-    category: "TanStack Start",
-    severity: "warn",
     rule: {
       ...tanstackStartMissingHeadContent,
       framework: "tanstack-start",
@@ -4140,9 +3324,6 @@ export const reactDoctorRules = [
     id: "tanstack-start-no-anchor-element",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "tanstack-start",
-    category: "TanStack Start",
-    severity: "warn",
     rule: {
       ...tanstackStartNoAnchorElement,
       framework: "tanstack-start",
@@ -4154,9 +3335,6 @@ export const reactDoctorRules = [
     id: "tanstack-start-no-direct-fetch-in-loader",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "tanstack-start",
-    category: "TanStack Start",
-    severity: "warn",
     rule: {
       ...tanstackStartNoDirectFetchInLoader,
       framework: "tanstack-start",
@@ -4168,9 +3346,6 @@ export const reactDoctorRules = [
     id: "tanstack-start-no-dynamic-server-fn-import",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "tanstack-start",
-    category: "TanStack Start",
-    severity: "error",
     rule: {
       ...tanstackStartNoDynamicServerFnImport,
       framework: "tanstack-start",
@@ -4182,9 +3357,6 @@ export const reactDoctorRules = [
     id: "tanstack-start-no-navigate-in-render",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "tanstack-start",
-    category: "TanStack Start",
-    severity: "warn",
     rule: {
       ...tanstackStartNoNavigateInRender,
       framework: "tanstack-start",
@@ -4196,9 +3368,6 @@ export const reactDoctorRules = [
     id: "tanstack-start-no-secrets-in-loader",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "tanstack-start",
-    category: "Security",
-    severity: "error",
     rule: {
       ...tanstackStartNoSecretsInLoader,
       framework: "tanstack-start",
@@ -4210,9 +3379,6 @@ export const reactDoctorRules = [
     id: "tanstack-start-no-use-server-in-handler",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "tanstack-start",
-    category: "TanStack Start",
-    severity: "error",
     rule: {
       ...tanstackStartNoUseServerInHandler,
       framework: "tanstack-start",
@@ -4224,9 +3390,6 @@ export const reactDoctorRules = [
     id: "tanstack-start-no-useeffect-fetch",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "tanstack-start",
-    category: "TanStack Start",
-    severity: "warn",
     rule: {
       ...tanstackStartNoUseEffectFetch,
       framework: "tanstack-start",
@@ -4238,9 +3401,6 @@ export const reactDoctorRules = [
     id: "tanstack-start-redirect-in-try-catch",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "tanstack-start",
-    category: "TanStack Start",
-    severity: "warn",
     rule: {
       ...tanstackStartRedirectInTryCatch,
       framework: "tanstack-start",
@@ -4252,9 +3412,6 @@ export const reactDoctorRules = [
     id: "tanstack-start-route-property-order",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "tanstack-start",
-    category: "TanStack Start",
-    severity: "error",
     rule: {
       ...tanstackStartRoutePropertyOrder,
       framework: "tanstack-start",
@@ -4266,9 +3423,6 @@ export const reactDoctorRules = [
     id: "tanstack-start-server-fn-method-order",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "tanstack-start",
-    category: "TanStack Start",
-    severity: "error",
     rule: {
       ...tanstackStartServerFnMethodOrder,
       framework: "tanstack-start",
@@ -4280,9 +3434,6 @@ export const reactDoctorRules = [
     id: "tanstack-start-server-fn-validate-input",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "tanstack-start",
-    category: "TanStack Start",
-    severity: "warn",
     rule: {
       ...tanstackStartServerFnValidateInput,
       framework: "tanstack-start",
@@ -4294,9 +3445,6 @@ export const reactDoctorRules = [
     id: "use-lazy-motion",
     source: "react-doctor",
     originallyExternal: false,
-    framework: "global",
-    category: "Bundle Size",
-    severity: "warn",
     rule: {
       ...useLazyMotion,
       framework: "global",
@@ -4308,9 +3456,6 @@ export const reactDoctorRules = [
     id: "void-dom-elements-no-children",
     source: "react-doctor",
     originallyExternal: true,
-    framework: "global",
-    category: "Correctness",
-    severity: "warn",
     rule: {
       ...voidDomElementsNoChildren,
       framework: "global",

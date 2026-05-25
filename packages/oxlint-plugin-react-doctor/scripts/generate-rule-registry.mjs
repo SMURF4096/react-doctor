@@ -178,6 +178,14 @@ const formatAutoTagsLine = (entry) => {
   return `      tags: [...new Set([${autoTagLiteral}, ...(${entry.identifier}.tags ?? [])])],\n`;
 };
 
+// Per-entry shape:
+//   { key, id, source, originallyExternal, rule: { ...sourceRule, framework, category, tags? } }
+//
+// `framework` / `category` / `severity` live on the inner `rule` object
+// (set by the spread + codegen merge) — consumers that need them read
+// `entry.rule.framework` / `.category` / `.severity` so we don't ship
+// the same value twice per entry. Saves ~3 lines × N rules on the
+// generated file and on the published bundle.
 const ruleLines = ruleEntries
   .map(
     (entry) =>
@@ -186,9 +194,6 @@ const ruleLines = ruleEntries
       `    id: "${entry.ruleId}",\n` +
       `    source: "react-doctor",\n` +
       `    originallyExternal: ${entry.originallyExternal},\n` +
-      `    framework: "${entry.framework}",\n` +
-      `    category: "${entry.category}",\n` +
-      `    severity: "${entry.severity}",\n` +
       `    rule: {\n` +
       `      ...${entry.identifier},\n` +
       `      framework: "${entry.framework}",\n` +
