@@ -1,6 +1,6 @@
 import type { EsTreeNode } from "./es-tree-node.js";
 import { isAstNode } from "./is-ast-node.js";
-import { isNodeOfType } from "./is-node-of-type.js";
+import { isFunctionLike } from "./is-function-like.js";
 
 // HACK: variant of `walkAst` that descends through control-flow blocks
 // (IfStatement / TryStatement / SwitchCase / loops / labels) but stops
@@ -16,13 +16,7 @@ export const walkInsideStatementBlocks = (
   visitor: (child: EsTreeNode) => void,
 ): void => {
   if (!node || typeof node !== "object") return;
-  if (
-    isNodeOfType(node, "FunctionDeclaration") ||
-    isNodeOfType(node, "FunctionExpression") ||
-    isNodeOfType(node, "ArrowFunctionExpression")
-  ) {
-    return;
-  }
+  if (isFunctionLike(node)) return;
   visitor(node);
   const nodeRecord = node as unknown as Record<string, unknown>;
   for (const key of Object.keys(nodeRecord)) {
