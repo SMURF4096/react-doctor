@@ -5,6 +5,7 @@ import type { EsTreeNodeOfType } from "../../utils/es-tree-node-of-type.js";
 import { isNodeOfType } from "../../utils/is-node-of-type.js";
 import { isReactComponentOrHookName } from "../../utils/is-react-component-or-hook-name.js";
 import { isReactHookName } from "../../utils/is-react-hook-name.js";
+import { FUNCTION_LIKE_TYPES } from "../../constants/js.js";
 import { REACT_HOC_NAMES } from "../../constants/react.js";
 import type { Rule } from "../../utils/rule.js";
 
@@ -328,12 +329,6 @@ const inferDestructureSourceKey = (bindingIdentifier: EsTreeNode): string | null
 // only recognized exception. We still require it to be inside a
 // component / custom hook scope.
 const isReactUseHook = (hookName: string): boolean => hookName === "use";
-
-const FUNCTION_LIKE_TYPES: ReadonlySet<string> = new Set([
-  "FunctionDeclaration",
-  "FunctionExpression",
-  "ArrowFunctionExpression",
-]);
 
 const isFunctionLike = (node: EsTreeNode): boolean => FUNCTION_LIKE_TYPES.has(node.type);
 

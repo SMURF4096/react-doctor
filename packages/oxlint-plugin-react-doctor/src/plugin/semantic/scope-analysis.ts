@@ -1,3 +1,4 @@
+import { FUNCTION_LIKE_TYPES } from "../constants/js.js";
 import type { EsTreeNode } from "../utils/es-tree-node.js";
 import type { EsTreeNodeOfType } from "../utils/es-tree-node-of-type.js";
 import { isAstNode } from "../utils/is-ast-node.js";
@@ -98,12 +99,6 @@ export interface ScopeAnalysis {
   readonly referenceFor: (identifier: EsTreeNode) => ReferenceDescriptor | null;
   readonly isGlobalReference: (identifier: EsTreeNode) => boolean;
 }
-
-const FUNCTION_LIKE_TYPES: ReadonlySet<string> = new Set([
-  "FunctionDeclaration",
-  "FunctionExpression",
-  "ArrowFunctionExpression",
-]);
 
 const isFunctionLike = (node: EsTreeNode): boolean => FUNCTION_LIKE_TYPES.has(node.type);
 

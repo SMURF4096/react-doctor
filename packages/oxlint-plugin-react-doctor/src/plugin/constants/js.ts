@@ -6,6 +6,16 @@ export const LOOP_TYPES = [
   "DoWhileStatement",
 ];
 
+// ESTree node type names for the three "function-like" syntactic
+// forms — declaration, expression, arrow. Used by the scope analyzer
+// (to bound function scopes) and by `rules-of-hooks` (to skip into
+// nested function bodies). Was duplicated verbatim in both places.
+export const FUNCTION_LIKE_TYPES: ReadonlySet<string> = new Set([
+  "FunctionDeclaration",
+  "FunctionExpression",
+  "ArrowFunctionExpression",
+]);
+
 // Built-in JS globals whose method calls (`Math.floor(x)`,
 // `Date.now()`, `JSON.parse(x)`, …) are not reactive reads and don't
 // count as "expensive derivations". The chain root is what matters —
