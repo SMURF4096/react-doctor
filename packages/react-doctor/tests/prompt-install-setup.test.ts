@@ -4,6 +4,11 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { SETUP_PROMPT_DELAY_MS } from "../src/cli/utils/constants.js";
 import {
+  CI_ENVIRONMENT_VARIABLES,
+  CODING_AGENT_ENVIRONMENT_VALUE_VARIABLES,
+  CODING_AGENT_ENVIRONMENT_VARIABLES,
+} from "../src/cli/utils/is-ci-environment.js";
+import {
   buildInstallSetupPitchLines,
   disableSetupPrompt,
   getSetupPromptConfigPath,
@@ -45,14 +50,35 @@ const readPackageJson = (projectRoot: string): Record<string, unknown> =>
 const readSetupPromptConfig = (configRoot: string): Record<string, unknown> =>
   JSON.parse(readFileSync(getSetupPromptConfigPath({ cwd: configRoot }), "utf8"));
 
+const ENVIRONMENT_VARIABLES = [
+  "CI",
+  ...CI_ENVIRONMENT_VARIABLES,
+  ...CODING_AGENT_ENVIRONMENT_VARIABLES,
+  ...CODING_AGENT_ENVIRONMENT_VALUE_VARIABLES,
+] as const;
+
 describe("shouldPromptInstallSetup", () => {
   let fixture: PromptInstallSetupFixture;
+  let savedEnv: Record<string, string | undefined>;
 
   beforeEach(() => {
+    savedEnv = {};
+    for (const envVariable of ENVIRONMENT_VARIABLES) {
+      savedEnv[envVariable] = process.env[envVariable];
+      delete process.env[envVariable];
+    }
     fixture = setupFixture();
   });
 
   afterEach(() => {
+    for (const envVariable of ENVIRONMENT_VARIABLES) {
+      const previousValue = savedEnv[envVariable];
+      if (previousValue === undefined) {
+        delete process.env[envVariable];
+      } else {
+        process.env[envVariable] = previousValue;
+      }
+    }
     fixture.cleanup();
   });
 
@@ -253,6 +279,40 @@ describe("shouldPromptInstallSetup", () => {
     expect(shouldPromptInstallSetup({ ...baseOptions, isStaged: true })).toBe(false);
     expect(shouldPromptInstallSetup({ ...baseOptions, skipPrompts: true })).toBe(false);
     expect(shouldPromptInstallSetup({ ...baseOptions, hasScoredScan: false })).toBe(false);
+  });
+
+  it("skips setup prompts in agent shells even when the caller did not pre-skip prompts", () => {
+    writePackageJson(fixture.projectRoot, { scripts: {} });
+    process.env.CURSOR_AGENT = "1";
+
+    expect(
+      shouldPromptInstallSetup({
+        projectRoot: fixture.projectRoot,
+        hasScoredScan: true,
+        isJsonMode: false,
+        isScoreOnly: false,
+        isStaged: false,
+        skipPrompts: false,
+        store: { cwd: fixture.configRoot },
+      }),
+    ).toBe(false);
+  });
+
+  it("skips setup prompts in CI even when the caller did not pre-skip prompts", () => {
+    writePackageJson(fixture.projectRoot, { scripts: {} });
+    process.env.CI = "true";
+
+    expect(
+      shouldPromptInstallSetup({
+        projectRoot: fixture.projectRoot,
+        hasScoredScan: true,
+        isJsonMode: false,
+        isScoreOnly: false,
+        isStaged: false,
+        skipPrompts: false,
+        store: { cwd: fixture.configRoot },
+      }),
+    ).toBe(false);
   });
 
   it("waits after score output, prints a setup pitch, then installs when accepted", async () => {

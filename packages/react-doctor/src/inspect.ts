@@ -22,6 +22,7 @@ import type {
 } from "@react-doctor/core";
 import { makeNoopConsole } from "./cli/utils/noop-console.js";
 import { printAgentGuidance } from "./cli/utils/render-agent-guidance.js";
+import { isCiOrCodingAgentEnvironment } from "./cli/utils/is-ci-environment.js";
 import { printDiagnostics } from "./cli/utils/render-diagnostics.js";
 import { isNonInteractiveEnvironment } from "./cli/utils/is-non-interactive-environment.js";
 import { printProjectDetection } from "./cli/utils/render-project-detection.js";
@@ -48,6 +49,7 @@ interface ResolvedInspectOptions {
   scoreOnly: boolean;
   noScore: boolean;
   isCi: boolean;
+  isCiOrCodingAgentEnvironment: boolean;
   isNonInteractiveEnvironment: boolean;
   silent: boolean;
   includePaths: string[];
@@ -77,6 +79,7 @@ const mergeInspectOptions = (
   scoreOnly: inputOptions.scoreOnly ?? false,
   noScore: inputOptions.noScore ?? userConfig?.noScore ?? false,
   isCi: inputOptions.isCi ?? false,
+  isCiOrCodingAgentEnvironment: isCiOrCodingAgentEnvironment(),
   isNonInteractiveEnvironment: isNonInteractiveEnvironment(),
   silent: inputOptions.silent ?? false,
   includePaths: inputOptions.includePaths ?? [],
@@ -175,7 +178,11 @@ const runInspectWithRuntime = async (
   // skipped entirely). `Progress.layerNoop` makes the lifecycle a
   // no-op; the rest of the pipeline is unchanged.
   const shouldShowProgressSpinners =
-    !options.silent && !options.scoreOnly && options.lint && Boolean(resolvedNodeBinaryPath);
+    !options.isCiOrCodingAgentEnvironment &&
+    !options.silent &&
+    !options.scoreOnly &&
+    options.lint &&
+    Boolean(resolvedNodeBinaryPath);
 
   const layers = buildRuntimeLayers({
     directory,

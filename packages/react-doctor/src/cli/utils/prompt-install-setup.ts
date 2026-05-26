@@ -3,6 +3,7 @@ import path from "node:path";
 import Conf from "conf";
 import basePrompts from "prompts";
 import { findNearestPackageDirectory, hasDoctorScript } from "./install-doctor-script.js";
+import { isCiOrCodingAgentEnvironment } from "./is-ci-environment.js";
 import { SETUP_PROMPT_DELAY_MS } from "./constants.js";
 
 export interface InstallSkillRunnerOptions {
@@ -120,6 +121,7 @@ export const shouldPromptInstallSetup = (options: ShouldPromptInstallSetupOption
   if (options.isScoreOnly) return false;
   if (options.isStaged) return false;
   if (options.skipPrompts) return false;
+  if (isCiOrCodingAgentEnvironment()) return false;
   if (hasDisabledSetupPrompt(options.projectRoot, options.store)) return false;
   return !hasDoctorScript(options.projectRoot);
 };
