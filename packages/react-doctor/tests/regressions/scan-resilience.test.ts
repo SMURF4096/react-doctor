@@ -382,7 +382,7 @@ describe("issue #141: oxlint config must not reference unloaded plugins", () => 
   });
 
   it("REACT_COMPILER_RULES are gated on react-hooks-js plugin resolution", () => {
-    // When eslint-plugin-react-hooks IS resolvable from react-doctor,
+    // When eslint-plugin-react-hooks IS resolvable from the project,
     // REACT_COMPILER_RULES should
     // appear AND `react-hooks-js` must be in jsPlugins by name.
     const config = createOxlintConfig({

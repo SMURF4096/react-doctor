@@ -58,6 +58,9 @@ importers:
       effect:
         specifier: 4.0.0-beta.70
         version: 4.0.0-beta.70
+      eslint-plugin-react-hooks:
+        specifier: ^7.1.1
+        version: 7.1.1(eslint@9.39.2(jiti@2.6.1))
       oxlint:
         specifier: ^1.66.0
         version: 1.66.0(oxlint-tsgolint@0.23.0)
@@ -80,9 +83,6 @@ importers:
       '@types/picomatch':
         specifier: ^4.0.3
         version: 4.0.3
-      eslint-plugin-react-hooks:
-        specifier: ^7.1.1
-        version: 7.1.1(eslint@9.39.2(jiti@2.6.1))
 
   packages/eslint-plugin-react-doctor:
     dependencies:
@@ -130,6 +130,9 @@ importers:
       effect:
         specifier: 4.0.0-beta.70
         version: 4.0.0-beta.70
+      eslint-plugin-react-hooks:
+        specifier: ^7.1.1
+        version: 7.1.1(eslint@9.39.2(jiti@2.6.1))
       oxlint:
         specifier: ^1.66.0
         version: 1.66.0(oxlint-tsgolint@0.23.0)
@@ -155,9 +158,6 @@ importers:
       commander:
         specifier: ^14.0.3
         version: 14.0.3
-      eslint-plugin-react-hooks:
-        specifier: ^7.1.1
-        version: 7.1.1(eslint@9.39.2(jiti@2.6.1))
       ora:
         specifier: ^9.4.0
         version: 9.4.0
