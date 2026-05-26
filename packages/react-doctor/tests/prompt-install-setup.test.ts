@@ -9,17 +9,19 @@ import {
   CODING_AGENT_ENVIRONMENT_VARIABLES,
 } from "../src/cli/utils/is-ci-environment.js";
 import {
-  buildInstallSetupPitchLines,
+  AGENT_INSTALL_HINT_LINES,
   disableSetupPrompt,
   getSetupPromptConfigPath,
   getSetupPromptProjectKey,
   hasDisabledSetupPrompt,
+  printAgentInstallHint,
   promptInstallSetup,
   resolveInstallSetupProjectRoot,
   SETUP_PROMPT_CHOICE_NEVER,
   SETUP_PROMPT_CHOICE_NO,
   SETUP_PROMPT_CHOICE_YES,
   shouldPromptInstallSetup,
+  shouldShowAgentInstallHint,
 } from "../src/cli/utils/prompt-install-setup.js";
 
 interface PromptInstallSetupFixture {
@@ -315,9 +317,8 @@ describe("shouldPromptInstallSetup", () => {
     ).toBe(false);
   });
 
-  it("waits after score output, prints a setup pitch, then installs when accepted", async () => {
+  it("waits after score output then installs when accepted", async () => {
     writePackageJson(fixture.projectRoot, { scripts: {} });
-    const writtenLines: string[] = [];
     let waitedMilliseconds = 0;
     let selectMessage = "";
     let didInstall = false;
@@ -334,9 +335,6 @@ describe("shouldPromptInstallSetup", () => {
       wait: async (milliseconds) => {
         waitedMilliseconds = milliseconds;
       },
-      writeLine: (line = "") => {
-        writtenLines.push(line);
-      },
       select: async (message) => {
         selectMessage = message;
         return SETUP_PROMPT_CHOICE_YES;
@@ -347,9 +345,6 @@ describe("shouldPromptInstallSetup", () => {
     });
 
     expect(waitedMilliseconds).toBe(SETUP_PROMPT_DELAY_MS);
-    expect(writtenLines.join("\n")).toContain("2 issues");
-    expect(writtenLines.join("\n")).toContain("humans and agents");
-    expect(writtenLines.join("\n")).not.toContain("Setup will add");
     expect(selectMessage).toBe("Set up React Doctor for this project?");
     expect(didInstall).toBe(true);
   });
@@ -627,8 +622,135 @@ describe("shouldPromptInstallSetup", () => {
     expect(disableSetupPrompt(fixture.projectRoot, { cwd: fixture.configRoot })).toBe(true);
     expect(hasDisabledSetupPrompt(fixture.projectRoot, { cwd: fixture.configRoot })).toBe(true);
   });
+});
 
-  it("pitches future regression checks when no issues were found", () => {
-    expect(buildInstallSetupPitchLines(0).join("\n")).toContain("catch future regressions early");
+describe("shouldShowAgentInstallHint", () => {
+  let fixture: PromptInstallSetupFixture;
+
+  beforeEach(() => {
+    fixture = setupFixture();
+  });
+
+  afterEach(() => {
+    fixture.cleanup();
+  });
+
+  it("returns true in a coding agent environment when doctor script is missing", () => {
+    writePackageJson(fixture.projectRoot, { scripts: {} });
+
+    expect(
+      shouldShowAgentInstallHint({
+        projectRoot: fixture.projectRoot,
+        hasScoredScan: true,
+        isJsonMode: false,
+        isScoreOnly: false,
+        isStaged: false,
+        isCodingAgent: true,
+      }),
+    ).toBe(true);
+  });
+
+  it("returns false when the doctor script already exists", () => {
+    writePackageJson(fixture.projectRoot, {
+      scripts: { doctor: "react-doctor" },
+    });
+
+    expect(
+      shouldShowAgentInstallHint({
+        projectRoot: fixture.projectRoot,
+        hasScoredScan: true,
+        isJsonMode: false,
+        isScoreOnly: false,
+        isStaged: false,
+        isCodingAgent: true,
+      }),
+    ).toBe(false);
+  });
+
+  it("returns false when not in a coding agent environment", () => {
+    writePackageJson(fixture.projectRoot, { scripts: {} });
+
+    expect(
+      shouldShowAgentInstallHint({
+        projectRoot: fixture.projectRoot,
+        hasScoredScan: true,
+        isJsonMode: false,
+        isScoreOnly: false,
+        isStaged: false,
+        isCodingAgent: false,
+      }),
+    ).toBe(false);
+  });
+
+  it("returns false in JSON mode, score-only, staged, or without a scored scan", () => {
+    writePackageJson(fixture.projectRoot, { scripts: {} });
+    const baseOptions = {
+      projectRoot: fixture.projectRoot,
+      hasScoredScan: true,
+      isJsonMode: false,
+      isScoreOnly: false,
+      isStaged: false,
+      isCodingAgent: true,
+    };
+
+    expect(shouldShowAgentInstallHint({ ...baseOptions, isJsonMode: true })).toBe(false);
+    expect(shouldShowAgentInstallHint({ ...baseOptions, isScoreOnly: true })).toBe(false);
+    expect(shouldShowAgentInstallHint({ ...baseOptions, isStaged: true })).toBe(false);
+    expect(shouldShowAgentInstallHint({ ...baseOptions, hasScoredScan: false })).toBe(false);
+  });
+
+  it("returns false when setup prompt has been disabled for this project", () => {
+    writePackageJson(fixture.projectRoot, { scripts: {} });
+    disableSetupPrompt(fixture.projectRoot, { cwd: fixture.configRoot });
+
+    expect(
+      shouldShowAgentInstallHint({
+        projectRoot: fixture.projectRoot,
+        hasScoredScan: true,
+        isJsonMode: false,
+        isScoreOnly: false,
+        isStaged: false,
+        isCodingAgent: true,
+        store: { cwd: fixture.configRoot },
+      }),
+    ).toBe(false);
+  });
+
+  it("returns false when the fallback react-doctor script exists", () => {
+    writePackageJson(fixture.projectRoot, {
+      scripts: { doctor: "vitest", "react-doctor": "npx react-doctor@latest" },
+    });
+
+    expect(
+      shouldShowAgentInstallHint({
+        projectRoot: fixture.projectRoot,
+        hasScoredScan: true,
+        isJsonMode: false,
+        isScoreOnly: false,
+        isStaged: false,
+        isCodingAgent: true,
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("printAgentInstallHint", () => {
+  it("prints the install command and description", () => {
+    const writtenLines: string[] = [];
+    printAgentInstallHint((line = "") => {
+      writtenLines.push(line);
+    });
+    const output = writtenLines.join("\n");
+
+    expect(output).toContain("npx react-doctor install --yes");
+    expect(output).toContain("not installed");
+    expect(output).toContain("Ask the user");
+  });
+
+  it("AGENT_INSTALL_HINT_LINES contains the install command", () => {
+    expect(AGENT_INSTALL_HINT_LINES.length).toBeGreaterThan(0);
+    expect(
+      AGENT_INSTALL_HINT_LINES.some((line) => line.includes("npx react-doctor install --yes")),
+    ).toBe(true);
   });
 });

@@ -3,7 +3,7 @@ import path from "node:path";
 import Conf from "conf";
 import basePrompts from "prompts";
 import { findNearestPackageDirectory, hasDoctorScript } from "./install-doctor-script.js";
-import { isCiOrCodingAgentEnvironment } from "./is-ci-environment.js";
+import { isCiOrCodingAgentEnvironment, isCodingAgentEnvironment } from "./is-ci-environment.js";
 import { SETUP_PROMPT_DELAY_MS } from "./constants.js";
 
 export interface InstallSkillRunnerOptions {
@@ -158,10 +158,14 @@ const defaultSelect: SetupPromptSelect = async (message) => {
       name: "setupReactDoctorChoice",
       message,
       choices: [
-        { title: "Yes", value: SETUP_PROMPT_CHOICE_YES },
-        { title: "No", value: SETUP_PROMPT_CHOICE_NO },
         {
-          title: "No, never ask again for this project",
+          title: "Yes (recommended)",
+          description: "Use agents to automatically fix issues",
+          value: SETUP_PROMPT_CHOICE_YES,
+        },
+        {
+          title: "Skip",
+          description: "Not recommended. Issues may go unfixed.",
           value: SETUP_PROMPT_CHOICE_NEVER,
         },
       ],
@@ -174,16 +178,6 @@ const defaultSelect: SetupPromptSelect = async (message) => {
 
 const defaultWriteLine: SetupPitchWriter = (line = "") => {
   console.log(line);
-};
-
-export const buildInstallSetupPitchLines = (issueCount: number): readonly string[] => {
-  const issueLabel = `${issueCount} ${issueCount === 1 ? "issue" : "issues"}`;
-  const issueLine =
-    issueCount > 0
-      ? `React Doctor found ${issueLabel}! Do you want to add React Doctor to this project? It will help humans and agents keep working through those fixes after this scan.`
-      : "React Doctor did not find issues this time! Do you want to add React Doctor to this project? It will help humans and agents catch future regressions early.";
-
-  return ["", issueLine, ""];
 };
 
 const formatSetupPromptFailure = (error: unknown): string =>
@@ -210,19 +204,18 @@ export const promptInstallSetup = async (options: PromptInstallSetupOptions): Pr
 
     await (options.wait ?? defaultWait)(SETUP_PROMPT_DELAY_MS);
 
-    const writeLine = options.writeLine ?? defaultWriteLine;
-    for (const line of buildInstallSetupPitchLines(options.issueCount)) {
-      writeLine(line);
-    }
-
     const setupReactDoctorChoice = await (options.select ?? defaultSelect)(
       "Set up React Doctor for this project?",
     );
-    if (setupReactDoctorChoice === SETUP_PROMPT_CHOICE_NEVER) {
-      disableSetupPrompt(options.projectRoot, options.store);
+    if (setupReactDoctorChoice !== SETUP_PROMPT_CHOICE_YES) {
+      if (setupReactDoctorChoice === SETUP_PROMPT_CHOICE_NEVER) {
+        disableSetupPrompt(options.projectRoot, options.store);
+      }
+      const writeLine = options.writeLine ?? defaultWriteLine;
+      writeLine("");
+      writeLine("You can always run `npx react-doctor@latest install` to set it up later.");
       return;
     }
-    if (setupReactDoctorChoice !== SETUP_PROMPT_CHOICE_YES) return;
 
     const install = options.install ?? (await import("./install-skill.js")).runInstallSkill;
     const previousExitCode = process.exitCode;
@@ -242,5 +235,41 @@ export const promptInstallSetup = async (options: PromptInstallSetupOptions): Pr
     }
   } catch (error) {
     await warnSetupPromptFailure(options, error);
+  }
+};
+
+export interface ShouldShowAgentInstallHintOptions {
+  readonly projectRoot: string;
+  readonly hasScoredScan: boolean;
+  readonly isJsonMode: boolean;
+  readonly isScoreOnly: boolean;
+  readonly isStaged: boolean;
+  readonly isCodingAgent?: boolean;
+  readonly store?: SetupPromptStoreOptions;
+}
+
+export const shouldShowAgentInstallHint = (options: ShouldShowAgentInstallHintOptions): boolean => {
+  if (!options.hasScoredScan) return false;
+  if (options.isJsonMode) return false;
+  if (options.isScoreOnly) return false;
+  if (options.isStaged) return false;
+  if (!(options.isCodingAgent ?? isCodingAgentEnvironment())) return false;
+  if (hasDisabledSetupPrompt(options.projectRoot, options.store)) return false;
+  return !hasDoctorScript(options.projectRoot);
+};
+
+export const AGENT_INSTALL_HINT_LINES = [
+  "React Doctor is not installed in this project.",
+  "Ask the user if they would like to set it up, then run:",
+  "",
+  "  npx react-doctor install --yes",
+  "",
+  "This adds agent skill files, a `doctor` package script, and react-doctor as a dev dependency.",
+] as const;
+
+export const printAgentInstallHint = (writeLine: SetupPitchWriter = defaultWriteLine): void => {
+  writeLine("");
+  for (const line of AGENT_INSTALL_HINT_LINES) {
+    writeLine(line);
   }
 };
