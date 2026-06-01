@@ -53,6 +53,8 @@ const detectLaunchableAgents = async (): Promise<CliAgentId[]> => {
 export const handoffToAgent = async (input: HandoffToAgentInput): Promise<void> => {
   if (!input.interactive || input.diagnostics.length === 0) return;
 
+  logger.break();
+
   const launchableAgents = await detectLaunchableAgents();
   const { handoffTarget } = await prompts<"handoffTarget">(
     {

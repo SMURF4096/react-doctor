@@ -1,12 +1,14 @@
 import * as Console from "effect/Console";
 import * as Effect from "effect/Effect";
 import {
+  CANONICAL_GITHUB_URL,
   DOCS_URL,
   highlighter,
   SHARE_BASE_URL,
   TOP_ERRORS_DISPLAY_COUNT,
 } from "@react-doctor/core";
 import type { Diagnostic, ScoreResult } from "@react-doctor/core";
+import { buildSectionDivider } from "./build-section-divider.js";
 import { colorizeByScore } from "./colorize-by-score.js";
 import { collectAffectedFiles } from "./render-diagnostics.js";
 import { printNoScoreHeader, printScoreHeader } from "./render-score-header.js";
@@ -31,36 +33,35 @@ const buildShareUrl = (
   return `${SHARE_BASE_URL}?${params.toString()}`;
 };
 
-// The closing "--verbose explains everything" hint, printed as the very
-// last line of a run (below the per-project summaries in a monorepo) so it
-// reads as a closing tip rather than crowding the overview. No-op when
-// already verbose or when there's nothing to list. When warnings are
-// present the tip leads with them, since non-verbose only rolls warnings up
-// to a `rule ×count` list — `--verbose` is where each one is explained.
-export const printVerboseTip = (
-  diagnostics: Diagnostic[],
-  isVerbose: boolean,
-): Effect.Effect<void> =>
-  Effect.gen(function* () {
-    if (isVerbose || diagnostics.length === 0) return;
-    const command = highlighter.info("npx react-doctor@latest --verbose");
-    const hasWarnings = diagnostics.some((diagnostic) => diagnostic.severity === "warning");
-    const message = hasWarnings
-      ? `Run ${command} to see each warning explained with its fix`
-      : `Run ${command} to see each issue explained with its fix`;
-    yield* Console.log(highlighter.dim(`  Tip: ${message}`));
-  });
+export interface PrintFooterInput {
+  readonly diagnostics: Diagnostic[];
+  readonly scoreResult: ScoreResult | null;
+  readonly projectName: string;
+  readonly isOffline: boolean;
+}
 
-// A closing pointer to the docs for the workflows the scan output doesn't
-// teach inline: wiring up CI/CD, writing a config file to suppress rules,
-// and scanning only a diff or PR. Printed once at the very end of a run.
-export const printDocsNote = (): Effect.Effect<void> =>
+export const printFooter = (input: PrintFooterInput): Effect.Effect<void> =>
   Effect.gen(function* () {
     yield* Console.log("");
+    yield* Console.log(buildSectionDivider());
+    yield* Console.log("");
+    if (!input.isOffline) {
+      const shareUrl = buildShareUrl(input.diagnostics, input.scoreResult, input.projectName);
+      yield* Console.log(`  ${highlighter.bold("Share:")} ${highlighter.info(shareUrl)}`);
+      yield* Console.log(highlighter.dim("  Tell others how you did on socials"));
+      yield* Console.log("");
+    }
     yield* Console.log(`  ${highlighter.bold("Docs:")} ${highlighter.info(DOCS_URL)}`);
     yield* Console.log(
-      highlighter.dim("  Set up CI/CD, suppress rules with a config file, and scan diffs or PRs."),
+      highlighter.dim(
+        "  Learn more about fixing issues, setting up CI/CD, and configuring rules with a config file",
+      ),
     );
+    yield* Console.log("");
+    yield* Console.log(
+      `  ${highlighter.bold("GitHub:")} ${highlighter.info(CANONICAL_GITHUB_URL)}`,
+    );
+    yield* Console.log(highlighter.dim("  Report issues and star the repository!"));
   });
 
 export interface PrintSummaryInput {
@@ -70,10 +71,8 @@ export interface PrintSummaryInput {
   // Score reachable by fixing the top errors, rendered as the bar's ghost
   // gain segment. Omitted when there's nothing to project.
   readonly potentialScore?: number | null;
-  readonly projectName: string;
   readonly totalSourceFileCount: number;
   readonly noScoreMessage: string;
-  readonly isOffline: boolean;
   readonly verbose?: boolean;
 }
 
@@ -104,12 +103,5 @@ export const printSummary = (input: PrintSummaryInput): Effect.Effect<void> =>
     }).pipe(Effect.orElseSucceed(() => null as string | null));
     if (diagnosticsDirectory !== null && input.verbose) {
       yield* Console.log(highlighter.gray(`  Full diagnostics written to ${diagnosticsDirectory}`));
-    }
-
-    if (!input.isOffline) {
-      yield* Console.log("");
-      const shareUrl = buildShareUrl(input.diagnostics, input.scoreResult, input.projectName);
-      yield* Console.log(`  ${highlighter.bold("Share:")} ${highlighter.info(shareUrl)}`);
-      yield* Console.log("");
     }
   });

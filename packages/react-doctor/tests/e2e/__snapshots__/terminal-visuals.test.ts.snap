@@ -50,17 +50,21 @@ exports[`in-process render across terminal widths and render modes > matches the
     └──────────────────────────────────────────────────────────────┘
 
 
-  ────────────────────────────────────────────────────────────
-  1 warning
-
-  ⚠ react-doctor/rendering-hoist-jsx
+  +1 optional warning — run npx react-doctor@latest --verbose for details
 
   ┌─────┐  99 / 100 Great
   │ ◠ ◠ │  ██████████████████████████████████████████████████
   │  ▽  │  React Doctor (https://react.doctor)
   └─────┘
 
-  Tip: Run npx react-doctor@latest --verbose to see each warning explained with its fix"
+
+  ────────────────────────────────────────────────────────────
+
+  Docs: https://www.react.doctor/docs
+  Learn more about fixing issues, setting up CI/CD, and configuring rules with a config file
+
+  GitHub: https://github.com/millionco/react-doctor
+  Report issues and star the repository!"
 `;
 
 exports[`in-process render across terminal widths and render modes > matches the terminal-width × mode overflow matrix 1`] = `
@@ -71,6 +75,6 @@ default-errors-ok              wrap   wrap     ok     ok     ok
 default-errors-needs-work      wrap   wrap     ok     ok     ok
 default-errors-no-score        wrap   wrap     ok     ok     ok
 default-warnings-only          wrap   wrap     ok     ok     ok
-default-clean-perfect          wrap     ok     ok     ok     ok
+default-clean-perfect          wrap   wrap     ok     ok     ok
 verbose-errors-great           wrap   wrap     ok     ok     ok"
 `;

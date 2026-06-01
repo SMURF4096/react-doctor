@@ -359,11 +359,15 @@ export const inspectAction = async (directory: string, flags: InspectFlags): Pro
     }
 
     if (!isQuiet && isMultiProject && completedScans.length > 0) {
+      const shouldShowShareLink =
+        !scanOptions.noScore && (userConfig?.share ?? true) && !scanOptions.isCi;
       await Effect.runPromise(
         printMultiProjectSummary({
           completedScans,
           userConfig,
           verbose: Boolean(flags.verbose),
+          isOffline: !shouldShowShareLink,
+          projectName: path.basename(resolvedDirectory),
         }),
       );
     }
