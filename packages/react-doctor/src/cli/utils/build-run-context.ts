@@ -4,6 +4,7 @@ import {
   isCiEnvironment,
   isCodingAgentEnvironment,
 } from "./is-ci-environment.js";
+import { isGitHookEnvironment } from "./is-git-hook-environment.js";
 import { isNonInteractiveEnvironment } from "./is-non-interactive-environment.js";
 import { isJsonModeActive } from "./json-mode.js";
 import { scrubSensitivePaths } from "./scrub-sensitive-text.js";
@@ -47,8 +48,7 @@ const detectNodeMajor = (): number => {
 };
 
 const detectOrigin = (): string => {
-  // `GIT_DIR` is git's canonical "I'm inside a hook" signal (git-hooks(5)).
-  if (process.env.GIT_DIR) return "git-hook";
+  if (isGitHookEnvironment()) return "git-hook";
   if (isCodingAgentEnvironment()) return "agent";
   if (isCiEnvironment()) return "ci";
   return "cli";

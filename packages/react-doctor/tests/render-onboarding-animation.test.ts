@@ -164,6 +164,7 @@ describe("canAnimateOnboarding", () => {
     FORCE_ONBOARDING_ENV_VAR,
     "TERM",
     "CI",
+    "GIT_DIR",
     ...CI_ENVIRONMENT_VARIABLES,
     ...CODING_AGENT_ENVIRONMENT_VARIABLES,
     ...CODING_AGENT_ENVIRONMENT_VALUE_VARIABLES,
@@ -198,6 +199,17 @@ describe("canAnimateOnboarding", () => {
   it("does not animate in CI", () => {
     process.env.CI = "true";
     expect(canAnimateOnboarding(REAL_TTY)).toBe(false);
+  });
+
+  it("does not animate inside a git hook (GIT_DIR) even on a real TTY", () => {
+    process.env.GIT_DIR = "/repo/.git";
+    expect(canAnimateOnboarding(REAL_TTY)).toBe(false);
+  });
+
+  it("animates a forced run even inside a git hook, on a real TTY", () => {
+    process.env.GIT_DIR = "/repo/.git";
+    process.env[FORCE_ONBOARDING_ENV_VAR] = "1";
+    expect(canAnimateOnboarding(REAL_TTY)).toBe(true);
   });
 
   it("animates a forced run even in CI, on a real TTY", () => {

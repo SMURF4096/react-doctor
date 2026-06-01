@@ -1,5 +1,6 @@
 import * as Effect from "effect/Effect";
 import { isCiEnvironment } from "./is-ci-environment.js";
+import { isGitHookEnvironment } from "./is-git-hook-environment.js";
 
 // Each scan-report section waits this long before printing, so a first human
 // run reads as a guided reveal rather than one painted frame.
@@ -45,11 +46,14 @@ export const shouldRecordOnboarding = (input: OnboardingRecordInput): boolean =>
 // exclude coding-agent shells (e.g. Cursor's integrated terminal) the way
 // `isSpinnerInteractive` does: when an agent *captures* output it gets a non-TTY
 // pipe, which the `isTTY` check already rejects, so only a human watching a real
-// terminal reaches the animated path. CI stays excluded (its logs shouldn't
-// carry cursor escapes); a forced demo overrides even that.
+// terminal reaches the animated path. Git hooks DO stay excluded: a hook
+// inherits the parent TTY (so `isTTY` passes) but must never emit cursor escapes
+// (issue #293), and git-hook runs keep the classic layout. CI stays excluded too
+// (its logs shouldn't carry cursor escapes); a forced demo overrides all of it.
 export const canAnimateOnboarding = (stream: NodeJS.WriteStream = process.stdout): boolean => {
   const isRealTty =
     stream.isTTY === true && (stream.columns ?? 0) > 0 && process.env.TERM !== "dumb";
   if (!isRealTty) return false;
-  return isOnboardingForced() || !isCiEnvironment();
+  if (isOnboardingForced()) return true;
+  return !isGitHookEnvironment() && !isCiEnvironment();
 };
