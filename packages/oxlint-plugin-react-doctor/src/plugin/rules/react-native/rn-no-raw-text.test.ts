@@ -79,4 +79,86 @@ describe("react-native/rn-no-raw-text", () => {
       `);
     });
   });
+
+  describe("expo universal ui ListItem", () => {
+    it("does not fire on raw text headline children of an @expo/ui ListItem", () => {
+      expectPass(`
+        import { Host, List, ListItem } from "@expo/ui";
+        const App = () => (
+          <Host>
+            <List>
+              <ListItem onPress={() => {}}>Settings</ListItem>
+            </List>
+          </Host>
+        );
+      `);
+    });
+
+    it("does not fire on a template-literal headline", () => {
+      expectPass(`
+        import { List, ListItem } from "@expo/ui";
+        const App = ({ id }) => <List><ListItem>{\`Item #\${id}\`}</ListItem></List>;
+      `);
+    });
+
+    it("does not fire on raw text inside compound slot markers", () => {
+      expectPass(`
+        import { ListItem } from "@expo/ui";
+        const App = () => (
+          <ListItem onPress={() => {}}>
+            <ListItem.Supporting>Richer slot content</ListItem.Supporting>
+          </ListItem>
+        );
+      `);
+    });
+
+    it("does not fire on a platform-specific @expo/ui subpath import", () => {
+      expectPass(`
+        import { ListItem } from "@expo/ui/swift-ui";
+        const App = () => <ListItem>Profile</ListItem>;
+      `);
+    });
+
+    it("does not fire on a namespace import", () => {
+      expectPass(`
+        import * as ExpoUI from "@expo/ui";
+        const App = () => <ExpoUI.ListItem>Settings</ExpoUI.ListItem>;
+      `);
+    });
+
+    // The namespace branch must match only `import * as X` — a *named*
+    // `@expo/ui` import reused via member access (`<Row.ListItem>`) is not the
+    // namespace form and must still report.
+    it("still fires on member access off a named (non-namespace) @expo/ui import", () => {
+      expectFail(`
+        import { Row } from "@expo/ui";
+        const App = () => <Row.ListItem>text</Row.ListItem>;
+      `);
+    });
+
+    it("does not fire on a renamed ListItem import", () => {
+      expectPass(`
+        import { ListItem as Row } from "@expo/ui";
+        const App = () => <Row>Profile</Row>;
+      `);
+    });
+
+    it("still fires on a same-named ListItem imported from elsewhere", () => {
+      expectFail(`
+        import { ListItem } from "./ui";
+        const App = () => <ListItem>Settings</ListItem>;
+      `);
+    });
+
+    it("still fires on a ListItem with no import", () => {
+      expectFail(`const App = () => <ListItem>Settings</ListItem>;`);
+    });
+
+    it("still fires on raw text in a non-ListItem @expo/ui layout child", () => {
+      expectFail(`
+        import { ListItem, Row } from "@expo/ui";
+        const App = () => <ListItem><Row>raw headline</Row></ListItem>;
+      `);
+    });
+  });
 });
