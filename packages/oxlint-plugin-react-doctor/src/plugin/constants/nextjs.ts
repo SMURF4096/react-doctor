@@ -38,3 +38,21 @@ export const MUTATING_ROUTE_SEGMENTS = new Set([
   "cancel",
   "deactivate",
 ]);
+
+export const ERROR_BOUNDARY_FILE_PATTERN = /\/(error|global-error)\.(tsx?|jsx?)$/;
+
+export const GLOBAL_ERROR_FILE_PATTERN = /\/global-error\.(tsx?|jsx?)$/;
+
+export const ROUTE_HANDLER_HTTP_METHODS = new Set([
+  "GET",
+  "POST",
+  "PUT",
+  "PATCH",
+  "DELETE",
+  "OPTIONS",
+  "HEAD",
+]);
+
+export const GOOGLE_ANALYTICS_SCRIPT_PATTERN = /google-analytics\.com|googletagmanager\.com\/gtag/;
+
+export const OG_IMAGE_FILE_PATTERN = /\/(opengraph-image|twitter-image)\d*\.(tsx?|jsx?)$/;
