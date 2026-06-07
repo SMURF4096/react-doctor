@@ -1358,6 +1358,8 @@ describe("inverted monorepo: web-rooted project with an RN workspace still loads
       rootDirectory: projectDir,
       project: {
         ...buildTestProject({ rootDirectory: projectDir, framework: "nextjs" }),
+        nextjsVersion: null,
+        nextjsMajorVersion: null,
         hasReactNativeWorkspace: true,
       },
     });
