@@ -30,4 +30,29 @@ describe("validateModeFlags", () => {
   it("allows --sfw on its own", () => {
     expect(() => validateModeFlags({ sfw: true })).not.toThrow();
   });
+
+  it("rejects --scope combined with the deprecated --diff alias", () => {
+    expect(() => validateModeFlags({ scope: "changed", diff: "main" })).toThrow(
+      "Cannot combine --scope and --diff",
+    );
+  });
+
+  it("rejects --staged with --scope full or changed (the index has no base branch)", () => {
+    expect(() => validateModeFlags({ staged: true, scope: "full" })).toThrow(
+      "Cannot combine --staged with --scope full",
+    );
+    expect(() => validateModeFlags({ staged: true, scope: "changed" })).toThrow(
+      "Cannot combine --staged with --scope changed",
+    );
+  });
+
+  it("allows --staged with --scope files or lines (composing source + granularity)", () => {
+    expect(() => validateModeFlags({ staged: true, scope: "files" })).not.toThrow();
+    expect(() => validateModeFlags({ staged: true, scope: "lines" })).not.toThrow();
+    expect(() => validateModeFlags({ staged: true })).not.toThrow();
+  });
+
+  it("rejects --sfw combined with --scope", () => {
+    expect(() => validateModeFlags({ sfw: true, scope: "lines" })).toThrow("Cannot combine --sfw");
+  });
 });

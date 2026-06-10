@@ -40,6 +40,22 @@ describe("stripUnknownCliFlags", () => {
     ]);
   });
 
+  it("keeps --scope / --base and consumes their values (no value leaks as a positional)", () => {
+    // Regression: the action invokes `react-doctor . --scope changed --changed-files-from <f>`.
+    // If --scope isn't a known value-taking flag, its value `changed` leaks as a 2nd
+    // positional and Commander throws "too many arguments".
+    expect(
+      stripUserArguments([".", "--scope", "changed", "--changed-files-from", "/tmp/changed.txt"]),
+    ).toEqual([".", "--scope", "changed", "--changed-files-from", "/tmp/changed.txt"]);
+    expect(stripUserArguments([".", "--scope", "lines", "--base", "main"])).toEqual([
+      ".",
+      "--scope",
+      "lines",
+      "--base",
+      "main",
+    ]);
+  });
+
   it("drops unknown install flags while keeping install options", () => {
     expect(stripUserArguments(["install", "--offline", "--cwd", ".", "--agent-hooks"])).toEqual([
       "install",

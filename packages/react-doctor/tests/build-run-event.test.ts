@@ -66,6 +66,7 @@ const buildResult = (overrides: Partial<InspectResult> = {}): InspectResult => (
 
 const baseInput = (overrides: Partial<RunEventInput> = {}): RunEventInput => ({
   mode: "full",
+  scope: "full",
   parallel: true,
   workerCount: 4,
   lint: true,

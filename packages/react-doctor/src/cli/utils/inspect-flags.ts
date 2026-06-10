@@ -19,6 +19,9 @@ export interface InspectFlags {
   warnings?: boolean;
   category?: string | string[];
   project?: string;
+  scope?: string;
+  base?: string;
+  // Deprecated alias for `--scope` (warns at runtime); resolved by resolveScope.
   diff?: boolean | string;
   changedFilesFrom?: string;
   // Commander's `--no-parallel` negatable option: defaults to `true`

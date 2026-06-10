@@ -101,6 +101,16 @@ export interface InspectOptions {
    */
   baseline?: { ref: string };
   /**
+   * Restrict reported diagnostics to those landing on the lines the change
+   * touched (`--scope lines`). Each entry is one changed file with the
+   * inclusive 1-based `[start, end]` line ranges the diff added/modified,
+   * keyed by a path relative to the scanned directory (forward slashes).
+   * Applied at the same post-lint seam as `baseline` — the score is still
+   * computed on the full head set, so only the displayed / gated diagnostics
+   * narrow. Mutually exclusive with `baseline` in practice (one scope value).
+   */
+  changedLineRanges?: ReadonlyArray<ChangedFileLineRanges>;
+  /**
    * Number of oxlint subprocesses to run in parallel during the lint
    * pass. Overrides the `OxlintConcurrency` Reference (env-seeded) for
    * this run. `undefined` leaves the ambient default in place (parallel:
@@ -149,6 +159,17 @@ export interface InspectOptions {
    * instead of N individual ones.
    */
   suppressRendering?: boolean;
+}
+
+/**
+ * One changed file plus the inclusive 1-based `[start, end]` line ranges the
+ * diff added or modified. Produced by `parseChangedLineRanges` / the Git
+ * service's `changedLineRanges`, consumed by the `lines` scope filter.
+ */
+export interface ChangedFileLineRanges {
+  /** Path relative to the scanned directory, forward-slash separated. */
+  readonly file: string;
+  readonly ranges: ReadonlyArray<readonly [number, number]>;
 }
 
 export interface DiffInfo {

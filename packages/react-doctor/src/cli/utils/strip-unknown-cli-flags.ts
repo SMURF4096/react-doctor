@@ -33,11 +33,13 @@ const ROOT_FLAG_SPEC: CliFlagSpec = {
     "--yes",
   ]),
   longOptionsWithRequiredValues: new Set([
+    "--base",
     "--category",
     "--changed-files-from",
     "--blocking",
     "--fail-on",
     "--project",
+    "--scope",
   ]),
   longOptionsWithOptionalValues: new Set(["--diff"]),
   shortOptionsWithoutValues: new Set(["-h", "-v", "-y"]),

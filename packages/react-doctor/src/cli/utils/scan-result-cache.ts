@@ -258,6 +258,9 @@ export const buildScanResultCacheKey = (input: ScanResultCacheKeyInput): string 
       ignoredTags: [...input.options.ignoredTags].sort(),
       concurrency: input.options.concurrency,
       baselineRef: input.options.baseline?.ref,
+      // `null` (not a `lines` scope) and an omitted field hash identically, so a
+      // non-lines lookup matches a non-lines store; only real ranges shift the key.
+      changedLineRanges: input.options.changedLineRanges ?? undefined,
       noScore: input.options.noScore,
       isCi: input.options.isCi,
       suppressRendering: input.options.suppressRendering,

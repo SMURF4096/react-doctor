@@ -5,6 +5,7 @@ export type {
   ReactDoctorIgnoreOverride,
   RuleSeverityControls,
   RuleSeverityOverride,
+  ScopeValue,
   SurfaceControls,
 } from "./config.js";
 export type {
@@ -25,6 +26,7 @@ export type {
 } from "./diagnostic.js";
 export type { HandleErrorOptions } from "./handle-error.js";
 export type {
+  ChangedFileLineRanges,
   DiffInfo,
   InspectOptions,
   InspectResult,

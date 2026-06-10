@@ -16,6 +16,8 @@ import {
   GitInvocationFailed,
   ReactDoctorError,
 } from "../errors.js";
+import { parseChangedLineRanges } from "../parse-changed-line-ranges.js";
+import type { ChangedFileLineRanges } from "../types/index.js";
 
 interface GitInvocationResult {
   readonly status: number;
@@ -190,6 +192,16 @@ interface GitGrepResult {
   readonly stdout: string;
 }
 
+interface GitChangedLineRangesInput {
+  readonly directory: string;
+  /** Ref to diff against; omit for working-tree / index diffs. */
+  readonly baseRef?: string;
+  /** When `true`, diff the index (`--cached`) instead of the working tree. */
+  readonly cached?: boolean;
+  /** Files to limit the diff to (relative to `directory`). */
+  readonly files: ReadonlyArray<string>;
+}
+
 /**
  * `Git` wraps every `git`-via-subprocess call react-doctor makes
  * behind a `Context.Service`. The production layer (`layerNode`)
@@ -268,6 +280,18 @@ export class Git extends Context.Service<
      * fall back to a filesystem walk.
      */
     readonly grep: (input: GitGrepInput) => Effect.Effect<GitGrepResult | null, ReactDoctorError>;
+    /**
+     * Per-file changed line ranges for the `lines` scope. Runs
+     * `git diff --unified=0` (optionally `--cached`, optionally against
+     * `baseRef`) limited to `files`, and parses the new-side hunks. Returns
+     * `null` when the ranges can't be computed (unsafe `baseRef`, or git
+     * exited non-zero) so the caller degrades to file-level scope instead of
+     * hiding every finding behind empty ranges; an empty array means git
+     * succeeded but the files added no lines.
+     */
+    readonly changedLineRanges: (
+      input: GitChangedLineRangesInput,
+    ) => Effect.Effect<ReadonlyArray<ChangedFileLineRanges> | null, ReactDoctorError>;
   }
 >()("react-doctor/Git") {
   static readonly layerNode: Layer.Layer<Git> = Layer.effect(
@@ -714,6 +738,26 @@ export class Git extends Context.Service<
             if (result.status === 128) return null;
             return { status: result.status, stdout: result.stdout } satisfies GitGrepResult;
           }),
+        changedLineRanges: ({ directory, baseRef, cached, files }) =>
+          Effect.gen(function* () {
+            if (files.length === 0) return [];
+            // An unsafe base ref can't reach git (CVE-2018-17456 shape) and a
+            // failed diff both mean "couldn't compute" — return null so the
+            // caller degrades to file-level scope rather than hiding everything.
+            if (baseRef !== undefined && !isSafeGitRevision(baseRef)) return null;
+            const result = yield* runGit(directory, [
+              "diff",
+              "--unified=0",
+              "--diff-filter=ACMR",
+              "--relative",
+              ...(cached ? ["--cached"] : []),
+              ...(baseRef !== undefined ? [baseRef] : []),
+              "--",
+              ...files,
+            ]);
+            if (result.status !== 0) return null;
+            return parseChangedLineRanges(result.stdout);
+          }),
       });
     }),
   ).pipe(
@@ -746,6 +790,7 @@ export class Git extends Context.Service<
     readonly refContent?: ReadonlyMap<string, string>;
     readonly diffSelection?: GitDiffSelection | null;
     readonly grepMatches?: ReadonlyArray<string> | null;
+    readonly changedLineRanges?: ReadonlyArray<ChangedFileLineRanges>;
   }): Layer.Layer<Git> =>
     Layer.succeed(
       Git,
@@ -771,6 +816,7 @@ export class Git extends Context.Service<
             const stdout = matches.length === 0 ? "" : `${matches.join("\n")}\n`;
             return { status: matches.length === 0 ? 1 : 0, stdout } satisfies GitGrepResult;
           }),
+        changedLineRanges: () => Effect.succeed(snapshot.changedLineRanges ?? []),
       }),
     );
 }

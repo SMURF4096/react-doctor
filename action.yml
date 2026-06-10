@@ -12,7 +12,7 @@ inputs:
     description: 'Workspace project(s) to scan (comma-separated). Use "*" to scan every discovered project.'
     default: "*"
   scope:
-    description: "On pull requests, what to scan: 'changed' (only files changed in the PR, the default baseline/diff behavior) or 'full' (the entire project, reporting every finding). Non-PR events always scan the full project."
+    description: "On pull requests, what to scan/report (same meanings as the CLI --scope): 'changed' (only issues the PR introduced vs base — the default), 'files' (all issues in changed files), 'lines' (only issues on the changed lines), or 'full' (the entire project, every finding). Non-PR events always scan the full project."
     default: "changed"
   blocking:
     description: "Severity that fails the workflow: none (default; advisory — report findings but always exit 0), warning, or error."
@@ -150,10 +150,17 @@ runs:
         # running a diff scan despite the user asking for a full one.
         SCOPE="$(printf '%s' "$INPUT_SCOPE" | tr '[:upper:]' '[:lower:]')"
         if [ "$SCOPE" = "full" ]; then
-          # `--diff false` scans the whole project. It turns off diff mode and
-          # ignores any `diff` value set in the project's config.
-          FLAGS+=("--diff" "false")
+          # `--scope full` scans the whole project, overriding any `scope` /
+          # `diff` set in the project's config (flags win over config).
+          FLAGS+=("--scope" "full")
         elif [ -n "$CHANGED_FILES_FROM" ]; then
+          # changed (default) | files | lines — forward the PR's changed-file
+          # list plus the matching scope. For `lines` the CLI derives the
+          # changed line ranges from the fetched base SHA.
+          case "$SCOPE" in
+            files | lines | changed) FLAGS+=("--scope" "$SCOPE") ;;
+            *) FLAGS+=("--scope" "changed") ;;
+          esac
           FLAGS+=("--changed-files-from" "$CHANGED_FILES_FROM")
         fi
 

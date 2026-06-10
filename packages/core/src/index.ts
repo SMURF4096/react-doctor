@@ -63,6 +63,7 @@ export * from "./load-config.js";
 export * from "./materialize-source-tree.js";
 export * from "./merge-and-filter-diagnostics.js";
 export * from "./neutralize-disable-directives.js";
+export * from "./parse-changed-line-ranges.js";
 export * from "./parse-gitattributes-linguist.js";
 export * from "./read-file-lines-node.js";
 export * from "./read-ignore-file.js";

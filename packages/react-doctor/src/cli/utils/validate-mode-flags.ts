@@ -1,19 +1,27 @@
 import { CliInputError } from "./cli-input-error.js";
 import type { InspectFlags } from "./inspect-flags.js";
-import { coerceDiffValue } from "./coerce-diff-value.js";
+
+// "The user asked for a diff scope via the deprecated `--diff`" — `false` /
+// `"false"` / `""` mean "force a full scan", so they don't count as a mode.
+const usedDiffAlias = (flags: InspectFlags): boolean =>
+  flags.diff !== undefined && flags.diff !== false && flags.diff !== "false" && flags.diff !== "";
+
+const usedScope = (flags: InspectFlags): boolean =>
+  typeof flags.scope === "string" && flags.scope.length > 0;
 
 export const validateModeFlags = (flags: InspectFlags): void => {
-  // HACK: use the same coercion as resolveEffectiveDiff so a bare
-  // `--diff false` (or `--diff ""`) is treated as "no diff" and doesn't
-  // trip the mutual-exclusion check against --staged.
-  const coercedDiff = coerceDiffValue(flags.diff);
-  const exclusiveModes = [
-    flags.staged ? "--staged" : null,
-    coercedDiff !== undefined && coercedDiff !== false ? "--diff" : null,
-  ].filter((modeName): modeName is string => modeName !== null);
-
-  if (exclusiveModes.length > 1) {
-    throw new CliInputError(`Cannot combine ${exclusiveModes.join(" and ")}; pick one mode.`);
+  if (usedScope(flags) && usedDiffAlias(flags)) {
+    throw new CliInputError("Cannot combine --scope and --diff; --diff is the deprecated alias.");
+  }
+  if (flags.staged && usedDiffAlias(flags)) {
+    throw new CliInputError("Cannot combine --staged and --diff; pick one mode.");
+  }
+  // `--staged` scans the git index; `full` / `changed` (which need a base
+  // branch) don't apply. `files` (default) and `lines` compose with it.
+  if (flags.staged && (flags.scope === "full" || flags.scope === "changed")) {
+    throw new CliInputError(
+      `Cannot combine --staged with --scope ${flags.scope}; use --scope files or --scope lines, or drop --scope.`,
+    );
   }
   if (flags.score && flags.json) {
     throw new CliInputError("Cannot combine --score and --json; pick one output mode.");
@@ -28,7 +36,8 @@ export const validateModeFlags = (flags: InspectFlags): void => {
       flags.json ? "--json" : null,
       flags.score ? "--score" : null,
       flags.staged ? "--staged" : null,
-      coercedDiff !== undefined && coercedDiff !== false ? "--diff" : null,
+      usedScope(flags) ? "--scope" : null,
+      usedDiffAlias(flags) ? "--diff" : null,
     ].find((name): name is string => name !== null);
     if (conflictingFlag) {
       throw new CliInputError(

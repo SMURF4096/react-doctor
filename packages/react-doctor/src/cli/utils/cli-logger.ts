@@ -23,7 +23,7 @@ export const cliLogger = {
   //   dim   → gray
   //   success → green
   // Bugbot regression #432: without these, warning / error / info
-  // messages from `install-react-doctor.ts`, `resolve-diff-mode.ts`, and
+  // messages from `install-react-doctor.ts`, `resolve-scope.ts`, and
   // `warn-deprecated-fail-on.ts` rendered as plain uncolored text.
   warn: (message: string): void => {
     Effect.runSync(Console.warn(highlighter.warn(message)));
