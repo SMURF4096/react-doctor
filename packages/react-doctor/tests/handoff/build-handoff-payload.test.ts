@@ -36,9 +36,10 @@ describe("buildHandoffPayload", () => {
 
     expect(payload).toContain(`Fix the top ${TOP_ERRORS_DISPLAY_COUNT}`);
     expect(payload).toContain("demo");
-    // The agent is told to offer CI first, with the trust pitch + guide link.
-    expect(payload).toContain("add React Doctor to CI");
-    expect(payload).toContain("https://react.doctor/ci");
+    // The agent copy-prompt carries no CI marketing — the interactive handoff
+    // prompt is the single once-per-repo pitch, so the agent never re-asks it.
+    expect(payload).not.toContain("add React Doctor to CI");
+    expect(payload).not.toContain("https://react.doctor/ci");
     // Exactly TOP_ERRORS_DISPLAY_COUNT numbered entries.
     expect(payload.match(/^\d+\. /gm)?.length).toBe(TOP_ERRORS_DISPLAY_COUNT);
 

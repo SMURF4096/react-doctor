@@ -24,6 +24,7 @@ import { askAddToGitHubActions } from "./ask-add-to-github-actions.js";
 import { askUpgradeActionVersion } from "./ask-upgrade-action-version.js";
 import { detectDefaultBranch } from "./detect-default-branch.js";
 import { hasHandledActionUpgrade, recordActionUpgradeDecision } from "./action-upgrade-prompt.js";
+import { hasHandledCiPrompt, recordCiPromptDecision } from "./ci-prompt-decision.js";
 import { installReactDoctorAgentHooks } from "./install-agent-hooks.js";
 import {
   getReactDoctorWorkflowPath,
@@ -545,9 +546,16 @@ export const runInstallReactDoctor = async (
   // to the action's previous floating major (`@v1`) is offered the in-place
   // `@v2` bump instead. The two are mutually exclusive — only one can apply.
   // `--yes` opts in and a bare non-interactive run opts out.
+  // The CI pitch is once-per-repo across `install` and the post-scan handoff, so
+  // a prior answer from either surface suppresses the interactive question here —
+  // mirroring how `canUpgradeWorkflow` respects `hasHandledActionUpgrade`. `--yes`
+  // still opts in (an explicit "set everything up" overrides a past decline).
+  const ciPromptOutcome =
+    canInstallWorkflow && !options.yes && !skipPrompts && !hasHandledCiPrompt(projectRoot)
+      ? await askAddToGitHubActions(prompt)
+      : null;
   const shouldInstallWorkflow =
-    canInstallWorkflow &&
-    (Boolean(options.yes) || (!skipPrompts && (await askAddToGitHubActions(prompt)) === "yes"));
+    canInstallWorkflow && (Boolean(options.yes) || ciPromptOutcome === "yes");
   const upgradePromptOutcome =
     canUpgradeWorkflow && !options.yes && !skipPrompts
       ? await askUpgradeActionVersion(prompt)
@@ -561,6 +569,16 @@ export const runInstallReactDoctor = async (
   // below. Dry runs preview without writing anything.
   if (upgradePromptOutcome === "no" && !options.dryRun) {
     recordActionUpgradeDecision(projectRoot, "declined");
+  }
+
+  // The CI pitch is once-per-repo: persist the answer (yes or no) the moment
+  // it's given — mirroring the post-scan handoff — so neither surface re-pitches
+  // it. Recording the accept here (not just relying on the workflow file) keeps
+  // it answered even if the install is cancelled below or the workflow write
+  // fails; the user can always re-run `install` to set CI up. A cancel records
+  // nothing. Dry runs preview without writing.
+  if ((ciPromptOutcome === "yes" || ciPromptOutcome === "no") && !options.dryRun) {
+    recordCiPromptDecision(projectRoot, ciPromptOutcome === "yes" ? "accepted" : "declined");
   }
 
   // Step 2 — the agent skill + package setup (the core of `install`).
