@@ -20,7 +20,7 @@
   "bugs": {
     "url": "https://github.com/millionco/react-doctor/issues"
   },
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "MIT",
   "author": "Million Software, Inc",
   "repository": {
     "type": "git",

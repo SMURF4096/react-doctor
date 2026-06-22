@@ -21,7 +21,7 @@
   "bugs": {
     "url": "https://github.com/millionco/react-doctor/issues"
   },
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "MIT",
   "author": "Aiden Bai",
   "repository": {
     "type": "git",
