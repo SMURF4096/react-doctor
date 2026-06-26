@@ -1,5 +1,46 @@
 # oxlint-plugin-react-doctor
 
+## 0.6.0
+
+### Patch Changes
+
+- [#936](https://github.com/millionco/react-doctor/pull/936) [`ba2af1b`](https://github.com/millionco/react-doctor/commit/ba2af1b7faa5ef4e1ae39e6c3b786259fba23f1f) Thanks [@aidenybai](https://github.com/aidenybai)! - Update the license to MIT with additional restrictions: the software may not be used as training, fine-tuning, or evaluation data for machine-learning models or AI systems, nor sold or resold as a commercial product or service (e.g. a paid API, SaaS, or hosted/managed service) whose value derives substantially from the software, without prior written permission (contact founders@million.dev). Each version's additional restrictions expire on the second anniversary of its release, after which that version is available under the standard MIT License (an FSL-style grant of future license). Each published package now ships its own up-to-date `LICENSE` file so the terms travel with the tarball.
+
+  The `react-doctor` CLI also now prints a one-time notice (once per run) when it detects it is running inside an AI/ML training pipeline or agent sandbox, pointing to the license terms.
+
+- [#958](https://github.com/millionco/react-doctor/pull/958) [`c72b560`](https://github.com/millionco/react-doctor/commit/c72b560682f1254aa4dd793898f2eed48afdbe27) Thanks [@aidenybai](https://github.com/aidenybai)! - Fix `jsx-key`'s spread-overwrites-`key` check to key off the spread's position. A `{...spread}` can only clobber an explicit `key` when it appears _after_ the key — the later attribute wins under the classic runtime (`{ key, ...spread }`) and React falls back to `createElement` under the automatic runtime, so the later spread wins there too. The rule now reports `<App key="x" {...spread} />` (and the sandwiched `<App {...a} key="x" {...b} />`) and stays silent on `<App {...spread} key="x" />`, which previously produced a false positive. Spreads of object literals that provably carry no `key` (e.g. `{...{}}`, `{...{ className }}`) are never treated as overwriting.
+
+- [#911](https://github.com/millionco/react-doctor/pull/911) [`f69f216`](https://github.com/millionco/react-doctor/commit/f69f21681dd7f17d632a09d742d501ef0b9b3047) Thanks [@skoshx](https://github.com/skoshx)! - fix: reduce false positives in supabase-rls-policy-risk
+
+  The rule now classifies each `CREATE POLICY` statement individually (over
+  comment/string-sanitized SQL) instead of matching the whole file with one
+  regex. A permissive `using/with check (true)` policy whose `TO` clause names
+  **only** server-only roles (`service_role`, `postgres`, `supabase_admin`) is
+  treated as hardening, not a public bypass — including two-clause `FOR ALL` /
+  `FOR UPDATE` forms and all-server-only role lists that the previous
+  negative-lookbehind missed. `anon` / `authenticated` (and a `TO` clause that
+  mixes one in, or no `TO` clause at all → `PUBLIC`) stay flagged, since those are
+  client-reachable via a JWT.
+
+  `auth.role() = 'service_role'` checks inside policy bodies are still flagged
+  (true runtime bypasses). The previous `IF EXISTS` suppression on `DISABLE ROW
+LEVEL SECURITY` was removed: it silently downgraded a real risk on live tables,
+  and the dropped-table case it targeted needs cross-migration analysis — deferred
+  with the issue's cross-migration class.
+
+  Fixes [#910](https://github.com/millionco/react-doctor/issues/910)
+
+- [#954](https://github.com/millionco/react-doctor/pull/954) [`6339f71`](https://github.com/millionco/react-doctor/commit/6339f715cc1a30521a699b818140ec2fae6f569e) Thanks [@rayhanadev](https://github.com/rayhanadev)! - fix(rn-no-raw-text): report raw text by where it actually crashes, resolving imported wrappers across files
+
+  The `rn-no-raw-text` rule reported raw text inside any element it couldn't prove was a text component — including a custom component imported from another file (e.g. a `<MyButton>` that wraps its label in `<Text>` internally), which produced false positives on the common "custom component that renders Text" pattern.
+
+  The rule now anchors its report on where React Native actually crashes — a host boundary — and resolves imported components across files instead of guessing:
+
+  - Raw text is reported inside a known host primitive (`View`, `ScrollView`, `Pressable`, the `Touchable*` family, `Modal`, …), a lowercase intrinsic, or an in-file component proven to forward its children into one.
+  - A component imported from another first-party file (relative or tsconfig-alias) is resolved and classified the same way: one that wraps its children in `<Text>` is left alone, while one that renders them into a `<View>` is still reported — so genuine crashes inside imported wrappers are kept.
+  - Components the resolver can't follow (`node_modules`, namespace imports, unanalyzable exports) are left unreported rather than assumed to crash; `rawTextWrapperComponents` / `textComponents` config still covers those.
+  - React's structural `<Fragment>` / `<React.Fragment>` now counts as a transparent wrapper alongside fbtee's `<fbt>` / `<fbs>`, so an `<fbt>` nested under a `<Fragment>` inside a `<Text>` is no longer falsely flagged.
+
 ## 0.5.8
 
 ### Patch Changes

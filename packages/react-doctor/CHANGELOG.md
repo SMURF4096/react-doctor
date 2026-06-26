@@ -1,5 +1,116 @@
 # react-doctor
 
+## 0.6.0
+
+### Minor Changes
+
+- [#955](https://github.com/millionco/react-doctor/pull/955) [`e2393c4`](https://github.com/millionco/react-doctor/commit/e2393c4a6b842efc72d5c225273c0de918a13450) Thanks [@rayhanadev](https://github.com/rayhanadev)! - Add `react-doctor ci <install|upgrade|config>`, a dedicated command for managing React Doctor in CI.
+
+  - `ci install` adds a workflow that scans every pull request. It auto-detects the provider (GitHub Actions or GitLab CI), bakes a gate from `--blocking`/`--scope`/`--comment`/`--review-comments`/`--commit-status`, and can open a pull request with `--pr`.
+  - `ci config` walks you through the gate, scan scope, and pull-request reporting interactively (with a plain-language recap of what each setting does), or applies the same flags non-interactively. It edits any workflow that contains the React Doctor action step in place — preserving your other steps, jobs, inputs, and comments — and only prints a paste snippet when the file has no React Doctor step.
+  - `ci upgrade` bumps the GitHub Action to its current floating major.
+
+  GitHub Actions is fully supported; GitLab CI gets a gate-only scaffold. The `install` command's CI setup is unchanged; `ci` is the focused home for managing CI on its own.
+
+### Patch Changes
+
+- [#936](https://github.com/millionco/react-doctor/pull/936) [`ba2af1b`](https://github.com/millionco/react-doctor/commit/ba2af1b7faa5ef4e1ae39e6c3b786259fba23f1f) Thanks [@aidenybai](https://github.com/aidenybai)! - Update the license to MIT with additional restrictions: the software may not be used as training, fine-tuning, or evaluation data for machine-learning models or AI systems, nor sold or resold as a commercial product or service (e.g. a paid API, SaaS, or hosted/managed service) whose value derives substantially from the software, without prior written permission (contact founders@million.dev). Each version's additional restrictions expire on the second anniversary of its release, after which that version is available under the standard MIT License (an FSL-style grant of future license). Each published package now ships its own up-to-date `LICENSE` file so the terms travel with the tarball.
+
+  The `react-doctor` CLI also now prints a one-time notice (once per run) when it detects it is running inside an AI/ML training pipeline or agent sandbox, pointing to the license terms.
+
+- [#941](https://github.com/millionco/react-doctor/pull/941) [`5774deb`](https://github.com/millionco/react-doctor/commit/5774debe1e912b109ca4d9e4093a92426c221218) Thanks [@rayhanadev](https://github.com/rayhanadev)! - Speed up cold scans and bound dead-code memory on multi-project workspaces.
+
+  - Overlap the project security scan with the lint pass instead of running it synchronously beforehand. The content-regex security sweep (shipped artifacts, dotenv, SQL — files lint never parses) was the single heaviest CPU phase on real repos and blocked the event loop the whole time. It now runs on a cooperative background fiber that yields between file chunks, so its cost hides under the subprocess-bound lint pass and stops starving a multi-project scan's concurrent git/network work. Cold scans are measurably faster (~30% on a mid-size project and workspace in local benchmarks); diagnostics are byte-identical.
+  - Cap concurrent dead-code (deslop) workers by a memory budget so a multi-project scan can't oversubscribe memory with many simultaneous worker processes on a small CI runner. On a roomy machine the cap exceeds the project count, so nothing serializes and scan time is unchanged.
+
+- [#929](https://github.com/millionco/react-doctor/pull/929) [`5f2bd72`](https://github.com/millionco/react-doctor/commit/5f2bd7254362109555194e43a019824478cb9ab5) Thanks [@skoshx](https://github.com/skoshx)! - fix: validate string array config fields (projects, textComponents, etc.)
+
+  Non-string entries in `config.projects` caused `selectProjects` to crash with `requestedName.trim is not a function`. The validator now filters non-string entries from `projects`, `textComponents`, `rawTextWrapperComponents`, and `serverAuthFunctionNames` with warnings instead of crashing.
+
+  Fixes [#921](https://github.com/millionco/react-doctor/issues/921) (Sentry REACT-DOCTOR-1R)
+
+- [#940](https://github.com/millionco/react-doctor/pull/940) [`441e6af`](https://github.com/millionco/react-doctor/commit/441e6afb55ee154e70e56f10a79565b9fd1f3295) Thanks [@rayhanadev](https://github.com/rayhanadev)! - Stop a scan from crashing when a git subprocess fails synchronously (fixes REACT-DOCTOR-1E, REACT-DOCTOR-1P, REACT-DOCTOR-20). Unlike a missing binary (`ENOENT`, which arrives on the catchable `'error'` event), `child_process.spawn` **throws synchronously** when the working directory isn't a directory (`ENOTDIR`) or the argument list exceeds the OS command-line limit (`ENAMETOOLONG` — e.g. `--scope lines` on a 1,000+-file diff on Windows). That throw escaped Effect's error channel entirely and took down the whole scan (reported to Sentry as a raw `spawn` error). The git runner now pre-flights both conditions and fails on its normal channel, so the existing fallbacks recover instead: a bad working directory degrades like an unavailable git, and an over-long `--scope lines` diff degrades to file-level scope.
+
+- [#966](https://github.com/millionco/react-doctor/pull/966) [`bd0f465`](https://github.com/millionco/react-doctor/commit/bd0f465e61ffb93b5716cd056b0e288365cb32ea) Thanks [@skoshx](https://github.com/skoshx)! - Fix Cursor agent handoff on Windows. Cursor installs its CLI as a PowerShell-wrapped `.cmd` that Node's `spawn()` cannot execute without `shell: true` (which would mangle the multi-line handoff prompt). The launcher now resolves Cursor's bundled `node.exe` + `index.js` under `%LOCALAPPDATA%\cursor-agent\versions\<latest>\` and spawns it directly — preserving argv integrity and bypassing the PowerShell hop. Closes [#964](https://github.com/millionco/react-doctor/issues/964).
+
+- [#974](https://github.com/millionco/react-doctor/pull/974) [`b6d1a87`](https://github.com/millionco/react-doctor/commit/b6d1a87cb86113a7caae072f5c9c2e1ba8ca3e31) Thanks [@rayhanadev](https://github.com/rayhanadev)! - Show staged findings in the pre-commit hook instead of swallowing them
+
+  The generated pre-commit hook captured react-doctor's output to a temp file and
+  deleted it before printing, so a failing scan showed only a generic "found
+  staged regressions" notice — never the actual findings ([#969](https://github.com/millionco/react-doctor/issues/969)). The hook now
+  writes the scan output to stderr before cleanup, in both the raw hook and the
+  hook-manager command. It stays non-blocking by design (the commit still
+  proceeds); the diagnostics are simply visible now so you know what to fix.
+
+- [#963](https://github.com/millionco/react-doctor/pull/963) [`03b7a5f`](https://github.com/millionco/react-doctor/commit/03b7a5f79e50d42f1d4f1aaddb2587605c8edde0) Thanks [@skoshx](https://github.com/skoshx)! - Exclude TypeScript 6.x to fix bunx installation crash
+
+  TypeScript 6.0.3 has an internal circular dependency with its `Comparison` enum
+  that triggers a known Bun module loader bug, causing `bunx react-doctor install`
+  to crash with "ReferenceError: Cannot access 'Comparison' before initialization".
+  Narrow the dependency range to `>=5.0.4 <6` until Bun fixes enum initialization
+  order (see oven-sh/bun#12805).
+
+  The constraint covers both `react-doctor` (whose CLI imports `typescript` at
+  startup) and `deslop-js` (loaded by the dead-code scan, which can run under bun),
+  so no published package pulls TypeScript 6.x into a consumer's install tree.
+
+  `npx` continues to work because npm's resolver handles the circular dependency
+  correctly. TypeScript 5.9.3 is stable and tested; TypeScript 6.x support will
+  return once the upstream bug is resolved.
+
+  Closes [#962](https://github.com/millionco/react-doctor/issues/962)
+
+- [#934](https://github.com/millionco/react-doctor/pull/934) [`970babc`](https://github.com/millionco/react-doctor/commit/970babcb09a597f2d0891b283c2bac7f8afaef1d) Thanks [@skoshx](https://github.com/skoshx)! - Fix `--project` resolution when scanning from within a project directory whose basename matches the requested project name.
+
+  When running react-doctor from a subdirectory (e.g., `apps/website`) and passing `--project website`, the CLI now correctly recognizes that the current directory is the requested project instead of failing with "Project 'website' is not a directory under /path/to/apps/website."
+
+  This affects users who scan a single (non-workspace) project directory and pass that directory's own name as the project — e.g. `directory: apps/website` together with `--project website` (or `projects: ["website"]` in config). The `*` ("all projects") default is unaffected: it short-circuits to the root directory and never goes through name resolution.
+
+- [#938](https://github.com/millionco/react-doctor/pull/938) [`229ea2e`](https://github.com/millionco/react-doctor/commit/229ea2e12e95e8af3279988c6c1c7a653bf5f6c5) Thanks [@skoshx](https://github.com/skoshx)! - fix(staged): log warning when getStagedSourceFiles encounters git errors
+
+  When git commands fail (missing git binary, corrupted repo, permission errors), `getStagedSourceFiles` now logs a warning message showing the error instead of silently returning an empty array. This makes `--staged` failures much easier to debug while still gracefully degrading.
+
+- [#957](https://github.com/millionco/react-doctor/pull/957) [`5893a56`](https://github.com/millionco/react-doctor/commit/5893a56f03c70eb9ca1ff5f88879a9acf3306f36) Thanks [@skoshx](https://github.com/skoshx)! - Fix mojibake (`ÔÇö`, `├ù`) in CLI output on Windows. The console was decoding
+  react-doctor's UTF-8 bytes with a non-UTF-8 code page (CP-850/437 in cmd.exe),
+  so `—`, `×`, `›`, and box-drawing rendered as garbage — including in VS Code's
+  terminal. Switch the Windows console to UTF-8 (code page 65001) once at CLI
+  startup (console-only, best-effort), which fixes every glyph at the source
+  rather than swapping individual characters for ASCII. Closes [#956](https://github.com/millionco/react-doctor/issues/956).
+
+- [#967](https://github.com/millionco/react-doctor/pull/967) [`43267da`](https://github.com/millionco/react-doctor/commit/43267da930fa25b9fa78e30de80f8d102c753a45) Thanks [@skoshx](https://github.com/skoshx)! - Install agent hooks (Cursor, Claude Code) as a Node `.mjs` runner invoked via `node` instead of a `#!/bin/sh` script, so they run on Windows without Git Bash/WSL/Cygwin. Closes [#965](https://github.com/millionco/react-doctor/issues/965).
+
+- [#930](https://github.com/millionco/react-doctor/pull/930) [`ea4d9af`](https://github.com/millionco/react-doctor/commit/ea4d9afd4f2afc15c5d52217c3d001bd02b84046) Thanks [@skoshx](https://github.com/skoshx)! - Degrade gracefully when git is unavailable or diff base ref is missing (fixes REACT-DOCTOR-F, REACT-DOCTOR-1K, REACT-DOCTOR-14, REACT-DOCTOR-22). CI containers without git installed and shallow clones missing the diff base ref now fall back to a full scan with a clear warning instead of crashing and reporting to Sentry.
+
+- [#926](https://github.com/millionco/react-doctor/pull/926) [`b8188e0`](https://github.com/millionco/react-doctor/commit/b8188e096bd0107e6ed350c7d77f582c99f79bbc) Thanks [@skoshx](https://github.com/skoshx)! - Fix `react-doctor install` crashes on pre-existing malformed/conflicting agent config. The install command now handles three user-environment failure modes gracefully with clear error messages instead of unhandled exceptions:
+
+  1. Malformed JSON in `~/.claude/settings.json` or `~/.cursor/hooks.json` (REACT-DOCTOR-25)
+  2. Directory path blocked by an existing file at `~/.claude/skills` or parent paths (REACT-DOCTOR-17)
+  3. Permission denied when target directories aren't writable (REACT-DOCTOR-1A)
+
+  These errors are now treated as expected user-environment conditions (not react-doctor bugs) and surface actionable messages without Sentry reports.
+
+- [#939](https://github.com/millionco/react-doctor/pull/939) [`986557d`](https://github.com/millionco/react-doctor/commit/986557d4ccebe26d16f73468773bed6cefa7d52f) Thanks [@rayhanadev](https://github.com/rayhanadev)! - Align `react-doctor install`'s agent selection with the Vercel `skills` CLI so it stops scattering skill directories across your project. The prompt previously detected every agent with a config dir anywhere in `$HOME` (`~/.codebuddy`, `~/.crush`, `~/.goose`, `~/.kilocode`, …) and **pre-selected all of them**, so a single Enter copied `.codebuddy/`, `.crush/`, `.goose/`, … into the project root.
+
+  Now, following that CLI's heuristic, the default selection is:
+
+  - your **remembered** last pick (persisted globally, like `skills`' `lastSelectedAgents` lock), else
+  - a small curated set of popular agents (`claude-code`, `cursor`, `codex`, `opencode`), else
+  - a lone detected agent when that's the only one — and otherwise nothing, so you make a deliberate choice.
+
+  Every detected agent is still shown so the rest are one keystroke away; they're just no longer pre-checked. A non-interactive run (`--yes` / CI) still installs to all detected agents, matching `skills`' `--yes`.
+
+- [#947](https://github.com/millionco/react-doctor/pull/947) [`05cafc6`](https://github.com/millionco/react-doctor/commit/05cafc669a5ff1e6c87daf83e9fa2972fe90c7e4) Thanks [@skoshx](https://github.com/skoshx)! - Add `--json-out <path>` flag to write JSON reports to a file instead of stdout
+
+- [#944](https://github.com/millionco/react-doctor/pull/944) [`0c19858`](https://github.com/millionco/react-doctor/commit/0c198589d81702cc0b59cfe6d41e63329154e203) Thanks [@rayhanadev](https://github.com/rayhanadev)! - Organize the per-scan Sentry "wide event" under dotted namespaces. The root-span attributes had accreted into a flat, half-namespaced set (~50 keys, most bare); each now carries a namespace matching its concept — `scan.*` (config + `scan.fileCount`), `action.*` (CI/action knobs), `outcome.*` (verdict), `diag.*` (findings), `score.*`, `lint.*`, `deadCode.*`, `supplyChain.*`, `timing.*` — alongside the already-namespaced `migration.*`/`baseline.*`. Applied via a single `withNamespace` helper so the prefix lives in one place instead of being hand-spelled per key. Pure rename: value types are preserved (numbers stay numeric so `p75`/`avg` keep working) and the keys stay filter-/group-/aggregate-able in Sentry's Spans dataset. Run/project base tags and all metrics are unchanged.
+
+- [#917](https://github.com/millionco/react-doctor/pull/917) [`7a673d2`](https://github.com/millionco/react-doctor/commit/7a673d20238903b4ef2d2b525379bec96cec2642) Thanks [@rayhanadev](https://github.com/rayhanadev)! - Remember the post-scan "What would you like to do next?" pick. The interactive handoff prompt now pre-selects whatever the user chose last (an agent, "copy to clipboard", or "skip"), so the common "always hand off to the same agent" path is a single Enter. The choice is remembered per user in the existing CLI state file via a new `Preference` lifecycle primitive; a remembered agent that's since been uninstalled falls back to highlighting the first option, and pressing Esc leaves the prior preference untouched.
+
+- [#928](https://github.com/millionco/react-doctor/pull/928) [`734c564`](https://github.com/millionco/react-doctor/commit/734c564db30507b99246f08308fa4ab68235194b) Thanks [@skoshx](https://github.com/skoshx)! - Stop reporting unactionable environment errors to Sentry. A narrow set of filesystem conditions react-doctor cannot fix — a full disk (`ENOSPC`), a failing or read-only disk (`EIO`/`EROFS`), denied permissions (`EACCES`/`EPERM`), a path blocked by a file (`ENOTDIR`), or a missing binary (`spawn … ENOENT`) — now exit cleanly with an actionable message instead of crashing with a stack trace and appearing as product defects in Sentry. The set is deliberately narrow: codes that usually indicate a react-doctor bug (a missing file we expected, or an over-long argv such as `ENAMETOOLONG`) keep reaching Sentry. A low-cardinality `cli.env_error` metric, keyed by code, tracks how often these occur without inflating the crash dashboard. Closes REACT-DOCTOR-13, REACT-DOCTOR-1V, REACT-DOCTOR-24.
+
+- Updated dependencies [[`ba2af1b`](https://github.com/millionco/react-doctor/commit/ba2af1b7faa5ef4e1ae39e6c3b786259fba23f1f), [`b69f4a7`](https://github.com/millionco/react-doctor/commit/b69f4a75360ad17d1d149aeb9de16835e792606a), [`a7ad969`](https://github.com/millionco/react-doctor/commit/a7ad969e5621ce1f61422b9bf578da600220d3e2), [`03b7a5f`](https://github.com/millionco/react-doctor/commit/03b7a5f79e50d42f1d4f1aaddb2587605c8edde0), [`c72b560`](https://github.com/millionco/react-doctor/commit/c72b560682f1254aa4dd793898f2eed48afdbe27), [`f69f216`](https://github.com/millionco/react-doctor/commit/f69f21681dd7f17d632a09d742d501ef0b9b3047), [`6339f71`](https://github.com/millionco/react-doctor/commit/6339f715cc1a30521a699b818140ec2fae6f569e), [`7f9e7f4`](https://github.com/millionco/react-doctor/commit/7f9e7f42832f40a32d7583126c096067f948856f)]:
+  - oxlint-plugin-react-doctor@0.6.0
+  - deslop-js@0.6.0
+
 ## 0.5.8
 
 ### Patch Changes
