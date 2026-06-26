@@ -1,5 +1,68 @@
 # @react-doctor/core
 
+## 0.6.0
+
+### Patch Changes
+
+- [#973](https://github.com/millionco/react-doctor/pull/973) [`99f2417`](https://github.com/millionco/react-doctor/commit/99f2417d8c181916919e6ae0a5ea0722770c7857) Thanks [@rayhanadev](https://github.com/rayhanadev)! - Add `runtimeGlobals` config to silence jsx-no-undef false positives for runtime-injected identifiers
+
+  `jsx-no-undef` is a single-file rule, so it flags capitalized JSX identifiers
+  that are provided at runtime rather than imported in the file — react-live's
+  `<LiveProvider scope={...}>`, Storybook globals, MDX live blocks, or an ambient
+  `declare global` in a separate `.d.ts`. List those names in the new
+  `runtimeGlobals` config array and `jsx-no-undef` treats them as known. Opt-in —
+  an empty/absent list leaves behavior unchanged.
+
+  Closes [#959](https://github.com/millionco/react-doctor/issues/959)
+
+- [#929](https://github.com/millionco/react-doctor/pull/929) [`5f2bd72`](https://github.com/millionco/react-doctor/commit/5f2bd7254362109555194e43a019824478cb9ab5) Thanks [@skoshx](https://github.com/skoshx)! - fix: validate string array config fields (projects, textComponents, etc.)
+
+  Non-string entries in `config.projects` caused `selectProjects` to crash with `requestedName.trim is not a function`. The validator now filters non-string entries from `projects`, `textComponents`, `rawTextWrapperComponents`, and `serverAuthFunctionNames` with warnings instead of crashing.
+
+  Fixes [#921](https://github.com/millionco/react-doctor/issues/921) (Sentry REACT-DOCTOR-1R)
+
+- [#940](https://github.com/millionco/react-doctor/pull/940) [`441e6af`](https://github.com/millionco/react-doctor/commit/441e6afb55ee154e70e56f10a79565b9fd1f3295) Thanks [@rayhanadev](https://github.com/rayhanadev)! - Stop a scan from crashing when a git subprocess fails synchronously (fixes REACT-DOCTOR-1E, REACT-DOCTOR-1P, REACT-DOCTOR-20). Unlike a missing binary (`ENOENT`, which arrives on the catchable `'error'` event), `child_process.spawn` **throws synchronously** when the working directory isn't a directory (`ENOTDIR`) or the argument list exceeds the OS command-line limit (`ENAMETOOLONG` — e.g. `--scope lines` on a 1,000+-file diff on Windows). That throw escaped Effect's error channel entirely and took down the whole scan (reported to Sentry as a raw `spawn` error). The git runner now pre-flights both conditions and fails on its normal channel, so the existing fallbacks recover instead: a bad working directory degrades like an unavailable git, and an over-long `--scope lines` diff degrades to file-level scope.
+
+- [#951](https://github.com/millionco/react-doctor/pull/951) [`c16e8ea`](https://github.com/millionco/react-doctor/commit/c16e8ea6f6cd455c837d02aafedb916817a4008e) Thanks [@skoshx](https://github.com/skoshx)! - Fix misleading remediation for react-hooks-js/incompatible-library
+
+  `react-hooks-js/incompatible-library` fires when the React Compiler can't
+  memoize through a third-party hook (e.g. `@tanstack/react-virtual`'s
+  `useVirtualizer`). The diagnostic carried the generic React Compiler action —
+  "Rewrite the flagged code so the compiler can optimize it" — which reads as
+  "reimplement the library locally" and steered users off mature libraries.
+
+  The rule stays active (the compiler's own bail-out reason is informative), but
+  its remediation now names the real fix: it's how the library works, not a bug in
+  your code — memoize values you pass from it into other memoized components, or
+  suppress it with `// react-doctor-disable-next-line react-hooks-js/incompatible-library`.
+
+  Closes [#950](https://github.com/millionco/react-doctor/issues/950)
+
+- [#972](https://github.com/millionco/react-doctor/pull/972) [`fff9466`](https://github.com/millionco/react-doctor/commit/fff946689638bab3641474b6f8712a62777934ab) Thanks [@rayhanadev](https://github.com/rayhanadev)! - Stop react-doctor from flagging its own toolchain as an unused dependency
+
+  After `react-doctor install` — especially via `bunx`, where react-doctor is
+  declared in `package.json` but never materialized in `node_modules` — a scan
+  reported `react-doctor` itself as an unused devDependency. It's used via the CLI,
+  git hooks, CI, and the agent skill (never imported in source), so the dead-code
+  import graph can't see it, and deslop's "ships a binary → used" heuristic can't
+  read its `bin` when it isn't installed. The dead-code pass now never reports
+  react-doctor's own CLI / plugin packages (`react-doctor`,
+  `eslint-plugin-react-doctor`, `oxlint-plugin-react-doctor`) as unused.
+
+  Closes [#961](https://github.com/millionco/react-doctor/issues/961)
+
+- [#927](https://github.com/millionco/react-doctor/pull/927) [`c2ce298`](https://github.com/millionco/react-doctor/commit/c2ce2989add3e43d21b7f609cad975e0284b6c42) Thanks [@skoshx](https://github.com/skoshx)! - Fix crash when disable comments contain Object.prototype keys (constructor, toString, valueOf, etc.)
+
+  Resolves REACT-DOCTOR-1Y and fixes [#920](https://github.com/millionco/react-doctor/issues/920).
+
+  The suppression near-miss detector would crash with `TypeError: bareRuleKey.includes is not a function` when an eslint-disable or oxlint-disable comment contained a token matching an Object.prototype member name. Indexing the LEGACY_RULE_KEY_TO_NATIVE_RULE_KEY lookup map with such a token returned an inherited method (which the `??` fallback let through), so `canonicalizeRuleKey` now guards the lookup with a `typeof` check and only treats the result as an alias when it is a string.
+
+- [#930](https://github.com/millionco/react-doctor/pull/930) [`ea4d9af`](https://github.com/millionco/react-doctor/commit/ea4d9afd4f2afc15c5d52217c3d001bd02b84046) Thanks [@skoshx](https://github.com/skoshx)! - Degrade gracefully when git is unavailable or diff base ref is missing (fixes REACT-DOCTOR-F, REACT-DOCTOR-1K, REACT-DOCTOR-14, REACT-DOCTOR-22). CI containers without git installed and shallow clones missing the diff base ref now fall back to a full scan with a clear warning instead of crashing and reporting to Sentry.
+
+- Updated dependencies [[`ba2af1b`](https://github.com/millionco/react-doctor/commit/ba2af1b7faa5ef4e1ae39e6c3b786259fba23f1f), [`b69f4a7`](https://github.com/millionco/react-doctor/commit/b69f4a75360ad17d1d149aeb9de16835e792606a), [`a7ad969`](https://github.com/millionco/react-doctor/commit/a7ad969e5621ce1f61422b9bf578da600220d3e2), [`03b7a5f`](https://github.com/millionco/react-doctor/commit/03b7a5f79e50d42f1d4f1aaddb2587605c8edde0), [`c72b560`](https://github.com/millionco/react-doctor/commit/c72b560682f1254aa4dd793898f2eed48afdbe27), [`f69f216`](https://github.com/millionco/react-doctor/commit/f69f21681dd7f17d632a09d742d501ef0b9b3047), [`6339f71`](https://github.com/millionco/react-doctor/commit/6339f715cc1a30521a699b818140ec2fae6f569e), [`7f9e7f4`](https://github.com/millionco/react-doctor/commit/7f9e7f42832f40a32d7583126c096067f948856f)]:
+  - oxlint-plugin-react-doctor@0.6.0
+  - deslop-js@0.6.0
+
 ## 0.5.8
 
 ### Patch Changes
