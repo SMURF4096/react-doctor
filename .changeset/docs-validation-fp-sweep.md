@@ -1,6 +1,6 @@
 ---
 "oxlint-plugin-react-doctor": patch
-"@react-doctor/deslop-js": patch
+"deslop-js": patch
 "@react-doctor/core": patch
 "react-doctor": patch
 ---
