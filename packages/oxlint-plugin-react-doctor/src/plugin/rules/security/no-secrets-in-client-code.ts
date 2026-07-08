@@ -50,12 +50,31 @@ const isIdentifierLikeKeyNameValue = (literalValue: string): boolean => {
   return wordSegments.every((segment) => /^[a-z]+$/.test(segment));
 };
 
+// Frameworks with a documented public-env convention get advice naming
+// their exact prefix; everything else falls back to the generic
+// `recommendation`. A project carries exactly one framework token, so the
+// first hit is the only hit.
+const FRAMEWORK_ENV_ADVICE = [
+  ["nextjs", "Next.js", "NEXT_PUBLIC_*"],
+  ["vite", "Vite", "VITE_*"],
+  ["tanstack-start", "TanStack Start", "VITE_*"],
+  ["cra", "Create React App", "REACT_APP_*"],
+  ["gatsby", "Gatsby", "GATSBY_*"],
+] as const;
 export const noSecretsInClientCode = defineRule({
   id: "no-secrets-in-client-code",
   title: "Secret in client code",
   severity: "warn",
   recommendation:
     "Move secrets to server-only code. Anything in client env variables gets shipped to the browser, so it can't hold secrets.",
+  recommendationFor: (hasCapability) => {
+    for (const [frameworkToken, frameworkName, publicEnvPrefix] of FRAMEWORK_ENV_ADVICE) {
+      if (hasCapability(frameworkToken)) {
+        return `Move secrets to server-only code. In ${frameworkName}, only \`${publicEnvPrefix}\` env vars are exposed to the browser, and they must not contain secrets`;
+      }
+    }
+    return undefined;
+  },
   create: (context: RuleContext) => {
     const filename = normalizeFilename(context.filename ?? "");
     const framework = getReactDoctorStringSetting(context.settings, "framework");
@@ -120,6 +139,8 @@ export const noSecretsInClientCode = defineRule({
           !isUiConstant &&
           !isPublicUrlValue(literalValue) &&
           !isPlaceholderValueForVariableHeuristic &&
+          !isSelfReferentialSentinelValue(variableName, literalValue) &&
+          !isIdentifierLikeKeyNameValue(literalValue) &&
           !isSelfReferentialSentinelValue(variableName, literalValue) &&
           !isIdentifierLikeKeyNameValue(literalValue) &&
           literalValue.length > SECRET_MIN_LENGTH_CHARS

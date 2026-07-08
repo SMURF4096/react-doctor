@@ -1,5 +1,5 @@
 import * as path from "node:path";
-import { readDirectoryEntries } from "../project-info/utils/read-directory-entries.js";
+import { readDirectoryEntries } from "../project-info/fs-utils.js";
 import { isIgnoredDirectoryName } from "./is-ignored-directory-name.js";
 
 export interface WalkedSourceTreeFile {

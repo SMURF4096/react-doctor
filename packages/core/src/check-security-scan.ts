@@ -4,10 +4,11 @@ import { buildSecurityScanDiagnostic } from "./checks/security-scan/build-securi
 import type { SecurityScanRuleEntry } from "./checks/security-scan/build-security-scan-diagnostic.js";
 import { collectSecurityScanFiles } from "./checks/security-scan/collect-security-scan-files.js";
 import { COOPERATIVE_YIELD_BUDGET_MS } from "./constants.js";
-import { buildCapabilities, shouldEnableRule } from "./runners/oxlint/capabilities.js";
+import { getCapabilities, shouldEnableRule } from "./project-info/capabilities.js";
 import type { Diagnostic, ProjectInfo } from "./types/index.js";
 import { isPathGitIgnored } from "./utils/is-path-git-ignored.js";
 import { yieldToEventLoop } from "./utils/yield-to-event-loop.js";
+import type { Capability } from "oxlint-plugin-react-doctor";
 
 export interface CheckSecurityScanOptions {
   readonly project?: ProjectInfo;
@@ -40,7 +41,7 @@ const createSecurityScanSession = (
   rootDirectory: string,
   options: CheckSecurityScanOptions,
 ): SecurityScanSession | null => {
-  const capabilities = options.project ? buildCapabilities(options.project) : new Set<string>();
+  const capabilities = options.project ? getCapabilities(options.project) : new Set<Capability>();
   const ignoredTags = options.ignoredTags ?? new Set<string>();
 
   const enabledScanRules: EnabledScanRule[] = REACT_DOCTOR_RULES.flatMap((entry) => {
@@ -48,7 +49,7 @@ const createSecurityScanSession = (
     const scan = rule.scan;
     if (typeof scan !== "function") return [];
     if (rule.defaultEnabled === false) return [];
-    if (!shouldEnableRule(rule.requires, rule.tags, capabilities, ignoredTags, rule.disabledBy)) {
+    if (!shouldEnableRule(rule.requires, rule.tags, capabilities, ignoredTags, rule.disabledWhen)) {
       return [];
     }
     return [{ entry, scan, committedFilesOnly: rule.committedFilesOnly === true }];
@@ -67,7 +68,8 @@ const createSecurityScanSession = (
     return status === true;
   };
 
-  const scanFileByRule = function* (file: ScannedFile): Generator<void, void, void> {
+  const scanFileByRule = function* (file: ScannedFile | null): Generator<void, void, void> {
+    if (file === null) return;
     for (const { entry, scan, committedFilesOnly } of enabledScanRules) {
       for (const finding of scan(file)) {
         // A committed-file rule's finding doesn't apply to a path git ignores

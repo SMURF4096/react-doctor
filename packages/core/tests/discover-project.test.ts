@@ -1902,3 +1902,133 @@ describe("discoverProject — Next.js version", () => {
     expect(projectInfo.nextjsMajorVersion).toBeNull();
   });
 });
+
+describe("discoverProject — Next.js static export", () => {
+  it('detects `output: "export"` from the scan root\'s own next.config', () => {
+    const projectDirectory = path.join(tempDirectory, "static-export-root");
+    fs.mkdirSync(projectDirectory, { recursive: true });
+    fs.writeFileSync(
+      path.join(projectDirectory, "package.json"),
+      JSON.stringify({
+        name: "static-export-root",
+        dependencies: { next: "^15.3.0", react: "^19.0.0" },
+      }),
+    );
+    fs.writeFileSync(
+      path.join(projectDirectory, "next.config.mjs"),
+      'export default { output: "export" };\n',
+    );
+
+    expect(discoverProject(projectDirectory).isStaticExport).toBe(true);
+  });
+
+  it("detects a workspace-level static export when scanning the monorepo root (#976)", () => {
+    const monorepoRoot = path.join(tempDirectory, "static-export-workspace");
+    const webDirectory = path.join(monorepoRoot, "apps", "web");
+    fs.mkdirSync(webDirectory, { recursive: true });
+    fs.writeFileSync(
+      path.join(monorepoRoot, "package.json"),
+      JSON.stringify({ name: "root", private: true, workspaces: ["apps/*"] }),
+    );
+    fs.writeFileSync(
+      path.join(webDirectory, "package.json"),
+      JSON.stringify({
+        name: "web",
+        dependencies: { next: "^15.3.0", react: "^19.0.0" },
+      }),
+    );
+    fs.writeFileSync(
+      path.join(webDirectory, "next.config.mjs"),
+      'export default { output: "export" };\n',
+    );
+
+    const projectInfo = discoverProject(monorepoRoot);
+    expect(projectInfo.framework).toBe("nextjs");
+    expect(projectInfo.isStaticExport).toBe(true);
+  });
+
+  it("attributes static export to the first workspace (walk order) that declares `next`", () => {
+    // Documented first-match semantics: with several Next workspaces, the
+    // config read follows the same workspace that supplied `nextjsVersion`.
+    const monorepoRoot = path.join(tempDirectory, "static-export-two-apps");
+    const adminDirectory = path.join(monorepoRoot, "apps", "admin");
+    const webDirectory = path.join(monorepoRoot, "apps", "web");
+    fs.mkdirSync(adminDirectory, { recursive: true });
+    fs.mkdirSync(webDirectory, { recursive: true });
+    fs.writeFileSync(
+      path.join(monorepoRoot, "package.json"),
+      JSON.stringify({ name: "root", private: true, workspaces: ["apps/*"] }),
+    );
+    fs.writeFileSync(
+      path.join(adminDirectory, "package.json"),
+      JSON.stringify({ name: "admin", dependencies: { next: "^15.3.0", react: "^19.0.0" } }),
+    );
+    fs.writeFileSync(
+      path.join(webDirectory, "package.json"),
+      JSON.stringify({ name: "web", dependencies: { next: "^15.3.0", react: "^19.0.0" } }),
+    );
+    // Only the LATER workspace (apps/web) exports; apps/admin sorts first and
+    // supplies the `next` signal, so the project is not a static export.
+    fs.writeFileSync(
+      path.join(webDirectory, "next.config.mjs"),
+      'export default { output: "export" };\n',
+    );
+
+    const projectInfo = discoverProject(monorepoRoot);
+    expect(projectInfo.framework).toBe("nextjs");
+    expect(projectInfo.isStaticExport).toBe(false);
+  });
+
+  it("classifies a web+mobile monorepo by the web framework regardless of walk order", () => {
+    // apps/a-mobile sorts before apps/web, but the cross-workspace merge is
+    // priority-ranked (web over mobile, mirroring detectFramework), so the
+    // Expo workspace must not claim the framework slot.
+    const monorepoRoot = path.join(tempDirectory, "web-mobile-priority");
+    const mobileDirectory = path.join(monorepoRoot, "apps", "a-mobile");
+    const webDirectory = path.join(monorepoRoot, "apps", "web");
+    fs.mkdirSync(mobileDirectory, { recursive: true });
+    fs.mkdirSync(webDirectory, { recursive: true });
+    fs.writeFileSync(
+      path.join(monorepoRoot, "package.json"),
+      JSON.stringify({ name: "root", private: true, workspaces: ["apps/*"] }),
+    );
+    fs.writeFileSync(
+      path.join(mobileDirectory, "package.json"),
+      JSON.stringify({
+        name: "a-mobile",
+        dependencies: { expo: "~52.0.0", react: "18.3.1", "react-native": "0.76.0" },
+      }),
+    );
+    fs.writeFileSync(
+      path.join(webDirectory, "package.json"),
+      JSON.stringify({ name: "web", dependencies: { next: "^15.3.0", react: "^19.0.0" } }),
+    );
+
+    const projectInfo = discoverProject(monorepoRoot);
+    expect(projectInfo.framework).toBe("nextjs");
+    expect(projectInfo.nextjsMajorVersion).toBe(15);
+    // The mobile workspace still surfaces through the RN/Expo facts.
+    expect(projectInfo.hasReactNativeWorkspace).toBe(true);
+    expect(projectInfo.expoVersion).toBe("~52.0.0");
+  });
+
+  it("stays false when no next.config sets output: export anywhere", () => {
+    const monorepoRoot = path.join(tempDirectory, "static-export-none");
+    const webDirectory = path.join(monorepoRoot, "apps", "web");
+    fs.mkdirSync(webDirectory, { recursive: true });
+    fs.writeFileSync(
+      path.join(monorepoRoot, "package.json"),
+      JSON.stringify({ name: "root", private: true, workspaces: ["apps/*"] }),
+    );
+    fs.writeFileSync(
+      path.join(webDirectory, "package.json"),
+      JSON.stringify({ name: "web", dependencies: { next: "^15.3.0", react: "^19.0.0" } }),
+    );
+    fs.writeFileSync(
+      path.join(webDirectory, "next.config.mjs"),
+      "export default { reactStrictMode: true };\n",
+    );
+
+    expect(discoverProject(monorepoRoot).isStaticExport).toBe(false);
+  });
+});

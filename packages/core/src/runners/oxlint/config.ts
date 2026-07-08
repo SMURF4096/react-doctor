@@ -8,7 +8,7 @@ import type { OxlintRuleSeverity } from "oxlint-plugin-react-doctor";
 import type { ProjectInfo, RuleSeverityControls } from "../../types/index.js";
 import { resolveRuleSeverityOverride } from "../../resolve-rule-severity-override.js";
 import { COMPILER_CLEANUP_BUCKET, COMPILER_CLEANUP_RULE_KEYS } from "../../constants.js";
-import { buildCapabilities, shouldEnableRule } from "./capabilities.js";
+import { getCapabilities, shouldEnableRule } from "../../project-info/capabilities.js";
 import { filterRulesToAvailable, resolveReactHooksJsPlugin } from "./plugin-resolution.js";
 import type { JsPluginEntry, ResolvedUserPlugin } from "./plugin-resolution.js";
 
@@ -146,7 +146,7 @@ export const createOxlintConfig = ({
   const jsPlugins: JsPluginEntry[] = [];
   if (reactHooksJsPlugin) jsPlugins.push(reactHooksJsPlugin.entry);
 
-  const capabilities = buildCapabilities(project);
+  const capabilities = getCapabilities(project);
 
   const enabledReactDoctorRules: Record<string, OxlintRuleSeverity> = {};
   for (const registryEntry of REACT_DOCTOR_RULES) {
@@ -172,7 +172,7 @@ export const createOxlintConfig = ({
     // from upstream OXC plugins.
     if (customRulesOnly && registryEntry.originallyExternal) continue;
     if (rule.framework !== "global" && !rule.requires) continue;
-    if (!shouldEnableRule(rule.requires, rule.tags, capabilities, ignoredTags, rule.disabledBy))
+    if (!shouldEnableRule(rule.requires, rule.tags, capabilities, ignoredTags, rule.disabledWhen))
       continue;
     // `defaultEnabled: false` opts a rule out of the default config —
     // it ships in the plugin but only activates when the user pins the
@@ -237,6 +237,10 @@ export const createOxlintConfig = ({
       "react-doctor": {
         framework: project.framework,
         rootDirectory: resolveSettingsRootDirectory(project.rootDirectory),
+        // The framework-capability vocabulary, available to any rule via
+        // `hasCapability`. Sorted so equivalent projects hash identically
+        // (this bag feeds the ruleset cache key).
+        capabilities: [...capabilities].sort(),
         ...(project.shopifyFlashListMajorVersion !== null
           ? { shopifyFlashListMajorVersion: project.shopifyFlashListMajorVersion }
           : {}),

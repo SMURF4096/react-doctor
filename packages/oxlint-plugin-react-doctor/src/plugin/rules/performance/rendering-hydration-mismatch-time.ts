@@ -281,7 +281,7 @@ export const renderingHydrationMismatchTime = defineRule({
   category: "Correctness",
   // Client-only build tools have no server render, so hydration can never
   // happen and a wall-clock/random value in JSX is harmless there.
-  disabledBy: ["vite", "cra"],
+  disabledWhen: ["vite", "cra"],
   recommendation:
     "Move time or random values into useEffect+useState so they only run in the browser, or add suppressHydrationWarning to the parent if it's intentional",
   create: (context: RuleContext): RuleVisitors => {

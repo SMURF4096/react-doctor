@@ -3,6 +3,7 @@ import { collectPatternNames } from "../../utils/collect-pattern-names.js";
 import { defineRule } from "../../utils/define-rule.js";
 import { findJsxAttribute } from "../../utils/find-jsx-attribute.js";
 import { findProgramRoot } from "../../utils/find-program-root.js";
+import { hasCapability } from "../../utils/get-react-doctor-setting.js";
 import { getReactDoctorStringSetting } from "../../utils/get-react-doctor-setting.js";
 import { hasDirective } from "../../utils/has-directive.js";
 import { hasJsxSpreadAttribute } from "../../utils/has-jsx-spread-attribute.js";
@@ -29,19 +30,11 @@ const PREVENT_DEFAULT_ELEMENTS = new Map<string, string[]>([
   ["a", ["onClick"]],
 ]);
 
-// Frameworks that ship a first-class server-mutation story tied to
-// plain `<form>` elements — Next.js Server Actions, TanStack Server
-// Functions, Remix loader/action handlers. Recommending
-// `<form action={serverAction}>` is honest progressive-enhancement
-// advice in these projects. Everywhere else (SPA bundlers, component
-// libraries, Electron shells, unknown classifications) calling
-// `preventDefault()` inside onSubmit IS the canonical controlled-form
-// pattern, so the form variant only fires when the framework is a
-// confirmed member of this set.
-const SERVER_CAPABLE_FRAMEWORKS = new Set<string>(["nextjs", "tanstack-start", "remix"]);
-
 const FORM_MESSAGE_SERVER_CAPABLE =
   "Your users can't submit this <form> without JavaScript because onSubmit calls preventDefault(), so use a server action like `<form action={serverAction}>` to make it work either way.";
+
+const FORM_MESSAGE_GENERIC =
+  "Your users can't submit this <form> because onSubmit calls preventDefault().";
 
 const ANCHOR_MESSAGE =
   "Your users click this <a> & nothing navigates because onClick calls preventDefault(), so use a <button> or a routing component instead.";
@@ -301,9 +294,11 @@ export const noPreventDefault = defineRule({
     "Use `<form action>` where your framework supports it (it works without JS), or use a `<button>` instead of an `<a>` with preventDefault.",
   create: (context: RuleContext) => {
     const framework = getReactDoctorStringSetting(context.settings, "framework");
-    const isServerCapableFramework =
-      framework !== undefined && SERVER_CAPABLE_FRAMEWORKS.has(framework);
-
+    const isClientOnlyFramework = hasCapability(context.settings, "client-only");
+    const isServerActionsFramework = hasCapability(context.settings, "server-actions");
+    const formMessage = isServerActionsFramework
+      ? FORM_MESSAGE_SERVER_CAPABLE
+      : FORM_MESSAGE_GENERIC;
     return {
       JSXOpeningElement(node: EsTreeNodeOfType<"JSXOpeningElement">) {
         const elementName = isNodeOfType(node.name, "JSXIdentifier") ? node.name.name : null;
@@ -313,16 +308,15 @@ export const noPreventDefault = defineRule({
         if (!targetEventProps) return;
 
         if (elementName === "form") {
-          // The form variant only fires when the project confirmably
-          // has a server-mutation story to recommend.
-          if (!isServerCapableFramework) return;
+          if (isClientOnlyFramework) return;
+          if (framework === undefined || framework === "unknown") return;
           // Next.js classification can't tell App Router from Pages
           // Router, and server actions only exist in the App Router. An
           // inline onSubmit handler only runs in a client module, so a
           // file that doesn't declare `"use client"` itself is either
           // Pages Router (no server actions) or transitively
           // client-rendered — either way the advice is unconfirmed.
-          if (framework === "nextjs") {
+          if (framework === "nextjs" && isServerActionsFramework) {
             const programRoot = findProgramRoot(node);
             if (!programRoot || !hasDirective(programRoot, "use client")) return;
           }
@@ -399,7 +393,7 @@ export const noPreventDefault = defineRule({
 
           context.report({
             node,
-            message: elementName === "form" ? FORM_MESSAGE_SERVER_CAPABLE : ANCHOR_MESSAGE,
+            message: elementName === "form" ? formMessage : ANCHOR_MESSAGE,
           });
           return;
         }

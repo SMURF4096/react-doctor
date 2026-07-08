@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vite-plus/test";
 import type { ProjectInfo } from "../src/types/index.js";
-import { buildCapabilities, shouldEnableRule } from "../src/runners/oxlint/capabilities.js";
+import {
+  buildCapabilities,
+  getCapabilities,
+  shouldEnableRule,
+} from "../src/project-info/capabilities.js";
 
 const baseProject: ProjectInfo = {
   rootDirectory: "/tmp/project",
@@ -24,10 +28,45 @@ const baseProject: ProjectInfo = {
   preactMajorVersion: null,
   hasReanimated: false,
   isPreES2023Target: false,
+  isStaticExport: false,
   sourceFileCount: 1,
 };
 
 describe("buildCapabilities", () => {
+  it("emits exactly the expected token set for a fully-featured Next.js project", () => {
+    const capabilities = buildCapabilities({
+      ...baseProject,
+      framework: "nextjs",
+      reactVersion: "19.2.0",
+      reactMajorVersion: 19,
+      tailwindVersion: "^3.4.1",
+      zodVersion: "^4.0.0",
+      zodMajorVersion: 4,
+      nextjsVersion: "^15.3.0",
+      nextjsMajorVersion: 15,
+      hasReactCompiler: true,
+      hasTanStackQuery: true,
+      hasTypeScript: true,
+    });
+    expect([...capabilities].sort()).toEqual([
+      "nextjs",
+      "nextjs:15",
+      "react",
+      "react-compiler",
+      "react:17",
+      "react:18",
+      "react:19",
+      "react:19.2",
+      "server-actions",
+      "tailwind",
+      "tailwind:3.4",
+      "tanstack-query",
+      "typescript",
+      "zod",
+      "zod:4",
+    ]);
+  });
+
   it("emits the `preact` capability when `preactVersion` is set on a Preact-on-Vite project", () => {
     const capabilities = buildCapabilities({
       ...baseProject,
@@ -231,6 +270,53 @@ describe("buildCapabilities", () => {
     expect(capabilities.has("nextjs:15")).toBe(false);
   });
 
+  it("emits `server-actions` for server-capable frameworks only", () => {
+    for (const framework of ["nextjs", "tanstack-start", "remix"] as const) {
+      expect(buildCapabilities({ ...baseProject, framework }).has("server-actions")).toBe(true);
+    }
+    for (const framework of ["vite", "cra", "gatsby", "expo", "react-native", "unknown"] as const) {
+      expect(buildCapabilities({ ...baseProject, framework }).has("server-actions")).toBe(false);
+    }
+  });
+
+  it("emits `nextjs:static-export` and drops `server-actions` for a statically-exported Next.js app", () => {
+    const staticExport = buildCapabilities({
+      ...baseProject,
+      framework: "nextjs",
+      isStaticExport: true,
+    });
+    expect(staticExport.has("nextjs:static-export")).toBe(true);
+    expect(staticExport.has("server-actions")).toBe(false);
+
+    const serverNext = buildCapabilities({ ...baseProject, framework: "nextjs" });
+    expect(serverNext.has("nextjs:static-export")).toBe(false);
+    expect(serverNext.has("server-actions")).toBe(true);
+  });
+
+  it("emits `client-only` for SPA / mobile frameworks only", () => {
+    for (const framework of ["vite", "cra", "gatsby", "react-native", "expo"] as const) {
+      expect(buildCapabilities({ ...baseProject, framework }).has("client-only")).toBe(true);
+    }
+    for (const framework of ["nextjs", "remix", "tanstack-start", "preact", "unknown"] as const) {
+      expect(buildCapabilities({ ...baseProject, framework }).has("client-only")).toBe(false);
+    }
+  });
+
+  it("does not treat a statically-exported Next.js app as `client-only`", () => {
+    const staticExport = buildCapabilities({
+      ...baseProject,
+      framework: "nextjs",
+      isStaticExport: true,
+    });
+    expect(staticExport.has("client-only")).toBe(false);
+  });
+
+  it("returns one memoized set per ProjectInfo identity via getCapabilities", () => {
+    const first = getCapabilities(baseProject);
+    expect(getCapabilities(baseProject)).toBe(first);
+    expect(getCapabilities({ ...baseProject })).not.toBe(first);
+  });
+
   it("emits `pre-es2023` when the project target predates ES2023", () => {
     const capabilities = buildCapabilities({
       ...baseProject,
@@ -240,7 +326,7 @@ describe("buildCapabilities", () => {
     expect(capabilities.has("pre-es2023")).toBe(true);
   });
 
-  it("disables rules when a disabledBy capability is present", () => {
+  it("disables rules when a disabledWhen capability is present", () => {
     const capabilities = buildCapabilities({
       ...baseProject,
       isPreES2023Target: true,

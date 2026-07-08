@@ -1,7 +1,7 @@
 import * as path from "node:path";
 import { ancestorDirectories } from "../utils/ancestor-directories.js";
 import { isProjectBoundary } from "../utils/is-project-boundary.js";
-import { isFile } from "./utils/is-file.js";
+import { isFile } from "./fs-utils.js";
 
 /**
  * Walk up from `startDirectory` to the nearest ancestor that owns a

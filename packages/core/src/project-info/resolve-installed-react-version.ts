@@ -1,8 +1,8 @@
 import * as path from "node:path";
 import { ancestorDirectories } from "../utils/ancestor-directories.js";
 import { isProjectBoundary } from "../utils/is-project-boundary.js";
-import { isFile } from "./utils/is-file.js";
-import { readPackageJson } from "./read-package-json.js";
+import { isFile } from "./fs-utils.js";
+import { readPackageJson } from "./package-json.js";
 
 /**
  * Last-resort React detection: locate React the way Node's `node_modules`

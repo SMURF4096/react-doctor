@@ -126,7 +126,7 @@ export const noJsonParseStringifyClone = defineRule({
   severity: "warn",
   // Hermes (the default React Native / Expo JS engine) has no global
   // `structuredClone`, so the recommended rewrite would crash at runtime.
-  disabledBy: ["react-native"],
+  disabledWhen: ["react-native"],
   recommendation:
     "Replace `JSON.parse(JSON.stringify(value))` with `structuredClone(value)`. It is faster and preserves Dates, Maps, Sets, and cyclic references.",
   create: (context) => ({

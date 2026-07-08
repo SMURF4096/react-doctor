@@ -1,7 +1,9 @@
+// HACK: kept standalone (not folded into workspaces.ts) to break an import
+// cycle — dependencies.ts imports findMonorepoRoot while workspaces.ts imports
+// dependencies.ts.
 import * as path from "node:path";
-import { ancestorDirectories } from "../utils/ancestor-directories.js";
-import { isFile } from "./utils/is-file.js";
-import { readPackageJson } from "./read-package-json.js";
+import { isFile } from "./fs-utils.js";
+import { readPackageJson } from "./package-json.js";
 
 export const isMonorepoRoot = (directory: string): boolean => {
   if (isFile(path.join(directory, "pnpm-workspace.yaml"))) return true;
@@ -13,8 +15,11 @@ export const isMonorepoRoot = (directory: string): boolean => {
 };
 
 export const findMonorepoRoot = (startDirectory: string): string | null => {
-  for (const directory of ancestorDirectories(startDirectory, { includeStart: false })) {
-    if (isMonorepoRoot(directory)) return directory;
+  let currentDirectory = path.dirname(startDirectory);
+
+  while (currentDirectory !== path.dirname(currentDirectory)) {
+    if (isMonorepoRoot(currentDirectory)) return currentDirectory;
+    currentDirectory = path.dirname(currentDirectory);
   }
 
   return null;
