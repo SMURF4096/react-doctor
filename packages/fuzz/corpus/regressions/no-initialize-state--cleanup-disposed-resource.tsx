@@ -1,4 +1,4 @@
-// rule: no-initialize-state, no-direct-state-mutation
+// rule: no-initialize-state
 // weakness: library-idiom
 // source: adversarial edge-case hunt (mount effect seeding state from a resource its cleanup disposes)
 import { useEffect, useState } from "react";

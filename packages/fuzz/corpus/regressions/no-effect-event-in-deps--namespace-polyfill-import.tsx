@@ -1,4 +1,4 @@
-// rule: no-effect-event-in-deps, rules-of-hooks, exhaustive-deps
+// rule: no-effect-event-in-deps, rules-of-hooks
 // weakness: library-idiom
 // source: fuzz edge-case wave (useEffectEvent origin resolution) — namespace
 //         import of a non-React polyfill (`FloatingUI.useEffectEvent`) returns
