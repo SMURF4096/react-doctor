@@ -1078,6 +1078,52 @@ describe("react-builtins/exhaustive-deps — upstream disable-comment suppressio
       const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
       expect(messages).toContain("useEffectEvent");
     });
+
+    it("still flags a renamed React useEffectEvent import listed in deps", () => {
+      const code = `
+        import { useEffect, useEffectEvent as useStableEvent } from "react";
+        export const TickPanel = ({ value }) => {
+          const onTick = useStableEvent(() => value);
+          useEffect(() => { onTick(); }, [onTick]);
+          return null;
+        };
+      `;
+      const result = runRule(exhaustiveDeps, code);
+      expect(result.parseErrors).toEqual([]);
+      const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
+      expect(messages).toContain("useEffectEvent");
+    });
+
+    it("still flags useEffectEvent from a wrapped React namespace listed in deps", () => {
+      const code = `
+        import React, { useEffect } from "react";
+        export const TickPanel = ({ value }) => {
+          const onTick = (React as typeof React).useEffectEvent(() => value);
+          useEffect(() => { onTick(); }, [onTick]);
+          return null;
+        };
+      `;
+      const result = runRule(exhaustiveDeps, code);
+      expect(result.parseErrors).toEqual([]);
+      const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
+      expect(messages).toContain("useEffectEvent");
+    });
+
+    it("still flags useEffectEvent through an immutable React default-import alias", () => {
+      const code = `
+        import React, { useEffect } from "react";
+        const ReactAlias = React;
+        export const TickPanel = ({ value }) => {
+          const onTick = ReactAlias.useEffectEvent(() => value);
+          useEffect(() => { onTick(); }, [onTick]);
+          return null;
+        };
+      `;
+      const result = runRule(exhaustiveDeps, code);
+      expect(result.parseErrors).toEqual([]);
+      const messages = result.diagnostics.map((diagnostic) => diagnostic.message).join("\n");
+      expect(messages).toContain("useEffectEvent");
+    });
   });
 
   it("does not suppress a report on a different line than the disable comment", () => {
