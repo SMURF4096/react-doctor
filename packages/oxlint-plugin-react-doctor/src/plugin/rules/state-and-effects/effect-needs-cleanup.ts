@@ -33,6 +33,7 @@ import {
   isCleanupReturningSubscribeLikeCallExpression,
   isSubscribeLikeCallExpression,
 } from "./utils/is-subscribe-like-call-expression.js";
+import { resolveEventListenerCapture } from "./utils/resolve-event-listener-capture.js";
 import { isFunctionLike } from "../../utils/is-function-like.js";
 import { isNodeOfType } from "../../utils/is-node-of-type.js";
 import type { EsTreeNodeOfType } from "../../utils/es-tree-node-of-type.js";
@@ -463,32 +464,29 @@ const isAssignmentFormForOfIteratorReference = (
     if (symbol) referencedSymbolIds.add(symbol.id);
   });
   if (referencedSymbolIds.size === 0) return false;
+  const assignsReferencedSymbol = (root: EsTreeNode, requireAssignmentTarget: boolean): boolean => {
+    let didAssignReferencedSymbol = false;
+    walkAst(root, (child: EsTreeNode) => {
+      if (!isNodeOfType(child, "Identifier")) return;
+      if (requireAssignmentTarget && !isWithinAssignmentTarget(child)) return;
+      const childSymbol = context.scopes.symbolFor(child);
+      if (childSymbol && referencedSymbolIds.has(childSymbol.id)) {
+        didAssignReferencedSymbol = true;
+        return false;
+      }
+    });
+    return didAssignReferencedSymbol;
+  };
   let currentNode = unwrappedExpression.parent;
   while (currentNode && !isFunctionLike(currentNode)) {
     if (isNodeOfType(currentNode, "ForOfStatement")) {
       const loopTarget = stripParenExpression(currentNode.left);
-      if (!isNodeOfType(loopTarget, "VariableDeclaration")) {
-        let doesLoopAssignReferencedSymbol = false;
-        walkAst(loopTarget, (targetChild: EsTreeNode) => {
-          if (!isNodeOfType(targetChild, "Identifier")) return;
-          const targetSymbol = context.scopes.symbolFor(targetChild);
-          if (targetSymbol && referencedSymbolIds.has(targetSymbol.id)) {
-            doesLoopAssignReferencedSymbol = true;
-            return false;
-          }
-        });
-        if (doesLoopAssignReferencedSymbol) return true;
-        walkAst(currentNode.body, (bodyChild: EsTreeNode) => {
-          if (!isNodeOfType(bodyChild, "Identifier") || !isWithinAssignmentTarget(bodyChild)) {
-            return;
-          }
-          const bodySymbol = context.scopes.symbolFor(bodyChild);
-          if (bodySymbol && referencedSymbolIds.has(bodySymbol.id)) {
-            doesLoopAssignReferencedSymbol = true;
-            return false;
-          }
-        });
-        if (doesLoopAssignReferencedSymbol) return true;
+      if (
+        !isNodeOfType(loopTarget, "VariableDeclaration") &&
+        (assignsReferencedSymbol(loopTarget, false) ||
+          assignsReferencedSymbol(currentNode.body, true))
+      ) {
+        return true;
       }
     }
     currentNode = currentNode.parent;
@@ -612,8 +610,7 @@ const resolveIteratorCollectionKey = (
     return resolveReplayableIteratorCollectionKey(forOfStatement.right, context);
   }
   const symbol = context.scopes.symbolFor(unwrappedExpression);
-  if (!symbol) return null;
-  if (symbol.kind !== "parameter") return null;
+  if (!symbol || symbol.kind !== "parameter") return null;
   let callbackNode: EsTreeNode | null | undefined = symbol.bindingIdentifier.parent;
   while (callbackNode && !isFunctionLike(callbackNode)) callbackNode = callbackNode.parent;
   if (!callbackNode || !isFunctionLike(callbackNode)) return null;
@@ -671,32 +668,6 @@ const resolveStableLoopHandlerSymbolId = (
     return null;
   }
   return symbol.id;
-};
-
-const resolveStaticEventListenerCapture = (
-  expression: EsTreeNode | null | undefined,
-): boolean | null => {
-  if (!expression) return false;
-  const unwrappedExpression = stripParenExpression(expression);
-  if (isNodeOfType(unwrappedExpression, "Literal")) {
-    return typeof unwrappedExpression.value === "boolean" ? unwrappedExpression.value : null;
-  }
-  if (!isNodeOfType(unwrappedExpression, "ObjectExpression")) return null;
-  let captureValue: boolean | null = false;
-  for (const property of unwrappedExpression.properties ?? []) {
-    if (isNodeOfType(property, "SpreadElement")) {
-      captureValue = null;
-      continue;
-    }
-    if (!isNodeOfType(property, "Property")) return null;
-    const propertyName = getStaticPropertyKeyName(property);
-    if (propertyName === null || (!property.computed && propertyName === "__proto__")) return null;
-    if (propertyName !== "capture") continue;
-    const value = stripParenExpression(property.value);
-    captureValue =
-      isNodeOfType(value, "Literal") && typeof value.value === "boolean" ? value.value : null;
-  }
-  return captureValue;
 };
 
 const isDirectExhaustiveForOfRelease = (
@@ -1079,10 +1050,10 @@ const doesCleanupFunctionReleaseUsage = (
     ) {
       return false;
     }
+    const cleanupCall = isNodeOfType(cleanupChild, "ChainExpression")
+      ? cleanupChild.expression
+      : cleanupChild;
     if (doesReleaseCallMatchUsage(cleanupChild, usage, context)) {
-      const cleanupCall = isNodeOfType(cleanupChild, "ChainExpression")
-        ? cleanupChild.expression
-        : cleanupChild;
       const cleanupEventArgument = isNodeOfType(cleanupCall, "CallExpression")
         ? cleanupCall.arguments?.[0]
         : null;
@@ -1103,22 +1074,19 @@ const doesCleanupFunctionReleaseUsage = (
       }
       return;
     }
-    const helperCall = isNodeOfType(cleanupChild, "ChainExpression")
-      ? cleanupChild.expression
-      : cleanupChild;
-    if (!isNodeOfType(helperCall, "CallExpression")) return;
-    const stableHelperFunction = resolveStableValue(helperCall.callee, context);
+    if (!isNodeOfType(cleanupCall, "CallExpression")) return;
+    const stableHelperFunction = resolveStableValue(cleanupCall.callee, context);
     const helperFunction = isNodeOfType(stableHelperFunction, "Identifier")
       ? resolveSingleAssignedCleanupFunction(stableHelperFunction, usage, context)
       : stableHelperFunction;
     if (
       helperFunction &&
       isFunctionLike(helperFunction) &&
-      doesCleanupFunctionReleaseUsage(helperFunction, usage, context, new Set(visitedFunctions)) &&
       !helperFunction.async &&
-      !helperFunction.generator
+      !helperFunction.generator &&
+      doesCleanupFunctionReleaseUsage(helperFunction, usage, context, new Set(visitedFunctions))
     ) {
-      matchingLoopOrHelperAnchors.push(helperCall);
+      matchingLoopOrHelperAnchors.push(cleanupCall);
     }
   });
   return (
@@ -1691,7 +1659,7 @@ const doesReleaseCallMatchUsage = (
     ) {
       return false;
     }
-    if (usageForOfStatement) {
+    if (usageForOfStatement && releaseForOfStatement) {
       const registrationHandlerSymbolId = resolveStableLoopHandlerSymbolId(
         usage.node.arguments?.[1],
         context,
@@ -1716,8 +1684,12 @@ const doesReleaseCallMatchUsage = (
       ) {
         return false;
       }
-      const registrationCapture = resolveStaticEventListenerCapture(usage.node.arguments?.[2]);
-      const releaseCapture = resolveStaticEventListenerCapture(callNode.arguments?.[2]);
+      const registrationCapture = resolveEventListenerCapture(usage.node.arguments?.[2], {
+        allowIndeterminateEntries: true,
+      });
+      const releaseCapture = resolveEventListenerCapture(callNode.arguments?.[2], {
+        allowIndeterminateEntries: true,
+      });
       if (
         registrationCapture === null ||
         releaseCapture === null ||
@@ -1725,6 +1697,7 @@ const doesReleaseCallMatchUsage = (
       ) {
         return false;
       }
+      if (!isDirectExhaustiveForOfRelease(callNode, releaseForOfStatement)) return false;
     }
   }
   if (releaseVerbName === "on") {
