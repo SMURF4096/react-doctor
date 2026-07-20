@@ -1,5 +1,6 @@
 import pLimit from "p-limit";
 
+import { EVALUATION_RETRY_REPOSITORIES_PER_SANDBOX } from "./constants.js";
 import type { CorpusEvaluationRecord, CorpusRepositoryGroup } from "./corpus.js";
 import { groupCorpusRepositories } from "./group-corpus-repositories.js";
 import { partitionRepositoryGroups } from "./utils/partition-repository-groups.js";
@@ -17,6 +18,7 @@ export interface RunEvaluationAttemptsInput {
   attemptConcurrencies: ReadonlyArray<number>;
   evaluateRepositoryBatch: (
     repositoryGroups: ReadonlyArray<CorpusRepositoryGroup>,
+    attemptIndex: number,
   ) => Promise<ReadonlyArray<CorpusEvaluationRecord>>;
   beforeRetry: () => Promise<void>;
   onBeforeRetryFailure: (error: unknown) => void;
@@ -37,14 +39,16 @@ export const runEvaluationAttempts = async ({
   let pendingRepositoryGroups = repositoryGroups;
   for (const [attemptIndex, concurrency] of attemptConcurrencies.entries()) {
     const limit = pLimit(concurrency);
+    const repositoryBatchSize =
+      attemptIndex === 0 ? repositoriesPerSandbox : EVALUATION_RETRY_REPOSITORIES_PER_SANDBOX;
     const repositoryBatches = partitionRepositoryGroups(
       pendingRepositoryGroups,
-      repositoriesPerSandbox,
+      repositoryBatchSize,
     );
     const failedRecords = (
       await Promise.all(
         repositoryBatches.map((repositoryBatch) =>
-          limit(() => evaluateRepositoryBatch(repositoryBatch)),
+          limit(() => evaluateRepositoryBatch(repositoryBatch, attemptIndex)),
         ),
       )
     ).flat();

@@ -1728,6 +1728,151 @@ export const livenessFixtures: Readonly<Record<string, LivenessFixture>> = {
     code: "export const Route = createRootRoute({\n  component: () => (\n    <html>\n      <head />\n      <body />\n    </html>\n  ),\n});",
     filePath: "src/routes/__root.tsx",
   },
+  "r3f-no-advancing-clock-in-use-frame": {
+    code: 'import { useFrame } from "@react-three/fiber"; useFrame((state) => state.clock.getDelta());',
+  },
+  "r3f-cap-device-pixel-ratio": {
+    code: 'import { Canvas } from "@react-three/fiber"; const Scene = () => <Canvas dpr={window.devicePixelRatio} />;',
+  },
+  "r3f-limit-shadowed-point-lights": {
+    code: 'import "@react-three/fiber"; const Scene = () => <><pointLight castShadow /><pointLight castShadow /><pointLight castShadow /></>;',
+  },
+  "r3f-no-async-use-frame": {
+    code: 'import { useFrame } from "@react-three/fiber"; useFrame(async () => load());',
+  },
+  "r3f-no-allocation-in-pointer-move": {
+    code: 'import "@react-three/fiber"; import { Vector3 } from "three"; const Scene = () => <mesh onPointerMove={() => new Vector3()} />;',
+  },
+  "r3f-no-clone-in-use-frame": {
+    code: 'import { useFrame } from "@react-three/fiber"; import { useRef } from "react"; const Scene = () => { const mesh = useRef(null); useFrame(() => mesh.current.position.clone()); return <mesh ref={mesh} />; };',
+  },
+  "r3f-no-dispose-loader-cache": {
+    code: 'import { useTexture } from "@react-three/drei"; const Scene = () => { const texture = useTexture(url); texture.dispose(); return null; };',
+  },
+  "r3f-no-duplicate-primitive-object": {
+    code: 'import "@react-three/fiber"; const Scene = ({ scene }) => <><primitive object={scene} /><primitive object={scene} /></>;',
+  },
+  "r3f-no-deep-use-three-selector": {
+    code: 'import { useThree } from "@react-three/fiber"; const zoom = useThree((state) => state.camera.zoom);',
+  },
+  "r3f-no-fresh-use-three-selector": {
+    code: 'import { useThree } from "@react-three/fiber"; const pair = useThree((state) => [state.camera, state.scene]);',
+  },
+  "r3f-no-extend-in-render": {
+    code: 'import { extend } from "@react-three/fiber"; const Scene = () => { extend({ CustomObject }); return <customObject />; };',
+  },
+  "r3f-no-extend-three-namespace": {
+    code: 'import { extend } from "@react-three/fiber"; import * as THREE from "three"; extend(THREE);',
+  },
+  "r3f-no-fresh-portal-container": {
+    code: 'import { createPortal } from "@react-three/fiber"; import { Scene } from "three"; const World = ({ enabled }) => createPortal(<mesh />, enabled ? {} : new Scene());',
+  },
+  "r3f-no-inline-resource-prop": {
+    code: 'import { Canvas } from "@react-three/fiber"; import { MeshBasicMaterial } from "three"; const Scene = () => <Canvas><mesh material={new MeshBasicMaterial()} /></Canvas>;',
+  },
+  "r3f-no-inline-primitive-object": {
+    code: 'import "@react-three/fiber"; const Scene = () => <primitive object={scene.clone()} />;',
+  },
+  "r3f-no-internal-imports": {
+    code: 'import internal from "@react-three/fiber/dist/internal";',
+  },
+  "r3f-no-imperative-attach-of-managed-ref": {
+    code: 'import { useRef } from "react"; import "@react-three/fiber"; import { Scene as ThreeScene } from "three"; const Scene = () => { const group = useRef(null); const scene = new ThreeScene(); scene.add(group.current); return <group ref={group} />; };',
+  },
+  "r3f-no-mutate-loader-cache": {
+    code: 'import { useGLTF } from "@react-three/drei"; const Scene = () => { const { nodes } = useGLTF(url); nodes.Mesh.geometry.center(); return null; };',
+  },
+  "r3f-no-manual-canvas-resize": {
+    code: 'import { useThree } from "@react-three/fiber"; const Scene = () => { const gl = useThree((state) => state.gl); window.addEventListener("resize", () => gl.setSize(1, 1)); return null; };',
+  },
+  "r3f-no-mutating-pointer-event-data": {
+    code: 'import "@react-three/fiber"; const Scene = () => <mesh onPointerMove={(event) => event.point.normalize()} />;',
+  },
+  "r3f-no-new-in-use-frame": {
+    code: 'import { useFrame } from "@react-three/fiber"; useFrame(() => new Vector3());',
+  },
+  "r3f-no-object-pointer-capture": {
+    code: 'import { Canvas } from "@react-three/fiber"; const Scene = () => <mesh onPointerDown={(event) => event.object.setPointerCapture(event.pointerId)} />;',
+  },
+  "r3f-no-null-loader-input": {
+    code: 'import { useLoader } from "@react-three/fiber"; const Scene = () => { useLoader(TextureLoader, null); return null; };',
+  },
+  "r3f-no-recursive-raf-with-use-frame": {
+    code: 'import { useFrame } from "@react-three/fiber"; const Scene = () => { useFrame(update); const animate = () => requestAnimationFrame(animate); requestAnimationFrame(animate); return null; };',
+  },
+  "r3f-prefer-use-loader": {
+    code: 'import "@react-three/fiber"; import { useEffect } from "react"; import { TextureLoader } from "three"; const Scene = ({ url }) => { useEffect(() => { new TextureLoader().load(url, setTexture); }, [url]); return <mesh />; };',
+  },
+  "r3f-no-state-in-use-frame": {
+    code: 'import { useState } from "react"; import { useFrame } from "@react-three/fiber"; const Scene = () => { const [count, setCount] = useState(0); useFrame(() => setCount(count + 1)); };',
+  },
+  "r3f-no-state-in-pointer-move": {
+    code: 'import { useState } from "react"; import "@react-three/fiber"; const Scene = () => { const [point, setPoint] = useState(null); return <mesh onPointerMove={(event) => setPoint(event.point)} />; };',
+  },
+  "r3f-no-sync-readback-in-use-frame": {
+    code: 'import { useFrame } from "@react-three/fiber"; useFrame(({ gl }) => gl.readRenderTargetPixels(target, 0, 0, 1, 1, pixels));',
+  },
+  "r3f-no-unstable-args": {
+    code: 'import { Canvas } from "@react-three/fiber"; import { Vector3 } from "three"; const Scene = () => <shapeGeometry args={[new Vector3()]} />;',
+  },
+  "r3f-no-use-frame-dependency-array": {
+    code: 'import { useFrame } from "@react-three/fiber"; useFrame(() => update(), []);',
+  },
+  "r3f-require-frame-delta": {
+    code: 'import { useFrame } from "@react-three/fiber"; useFrame(({ scene }) => { scene.rotation.y += 0.01; });',
+  },
+  "r3f-require-global-effect-cleanup": {
+    code: 'import { useEffect } from "react"; import { addEffect } from "@react-three/fiber"; const Scene = () => { useEffect(() => { addEffect(update); }, []); return null; };',
+  },
+  "r3f-require-instanced-buffer-update": {
+    code: 'import "@react-three/fiber"; import { useRef } from "react"; const Scene = () => { const meshRef = useRef(null); const update = () => { meshRef.current.setMatrixAt(0, matrix); }; return <instancedMesh ref={meshRef} />; };',
+  },
+  "r3f-require-owned-texture-cleanup": {
+    code: 'import { useMemo } from "react"; import { CanvasTexture } from "three"; const Scene = ({ canvas }) => { const texture = useMemo(() => new CanvasTexture(canvas), [canvas]); return <meshStandardMaterial map={texture} />; };',
+  },
+  "r3f-require-projection-matrix-update": {
+    code: 'import { useFrame } from "@react-three/fiber"; useFrame(({ camera }) => { camera.aspect = 2; });',
+  },
+  "r3f-require-render-with-positive-priority": {
+    code: 'import { useFrame } from "@react-three/fiber"; const Scene = () => { useFrame(() => update(), 1); return null; };',
+  },
+  "r3f-require-root-unmount": {
+    code: 'import { createRoot } from "@react-three/fiber"; const Scene = ({ canvas }) => { const root = createRoot(canvas); root.render(<mesh />); return null; };',
+  },
+  "r3f-webgpu-canvas-prop-compatibility": {
+    code: 'import { Canvas } from "@react-three/fiber/webgpu"; const Scene = () => <Canvas gl={{ antialias: true }} />;',
+  },
+  "r3f-webgpu-no-legacy-effect-composer": {
+    code: 'import { Canvas } from "@react-three/fiber/webgpu"; import { EffectComposer } from "@react-three/postprocessing"; const Scene = () => <Canvas><EffectComposer /></Canvas>;',
+  },
+  "r3f-webgpu-no-legacy-material-api": {
+    code: 'import { Canvas } from "@react-three/fiber/webgpu"; const Scene = () => <Canvas><shaderMaterial /></Canvas>;',
+  },
+  "three-require-controls-cleanup": {
+    code: 'import { useMemo } from "react"; import { OrbitControls } from "three/addons/controls/OrbitControls.js"; import "@react-three/fiber"; const Scene = ({ camera, element }) => { const controls = useMemo(() => new OrbitControls(camera, element), [camera, element]); return <primitive object={controls} />; };',
+  },
+  "three-require-animation-mixer-cleanup": {
+    code: 'import { useMemo } from "react"; import { AnimationMixer } from "three"; const Scene = ({ root, clip }) => { const mixer = useMemo(() => new AnimationMixer(root), [root]); mixer.clipAction(clip); return null; };',
+  },
+  "r3f-webgpu-no-gl-state": {
+    code: 'import { useThree } from "@react-three/fiber/webgpu"; const renderer = useThree((state) => state.gl);',
+  },
+  "r3f-webgpu-no-js-uniform-branch": {
+    code: 'import { useLocalNodes } from "@react-three/fiber/webgpu"; useLocalNodes(({ uniforms }) => { if (uniforms.mode.value) return { colorNode: red }; return { colorNode: blue }; });',
+  },
+  "r3f-webgpu-no-unregistered-pipeline-pass": {
+    code: 'import { useRenderPipeline } from "@react-three/fiber/webgpu"; useRenderPipeline(({ passes }) => { passes.custom = customPass; });',
+  },
+  "three-require-render-target-cleanup": {
+    code: 'import { useMemo } from "react"; import { WebGLRenderTarget } from "three"; const Scene = () => { const target = useMemo(() => new WebGLRenderTarget(1, 1), []); target.width; return null; };',
+  },
+  "three-require-renderer-cleanup": {
+    code: 'import { useMemo } from "react"; import { WebGLRenderer } from "three"; const Scene = ({ canvas }) => { const renderer = useMemo(() => new WebGLRenderer({ canvas }), [canvas]); renderer.render(scene, camera); return null; };',
+  },
+  "three-require-postprocessing-cleanup": {
+    code: 'import { useMemo } from "react"; import "three"; import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js"; const Scene = ({ renderer }) => { const composer = useMemo(() => new EffectComposer(renderer), [renderer]); composer.render(); return null; };',
+    settings: { "react-doctor": { capabilities: ["three", "three:145", "three:146"] } },
+  },
   "tanstack-start-no-anchor-element": {
     code: 'const C = () => <a href="/dashboard">Go</a>;',
     filePath: "src/routes/index.tsx",

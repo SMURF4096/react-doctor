@@ -1072,5 +1072,563 @@
     "name": "carbon-addons-iot-react",
     "ref": "b1f5b08e7edadcbf5c6282d9b7380424f68732c2",
     "rootDir": "packages/react"
+  },
+  {
+    "org": "getsentry",
+    "name": "sentry",
+    "ref": "2bacd0a62af377a22cdc94431bd7c97c674d1cf9",
+    "rootDir": "."
+  },
+  {
+    "org": "mattermost",
+    "name": "mattermost",
+    "ref": "323841e9c560e75a4f8fd3d106b0fd2d780216fc",
+    "rootDir": "webapp/channels"
+  },
+  {
+    "org": "mattermost",
+    "name": "mattermost",
+    "ref": "323841e9c560e75a4f8fd3d106b0fd2d780216fc",
+    "rootDir": "webapp/platform/shared"
+  },
+  {
+    "org": "nocobase",
+    "name": "nocobase",
+    "ref": "f67491bb035cca5c27cb15de94a288dd03bd72c6",
+    "rootDir": "packages/core/client"
+  },
+  {
+    "org": "nocobase",
+    "name": "nocobase",
+    "ref": "f67491bb035cca5c27cb15de94a288dd03bd72c6",
+    "rootDir": "packages/core/devtools"
+  },
+  {
+    "org": "nocobase",
+    "name": "nocobase",
+    "ref": "f67491bb035cca5c27cb15de94a288dd03bd72c6",
+    "rootDir": "packages/core/flow-engine"
+  },
+  {
+    "org": "Infisical",
+    "name": "infisical",
+    "ref": "6321a81059459066a1d95738acb6420accf5626c",
+    "rootDir": "backend"
+  },
+  {
+    "org": "Infisical",
+    "name": "infisical",
+    "ref": "6321a81059459066a1d95738acb6420accf5626c",
+    "rootDir": "frontend"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "client"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/api-queries"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/block-notes"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/calypso-jest"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/calypso-paypal"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/calypso-products"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/calypso-razorpay"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/calypso-sentry"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/calypso-storybook"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/calypso-stripe"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/components"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/composite-checkout"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/data-stores"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/design-picker"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/design-preview"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/domain-search"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/domains-table"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/explat-client-react-helpers"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/global-styles"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/grid"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/help-center"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/i18n-calypso"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/i18n-utils"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/image-studio"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/interpolate-components"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/jetpack-ai-calypso"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/jetpack-ai-sidebar"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/language-picker"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/launchpad"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/odie-client"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/omnibar"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/onboarding"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/plans-grid-next"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/privacy-toolset"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/search"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/shopping-cart"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/site-admin"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/sites"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/subscriber"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/ui"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/verbum-block-editor"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/viewport-react"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/viewport"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/wpcom-smart-dictation"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/wpcom-template-parts"
+  },
+  {
+    "org": "Automattic",
+    "name": "wp-calypso",
+    "ref": "4b2bc7fe4be695df4a442097ee59712425468b9e",
+    "rootDir": "packages/zendesk-client"
+  },
+  {
+    "org": "openreplay",
+    "name": "openreplay",
+    "ref": "1452c569641f3b2d889c1b658ef161de77de41dd",
+    "rootDir": "frontend"
+  },
+  {
+    "org": "openreplay",
+    "name": "openreplay",
+    "ref": "1452c569641f3b2d889c1b658ef161de77de41dd",
+    "rootDir": "tracker/tracker-reactnative/example"
+  },
+  {
+    "org": "openreplay",
+    "name": "openreplay",
+    "ref": "1452c569641f3b2d889c1b658ef161de77de41dd",
+    "rootDir": "tracker/tracker-reactnative"
+  },
+  {
+    "org": "openreplay",
+    "name": "openreplay",
+    "ref": "1452c569641f3b2d889c1b658ef161de77de41dd",
+    "rootDir": "tracker/tracker-testing-playground"
+  },
+  {
+    "org": "nhost",
+    "name": "nhost",
+    "ref": "284c909d73dee1d285fecd333ac736c6c9acad6e",
+    "rootDir": "dashboard"
+  },
+  {
+    "org": "nhost",
+    "name": "nhost",
+    "ref": "284c909d73dee1d285fecd333ac736c6c9acad6e",
+    "rootDir": "examples/demos/react-demo"
+  },
+  {
+    "org": "nhost",
+    "name": "nhost",
+    "ref": "284c909d73dee1d285fecd333ac736c6c9acad6e",
+    "rootDir": "examples/guides/codegen-nhost"
+  },
+  {
+    "org": "nhost",
+    "name": "nhost",
+    "ref": "284c909d73dee1d285fecd333ac736c6c9acad6e",
+    "rootDir": "examples/guides/react-apollo"
+  },
+  {
+    "org": "nhost",
+    "name": "nhost",
+    "ref": "284c909d73dee1d285fecd333ac736c6c9acad6e",
+    "rootDir": "examples/guides/react-query"
+  },
+  {
+    "org": "nhost",
+    "name": "nhost",
+    "ref": "284c909d73dee1d285fecd333ac736c6c9acad6e",
+    "rootDir": "examples/guides/react-urql"
+  },
+  {
+    "org": "nhost",
+    "name": "nhost",
+    "ref": "284c909d73dee1d285fecd333ac736c6c9acad6e",
+    "rootDir": "examples/quickstarts/nextjs"
+  },
+  {
+    "org": "nhost",
+    "name": "nhost",
+    "ref": "284c909d73dee1d285fecd333ac736c6c9acad6e",
+    "rootDir": "examples/quickstarts/react"
+  },
+  {
+    "org": "nhost",
+    "name": "nhost",
+    "ref": "284c909d73dee1d285fecd333ac736c6c9acad6e",
+    "rootDir": "examples/quickstarts/reactnative"
+  },
+  {
+    "org": "nhost",
+    "name": "nhost",
+    "ref": "284c909d73dee1d285fecd333ac736c6c9acad6e",
+    "rootDir": "examples/tutorials/nhost-nextjs-tutorial"
+  },
+  {
+    "org": "nhost",
+    "name": "nhost",
+    "ref": "284c909d73dee1d285fecd333ac736c6c9acad6e",
+    "rootDir": "examples/tutorials/nhost-react-tutorial"
+  },
+  {
+    "org": "nhost",
+    "name": "nhost",
+    "ref": "284c909d73dee1d285fecd333ac736c6c9acad6e",
+    "rootDir": "examples/tutorials/nhost-reactnative-tutorial"
+  },
+  {
+    "org": "DefiLlama",
+    "name": "defillama-app",
+    "ref": "c4bb14d6bb56ff6bc87da5daffc67b205ac0f1e3",
+    "rootDir": "."
+  },
+  {
+    "org": "novuhq",
+    "name": "novu",
+    "ref": "eb19786a05b35633f3799f8514326501814554e5",
+    "rootDir": "apps/dashboard"
+  },
+  {
+    "org": "novuhq",
+    "name": "novu",
+    "ref": "eb19786a05b35633f3799f8514326501814554e5",
+    "rootDir": "libs/notifications"
+  },
+  {
+    "org": "novuhq",
+    "name": "novu",
+    "ref": "eb19786a05b35633f3799f8514326501814554e5",
+    "rootDir": "playground/nextjs"
+  },
+  {
+    "org": "mattermost",
+    "name": "mattermost-mobile",
+    "ref": "62916892f369e4d809a3d449743da5b9f096903c",
+    "rootDir": "."
+  },
+  {
+    "org": "ill-inc",
+    "name": "biomes-game",
+    "ref": "14252b95bf9e68495655af40c72750e8e3c44a42",
+    "rootDir": "."
+  },
+  {
+    "org": "PostHog",
+    "name": "posthog.com",
+    "ref": "384320e4c9b906753114486f466efcd0152c8182",
+    "rootDir": "."
+  },
+  {
+    "org": "GrootMade",
+    "name": "GrootMade",
+    "ref": "2d1548ea1c5d569fcadf5e1c343e991e0e06ff1d",
+    "rootDir": "."
+  },
+  {
+    "org": "eigenpal",
+    "name": "docx-editor",
+    "ref": "4b6e572dc85bc91cead13abafb1c2c5f572a5122",
+    "rootDir": "examples/agent-chat-demo"
+  },
+  {
+    "org": "eigenpal",
+    "name": "docx-editor",
+    "ref": "4b6e572dc85bc91cead13abafb1c2c5f572a5122",
+    "rootDir": "examples/agent-use-demo"
+  },
+  {
+    "org": "eigenpal",
+    "name": "docx-editor",
+    "ref": "4b6e572dc85bc91cead13abafb1c2c5f572a5122",
+    "rootDir": "examples/collaboration"
+  },
+  {
+    "org": "eigenpal",
+    "name": "docx-editor",
+    "ref": "4b6e572dc85bc91cead13abafb1c2c5f572a5122",
+    "rootDir": "examples/plugins/docxtemplater"
+  },
+  {
+    "org": "eigenpal",
+    "name": "docx-editor",
+    "ref": "4b6e572dc85bc91cead13abafb1c2c5f572a5122",
+    "rootDir": "examples/plugins/hello-world"
+  },
+  {
+    "org": "eigenpal",
+    "name": "docx-editor",
+    "ref": "4b6e572dc85bc91cead13abafb1c2c5f572a5122",
+    "rootDir": "examples/remix"
+  },
+  {
+    "org": "eigenpal",
+    "name": "docx-editor",
+    "ref": "4b6e572dc85bc91cead13abafb1c2c5f572a5122",
+    "rootDir": "examples/vite"
+  },
+  {
+    "org": "eigenpal",
+    "name": "docx-editor",
+    "ref": "4b6e572dc85bc91cead13abafb1c2c5f572a5122",
+    "rootDir": "."
+  },
+  {
+    "org": "reearth",
+    "name": "reearth-visualizer",
+    "ref": "e9b543ecdd0523ba3ff6cd7cc879394a7652de9f",
+    "rootDir": "web"
+  },
+  {
+    "org": "nuotsu",
+    "name": "sanitypress",
+    "ref": "c6b4d5764049e94b76afc6a552e4e7cd6b2f0b29",
+    "rootDir": "."
+  },
+  {
+    "org": "drkostas",
+    "name": "drkostas.github.io",
+    "ref": "ec62d277563fef21a052f04d70138b4f254d0cc4",
+    "rootDir": "."
+  },
+  {
+    "org": "DioCrafts",
+    "name": "OpenFoundry",
+    "ref": "e5986e9cefc20cb9986506c1846a811f061dd88b",
+    "rootDir": "apps/web"
+  },
+  {
+    "org": "invoiceninja",
+    "name": "ui",
+    "ref": "7f7a57cb8f07176c932bf52afd88adaf97d83399",
+    "rootDir": "."
+  },
+  {
+    "org": "berthutapea",
+    "name": "mern-movie",
+    "ref": "32d491a3139f2b72da6bbf913f59ca914e14906f",
+    "rootDir": "client"
+  },
+  {
+    "org": "berthutapea",
+    "name": "react-shopify-landing",
+    "ref": "88711ec0a946448abe45ed4542860521dcd54cb6",
+    "rootDir": "."
   }
 ]

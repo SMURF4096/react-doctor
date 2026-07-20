@@ -38,6 +38,18 @@ export interface ProjectInfo {
   hasI18nLibrary?: boolean;
   tanstackQueryVersion?: string | null;
   styledComponentsVersion?: string | null;
+  /** Whether the project or one of its workspaces declares Three.js, Fiber, or Drei. */
+  hasThree?: boolean;
+  /** Lowest declared Three.js version across the project and its workspaces. */
+  threeVersion?: string | null;
+  /** Three.js release number parsed from threeVersion (`0.146.x` becomes 146). */
+  threeRelease?: number | null;
+  /** Whether the project or one of its workspaces declares React Three Fiber or Drei. */
+  hasReactThreeFiber?: boolean;
+  /** Declared version of @react-three/fiber or its legacy package name, when directly present. */
+  reactThreeFiberVersion?: string | null;
+  /** Parsed major from reactThreeFiberVersion, or null when absent or unparseable. */
+  reactThreeFiberMajorVersion?: number | null;
   /**
    * The declared `valtio` version spec, or `null` when no package in the
    * analyzed project declares Valtio. `useSnapshot` has kept the same

@@ -9,9 +9,9 @@ cd packages/evals
 nr --silent eval --react-doctor-ref <pushed_commit> > results.ndjson
 ```
 
-The default [repository corpus](./repositories.json) contains 2,000 repositories and 5,892 available project roots selected from the canonical React Doctor Evals corpus. Every repository is pinned to a commit so repeated runs inspect the same source. Runs inspect the first root from each repository by default for breadth within the time budget; use `--project-roots-per-repository` for deeper monorepo coverage.
+The default [repository corpus](./repositories.json) contains 2,000 repositories and 5,824 available project roots selected from the canonical React Doctor Evals corpus. Every repository is pinned to a commit so repeated runs inspect the same source. Runs inspect the first root from each repository by default for breadth within the time budget; use `--project-roots-per-repository` for deeper monorepo coverage.
 
-The corpus excludes 179 [measured slow repositories](./excluded-slow-repositories.json) whose representative root took at least 60 seconds or returned incomplete lint coverage in the 2026-07-19 Daytona runs. Later pinned repositories from the canonical corpus replace them so the default remains at 2,000 repositories.
+The corpus excludes 200 [measured slow repositories](./excluded-slow-repositories.json) whose representative root took at least 60 seconds, returned incomplete lint coverage, or could no longer be fetched at its pinned revision in the 2026-07-19 Daytona runs. Later pinned repositories from the canonical corpus replace them so the default remains at 2,000 repositories.
 
 The evaluator accepts corpus JSON, `owner/name` text files, prior result NDJSON, URLs, and directories. Repeat `--repositories` to combine sources:
 
@@ -23,7 +23,7 @@ nr --silent eval \
   --concurrency 200 \
   --repositories-per-sandbox 10 \
   --project-roots-per-repository 1 \
-  --max-duration-minutes 20 \
+  --max-duration-minutes 30 \
   --react-doctor-ref <pushed_commit>
 ```
 
@@ -31,7 +31,7 @@ Text entries use each repository's default branch. Output records replace `HEAD`
 
 Candidate runs reject baseline records that still contain `HEAD`. Evaluation concurrency defaults to 200 batches, with a target of 10 repositories per sandbox. Sandbox creation is capped at 20 to avoid overloading Daytona, so a 2,000-repository run uses about 200 sandboxes instead of provisioning 2,000. Batches are balanced by project-root count so large monorepos do not collect on one worker.
 
-The default 20-minute wall-clock budget stops starting commands after 18 minutes and reserves two minutes for deleting sandboxes and the snapshot. Override the corpus size, batch size, concurrency, or duration for smaller investigations. After the initial pass, the evaluator retries failed projects at concurrency 50, then 10 while budget remains. Valid partial reports remain in the corpus. Execution failures, including work that exceeds the budget, make the command exit non-zero.
+The default 30-minute wall-clock budget stops initial-pass commands after 18 minutes, the first retry after 23 minutes, and the final retry after 28 minutes. The last two minutes remain reserved for deleting sandboxes and the snapshot. Override the corpus size, batch size, concurrency, or duration for smaller investigations. After the initial pass, the evaluator retries failed projects at concurrency 50, then 10 in isolated sandboxes. Valid partial reports remain in the corpus. Execution failures, including work that exceeds the budget, make the command exit non-zero.
 
 Progress and completion metrics use stderr. Results use stdout. The evaluator deletes every repository sandbox and the build snapshot after the run.
 

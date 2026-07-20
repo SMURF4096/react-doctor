@@ -9,9 +9,11 @@ export const DEFAULT_CORPUS_REPOSITORY_COUNT = 2_000;
 export const DEFAULT_CORPUS_CONCURRENCY = 200;
 export const DEFAULT_REPOSITORIES_PER_SANDBOX = 10;
 export const DEFAULT_PROJECT_ROOTS_PER_REPOSITORY = 1;
-export const DEFAULT_EVALUATION_MAX_DURATION_MINUTES = 20;
+export const DEFAULT_EVALUATION_MAX_DURATION_MINUTES = 30;
 export const EVALUATION_CLEANUP_RESERVE_MINUTES = 2;
 export const EVALUATION_RETRY_CONCURRENCIES: ReadonlyArray<number> = [50, 10];
+export const EVALUATION_RETRY_ATTEMPT_RESERVE_MINUTES = 5;
+export const EVALUATION_RETRY_REPOSITORIES_PER_SANDBOX = 1;
 
 export const SANDBOX_IMAGE = "node:22-bookworm";
 export const SANDBOX_CPU_CORES = 2;
@@ -20,7 +22,7 @@ export const SANDBOX_DISK_GIB = 10;
 export const SANDBOX_AUTO_STOP_INTERVAL_MINUTES = 60;
 export const SANDBOX_CREATE_TIMEOUT_SECONDS = 600;
 export const SANDBOX_SETUP_TIMEOUT_SECONDS = 1_800;
-export const SANDBOX_SCAN_TIMEOUT_SECONDS = 900;
+export const SANDBOX_SCAN_TIMEOUT_SECONDS = 1_800;
 export const SANDBOX_DELETE_TIMEOUT_SECONDS = 120;
 export const SANDBOX_CLEANUP_CONCURRENCY = 50;
 export const SANDBOX_CREATE_CONCURRENCY = 20;
@@ -61,7 +63,6 @@ export const RESOLVE_TARGET_REPOSITORY_REF_COMMAND = "git -C /workspace/target r
 export const SCAN_COMMAND = `node /workspace/react-doctor/packages/react-doctor/bin/react-doctor.js \
   --json \
   --diff false \
-  --no-parallel \
   --no-dead-code \
   --no-supply-chain \
   --no-telemetry \
