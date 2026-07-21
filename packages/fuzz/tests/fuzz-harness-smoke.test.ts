@@ -1,3 +1,4 @@
+import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vite-plus/test";
@@ -7,13 +8,25 @@ import { loadFuzzCorpus } from "../src/load-fuzz-corpus.js";
 import { createSeededRandom } from "../src/seeded-random.js";
 import { buildAstEquivalentFuzzVariants } from "../src/ast-equivalent-fuzz-variants.js";
 import { buildVerdictPreservingVariants } from "../src/verdict-preserving-variants.js";
+import { MAX_CORPUS_FILES } from "../src/constants.js";
+import { livenessFixtures } from "../../oxlint-plugin-react-doctor/src/plugin/liveness/liveness-fixtures.js";
+import { reactDoctorRules } from "../../oxlint-plugin-react-doctor/src/plugin/rule-registry.js";
 import { runRule } from "../../oxlint-plugin-react-doctor/src/test-utils/run-rule.js";
 import { isNodeOfType } from "../../oxlint-plugin-react-doctor/src/plugin/utils/is-node-of-type.js";
 import type { Rule } from "../../oxlint-plugin-react-doctor/src/plugin/utils/rule.js";
 
 const NOOP_RULE: Rule = { id: "fuzz-smoke-noop", severity: "warn", create: () => ({}) };
+const RULE_DIRECTIVE_PATTERN = /^\/\/ rule: ([^\r\n]+)$/m;
+const VERDICT_DIRECTIVE_PATTERN = /^\/\/ verdict: (pass|fail)$/m;
 
 describe("fuzz harness oracles", () => {
+  it("reads corpus directives from CRLF files", () => {
+    const code = "// rule: example-rule\r\n// verdict: fail\r\n";
+
+    expect(RULE_DIRECTIVE_PATTERN.exec(code)?.[1]).toBe("example-rule");
+    expect(VERDICT_DIRECTIVE_PATTERN.exec(code)?.[1]).toBe("fail");
+  });
+
   // Generator health: every unmutated program must parse — a snippet-pool
   // typo would otherwise silently turn iterations into parse-error skips.
   it("generates programs that all parse cleanly", () => {
@@ -39,18 +52,67 @@ describe("fuzz harness oracles", () => {
 
   // The corpus holds confirmed false positives (regressions/) and confirmed
   // true positives (true-positives/) — every seed must parse (a broken seed
-  // would silently stop exercising its weakness class). Firing expectations
-  // live in each rule's unit suite, never here.
+  // would silently stop exercising its weakness class).
   it("loads a corpus whose every seed parses cleanly", () => {
     const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-    const corpus = loadFuzzCorpus(path.join(packageRoot, "corpus"));
-    expect(corpus.length).toBeGreaterThan(0);
+    const corpusDirectory = path.join(packageRoot, "corpus");
+    const corpus = loadFuzzCorpus(corpusDirectory, {
+      maximumFiles: Number.POSITIVE_INFINITY,
+    });
+    const seedRelativePaths = fs
+      .readdirSync(corpusDirectory, { encoding: "utf8", recursive: true })
+      .filter((relativePath) => /\.(tsx|jsx)$/.test(relativePath))
+      .sort();
+    expect(corpus.length).toBeGreaterThan(MAX_CORPUS_FILES);
+    expect(corpus.map((entry) => entry.relativePath).sort()).toEqual(seedRelativePaths);
     const unparseable = corpus.filter(
       (entry) =>
         runRule(NOOP_RULE, entry.code, { filename: entry.relativePath, forceJsx: true }).parseErrors
           .length > 0,
     );
     expect(unparseable.map((entry) => entry.relativePath)).toEqual([]);
+  });
+
+  it("preserves every declared corpus verdict", () => {
+    const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+    const corpus = loadFuzzCorpus(path.join(packageRoot, "corpus"), {
+      maximumFiles: Number.POSITIVE_INFINITY,
+    });
+    const rulesById = new Map<string, Rule>();
+    for (const entry of reactDoctorRules) rulesById.set(entry.id, entry.rule);
+    const livenessFixturesById = new Map(Object.entries(livenessFixtures));
+    const verdictFailures: string[] = [];
+    let declaredVerdictCount = 0;
+
+    for (const entry of corpus) {
+      const ruleId = RULE_DIRECTIVE_PATTERN.exec(entry.code)?.[1];
+      const verdict = VERDICT_DIRECTIVE_PATTERN.exec(entry.code)?.[1];
+      if (!verdict) continue;
+      declaredVerdictCount += 1;
+      if (!ruleId) {
+        verdictFailures.push(`${entry.relativePath}: missing rule`);
+        continue;
+      }
+      const rule = rulesById.get(ruleId);
+      if (!rule) {
+        verdictFailures.push(`${entry.relativePath}: unknown rule ${ruleId}`);
+        continue;
+      }
+      const result = runRule(rule, entry.code, {
+        filename: entry.relativePath,
+        settings: livenessFixturesById.get(ruleId)?.settings,
+        forceJsx: true,
+      });
+      const didFire = result.diagnostics.length > 0;
+      if ((verdict === "fail") !== didFire) {
+        verdictFailures.push(
+          `${entry.relativePath}: expected ${verdict}, received ${result.diagnostics.length} diagnostics`,
+        );
+      }
+    }
+
+    expect(declaredVerdictCount).toBeGreaterThan(0);
+    expect(verdictFailures).toEqual([]);
   });
 
   it("catches a rule that crashes on JSX", () => {
