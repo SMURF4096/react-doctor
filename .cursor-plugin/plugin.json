@@ -19,6 +19,5 @@
     "performance"
   ],
   "category": "developer-tools",
-  "tags": ["react", "linting", "code-review"],
-  "skills": "./skills/react-doctor/SKILL.md"
+  "tags": ["react", "linting", "code-review"]
 }
