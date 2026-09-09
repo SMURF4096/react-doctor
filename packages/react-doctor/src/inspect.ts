@@ -1,18 +1,19 @@
+import * as path from "node:path";
 import { performance } from "node:perf_hooks";
 import * as Console from "effect/Console";
 import * as Effect from "effect/Effect";
 import {
+  createInvocationCaches,
   createOxlintSpawnSlots,
   type Diagnostic,
   highlighter,
   type InspectResult,
   OXLINT_NODE_REQUIREMENT,
-  OxlintConcurrency,
   type ReactDoctorConfig,
   resolveScanTarget,
-  resolveScanConcurrency,
   restoreLegacyThrow,
   runInspect as runInspectEffect,
+  warmOxlintWorkerPool,
   yieldToEventLoop,
 } from "@react-doctor/core";
 import { activeScanAbortRegistry } from "./cli/utils/active-scan-abort-registry.js";
@@ -29,6 +30,7 @@ import { recordCount } from "./cli/utils/record-metric.js";
 import { recordRunEvent } from "./cli/utils/build-run-event.js";
 import { filterDiagnosticsByChangedLines } from "./cli/utils/filter-diagnostics-by-changed-lines.js";
 import { makeNoopConsole } from "./cli/utils/noop-console.js";
+import { resolveInvocationOxlintConcurrency } from "./cli/utils/resolve-invocation-oxlint-concurrency.js";
 import { resolveOxlintNode } from "./cli/utils/resolve-oxlint-node.js";
 import { resolveInspectOptions } from "./cli/utils/resolve-inspect-options.js";
 import { buildRunEventConfig } from "./cli/utils/render-and-record-scan.js";
@@ -106,7 +108,15 @@ const inspectWithOxlintRuntime = async (
     configSourceDirectory = scanTarget.configSourceDirectory;
   }
 
-  const options = resolveInspectOptions(inputOptions, userConfig);
+  // Precomputed entries are relative to the requested directory, so they are
+  // only valid when scan-target resolution did not redirect the scan root.
+  const canReusePrecomputedSourceFiles = path.resolve(directory) === path.resolve(scanDirectory);
+  const options = resolveInspectOptions(
+    canReusePrecomputedSourceFiles
+      ? inputOptions
+      : { ...inputOptions, precomputedSourceFiles: undefined },
+    userConfig,
+  );
 
   // HACK: spinner.ts still has module-level silent state for imperative CLI
   // helpers. Concurrent batch members never touch the shared flag — overlapping
@@ -164,11 +174,10 @@ const inspectWithOxlintRuntime = async (
 export const createInvocationInspect = (
   requestedOxlintConcurrency?: number,
 ): ((directory: string, inputOptions?: ReactDoctorInspectOptions) => Promise<InspectResult>) => {
-  const concurrency = resolveScanConcurrency(
-    requestedOxlintConcurrency ?? Effect.runSync(OxlintConcurrency),
-  );
+  const concurrency = resolveInvocationOxlintConcurrency(requestedOxlintConcurrency);
   const spawnSlots = createOxlintSpawnSlots(concurrency);
   const scanResultCacheInvocationState = createScanResultCacheInvocationState();
+  const invocationCaches = createInvocationCaches();
   return async (directory, inputOptions = {}) => {
     const abortController = new AbortController();
     const unregisterAbortController = activeScanAbortRegistry.register(abortController);
@@ -178,6 +187,7 @@ export const createInvocationInspect = (
         spawnSlots,
         abortSignal: abortController.signal,
         scanResultCacheInvocationState,
+        invocationCaches,
       };
       return await inspectWithOxlintRuntime(directory, inputOptions, oxlintRuntime);
     } finally {
@@ -228,6 +238,9 @@ const runInspectWithRuntime = async (
   });
   const cachedResult = scanResultCacheLifecycle.replay();
   if (cachedResult !== null) return cachedResult;
+  if (options.lint && resolvedNodeBinaryPath) {
+    warmOxlintWorkerPool(resolvedNodeBinaryPath, oxlintRuntime.concurrency);
+  }
 
   // Suppress the orchestrator-owned lint + maintainability spinners when
   // the CLI is in score-only / silent / suppressed-rendering mode (or
@@ -255,6 +268,7 @@ const runInspectWithRuntime = async (
     shouldShowProgressSpinners,
     oxlintConcurrency: oxlintRuntime.concurrency,
     oxlintSpawnSlots: oxlintRuntime.spawnSlots,
+    invocationCaches: oxlintRuntime.invocationCaches,
     reporterLayer: options.uiLayers?.reporter,
     progressLayer: options.uiLayers?.progress,
   });
@@ -263,6 +277,7 @@ const runInspectWithRuntime = async (
     {
       directory,
       precomputedSourceFileCount: options.precomputedSourceFileCount,
+      precomputedSourceFiles: options.precomputedSourceFiles,
       includePaths: options.includePaths,
       changedLineRanges: options.changedLineRanges ?? undefined,
       customRulesOnly: options.customRulesOnly,

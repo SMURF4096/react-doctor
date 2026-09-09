@@ -286,6 +286,13 @@ export const AUTO_MAX_SCAN_CONCURRENCY = 10;
 // proportionally more speed.
 export const HARD_MAX_SCAN_CONCURRENCY = 32;
 
+// Rust parse threads per oxlint subprocess (`--threads`). oxlint defaults to one
+// rayon thread per core, so N concurrent workers would otherwise run N × cores
+// parse threads against N JS-plugin main threads; sharing the cores instead
+// (`floor(cores / workers)`, never below this floor) measured 7-8% less wall
+// and CPU on an 8-core box at 8 workers.
+export const MIN_OXLINT_THREADS_PER_WORKER = 1;
+
 // Memory one oxlint subprocess is budgeted at the OXLINT_MAX_FILES_PER_BATCH=200
 // batch size (the native binding's parser arena + the batch's ASTs + the
 // JS-plugin heap). The auto path takes `floor(availableMemory / this)` as a
@@ -305,6 +312,10 @@ export const PER_WORKER_MEM_BUDGET_BYTES = 1024 * 1024 * 1024;
 // keeps an 80-module monorepo from spawning hundreds of subprocesses by
 // default. Callers opt into more via `DiagnoseProjectsInput.concurrency`.
 export const DEFAULT_PROJECT_SCAN_CONCURRENCY = 4;
+
+// A project holds its batch slot through its trailing score round-trip, so one
+// project per worker would leave the shared oxlint pool idle on small packages.
+export const PROJECT_SCANS_IN_FLIGHT_PER_OXLINT_WORKER = 4;
 
 export const DEFAULT_BRANCH_CANDIDATES = ["main", "master"];
 
@@ -611,6 +622,56 @@ export const OXLINT_SPLIT_MAX_DEPTH = 9;
 // { kind: "oom" }` class as a SIGABRT so the binary-split retry and the OOM
 // rescue pass work on Windows too.
 export const ABORT_EXIT_CODES: ReadonlySet<number> = new Set([134, 0xc0000409]);
+
+// Line the oxlint worker writes to fd 1 / fd 2 after each `lint()` job so the
+// parent can split one worker's stream into per-job outputs. oxlint's JSON
+// formatter escapes newlines inside strings, so a whole line equal to this
+// marker cannot occur inside the payload.
+export const OXLINT_WORKER_JOB_END_MARKER = "__REACT_DOCTOR_OXLINT_JOB_END__";
+
+// Boot budget for an oxlint worker (Node start + importing oxlint's native
+// binding and the plugin runtime). A worker that has not reported ready by
+// then is treated as unavailable and the batch falls back to the per-batch
+// spawn path.
+export const OXLINT_WORKER_READY_TIMEOUT_MS = 30_000;
+
+// An idle worker keeps ~150 MB of warmed plugin heap alive; long-lived hosts
+// (`@react-doctor/api`) reclaim it after this quiet period. The CLI is not
+// held open by idle workers — their handles are unref'd — so this only
+// matters between scans in one process.
+export const OXLINT_WORKER_IDLE_TIMEOUT_MS = 30_000;
+export const DUPLICATE_JSX_WORKER_IDLE_TIMEOUT_MS = 30_000;
+
+// Every pooled job hands the plugin a fresh oxlint transfer buffer and fresh
+// rule closures, and the full GC that follows drops every TurboFan code object
+// specialized on the previous job's objects ("weak objects" deopt). With V8's
+// default tier-up threshold (3 000 invocations) the ~300 functions that just
+// got invalidated re-optimize on every job, and the background compiler
+// threads end up burning more CPU than the lint itself. Raising the threshold
+// keeps TurboFan for the genuinely hot walkers while the rest stay on Maglev;
+// measured on refine/grafana/tldraw it cut worker CPU ~30% and wall ~15-25%.
+// The flag exists from V8 12 (Node 22); Node 20 keeps the default tiering.
+export const OXLINT_WORKER_TURBOFAN_INVOCATION_COUNT = 30_000;
+export const OXLINT_WORKER_TIERING_FLAGS_MIN_NODE_MAJOR = 22;
+
+// HACK: oxlint registers one 2 GiB fixed-size AST transfer buffer per native
+// thread as V8 external memory, and a pooled job allocates a new set before the
+// previous set is collected. External growth past half the old-space limit
+// triggers a synchronous full GC per job; a ceiling of two buffers per thread
+// (plus headroom) keeps V8 on incremental marking. Nothing is committed up front.
+export const OXLINT_WORKER_OLD_SPACE_MB_PER_NATIVE_THREAD = 4352;
+
+// Global registry key under which the react-doctor oxlint plugin publishes its
+// filesystem-cache reset. A warm worker calls it when a job's scan epoch differs
+// from the previous job's, so caches never outlive one invocation. Mirrored in
+// `oxlint-plugin-react-doctor/src/plugin/constants/host.ts`.
+export const REACT_DOCTOR_PLUGIN_RESET_HOOK_KEY = Symbol.for(
+  "react-doctor.reset-filesystem-caches",
+);
+
+// Bytes of each oxlint job's stdout kept in the performance-harness timeline
+// (`REACT_DOCTOR_OXLINT_SPAWN_LOG`), enough to tell JSON output from a crash.
+export const OXLINT_JOB_TIMELINE_STDOUT_PREVIEW_BYTES = 160;
 
 // Wall-clock cap on the serial OOM rescue pass (replaying OOM-dropped
 // files one at a time after the parallel pass). The rescue is unbounded

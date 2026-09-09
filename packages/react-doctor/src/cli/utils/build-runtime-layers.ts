@@ -4,6 +4,7 @@ import {
   Config,
   Files,
   Git,
+  InvocationCaches,
   Linter,
   LintPartialFailures,
   Maintainability,
@@ -17,10 +18,11 @@ import {
   SupplyChain,
 } from "@react-doctor/core";
 import type {
+  InvocationCachesHandle,
   ProgressHandle,
   ProjectInfo,
   ReactDoctorConfig,
-  WorkerSlots,
+  OxlintSpawnSlotsHandle,
 } from "@react-doctor/core";
 import { spinner } from "./spinner.js";
 
@@ -73,7 +75,8 @@ export interface BuildRuntimeLayersInput {
    * count) in place.
    */
   readonly oxlintConcurrency?: number;
-  readonly oxlintSpawnSlots?: WorkerSlots;
+  readonly oxlintSpawnSlots?: OxlintSpawnSlotsHandle;
+  readonly invocationCaches?: InvocationCachesHandle;
   readonly reporterLayer?: Layer.Layer<Reporter>;
   readonly progressLayer?: Layer.Layer<Progress>;
 }
@@ -178,10 +181,14 @@ export const buildRuntimeLayers = (input: BuildRuntimeLayersInput) => {
     input.oxlintConcurrency === undefined
       ? baseLayers
       : Layer.mergeAll(baseLayers, Layer.succeed(OxlintConcurrency, input.oxlintConcurrency));
-  return input.oxlintSpawnSlots === undefined
-    ? layersWithConcurrency
-    : Layer.mergeAll(
-        layersWithConcurrency,
-        Layer.succeed(OxlintSpawnSlots, input.oxlintSpawnSlots),
-      );
+  const layersWithSpawnSlots =
+    input.oxlintSpawnSlots === undefined
+      ? layersWithConcurrency
+      : Layer.mergeAll(
+          layersWithConcurrency,
+          Layer.succeed(OxlintSpawnSlots, input.oxlintSpawnSlots),
+        );
+  return input.invocationCaches === undefined
+    ? layersWithSpawnSlots
+    : Layer.mergeAll(layersWithSpawnSlots, Layer.succeed(InvocationCaches, input.invocationCaches));
 };

@@ -1,8 +1,5 @@
 import * as fs from "node:fs/promises";
-import {
-  JSX_DUPLICATION_SOURCE_READ_SENTINEL_BYTES,
-  UTF8_MAX_BYTES_PER_UTF16_CODE_UNIT,
-} from "../constants.js";
+import { resolveBoundedSourceReadBytes } from "./resolve-bounded-source-read-bytes.js";
 
 export interface ReadTextFileUpToCharacterLimitInput {
   readonly filePath: string;
@@ -14,10 +11,9 @@ export interface ReadTextFileUpToCharacterLimitInput {
 export const readTextFileUpToCharacterLimit = async (
   input: ReadTextFileUpToCharacterLimitInput,
 ): Promise<string> => {
-  const maximumReadBytes =
-    input.maximumLengthChars * UTF8_MAX_BYTES_PER_UTF16_CODE_UNIT +
-    JSX_DUPLICATION_SOURCE_READ_SENTINEL_BYTES;
-  const buffer = Buffer.allocUnsafe(Math.min(input.sizeBytes, maximumReadBytes));
+  const buffer = Buffer.allocUnsafe(
+    resolveBoundedSourceReadBytes(input.maximumLengthChars, input.sizeBytes),
+  );
   const fileHandle = await fs.open(input.filePath, "r");
   let readOffset = 0;
   try {

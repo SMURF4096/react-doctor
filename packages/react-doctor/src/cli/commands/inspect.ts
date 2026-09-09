@@ -11,9 +11,11 @@ import {
   type JsonReportSkippedProject,
   remainingDeadlineBudgetMs,
   resolveScanTarget,
+  type SourceFileEntry,
   toRelativePath,
 } from "@react-doctor/core";
 import { createInvocationInspect } from "../../inspect.js";
+import { resolveInvocationOxlintConcurrency } from "../utils/resolve-invocation-oxlint-concurrency.js";
 import type { ReactDoctorInspectOptions } from "../../inspect-options.js";
 import { flushSentry } from "../../instrument.js";
 import { shutdownTelemetry } from "../utils/telemetry-runtime.js";
@@ -24,7 +26,7 @@ import { recordCount, recordDistribution } from "../utils/record-metric.js";
 import type { InspectFlags } from "../utils/inspect-flags.js";
 import { filterDiagnosticsByCategories } from "../utils/filter-diagnostics-by-categories.js";
 import { deduplicateProjectScans } from "../utils/deduplicate-project-scans.js";
-import { collectProjectSourceFileCounts } from "../utils/collect-project-source-file-counts.js";
+import { collectProjectSourceFiles } from "../utils/collect-project-source-files.js";
 import { handleError, handleUserError } from "../utils/handle-error.js";
 import { isDebugFlagEnabled } from "../utils/is-debug-flag.js";
 import { isExpectedUserError } from "../utils/is-expected-user-error.js";
@@ -106,7 +108,7 @@ interface ProjectScanExecutionContext {
   readonly isQuiet: boolean;
   readonly isMultiProject: boolean;
   readonly workspaceDeadCodeOwner: string | null;
-  readonly precomputedSourceFileCounts: ReadonlyMap<string, number> | null;
+  readonly precomputedSourceFiles: ReadonlyMap<string, ReadonlyArray<SourceFileEntry>> | null;
   readonly projectScans: ReadonlyArray<ResolvedProjectScan>;
   readonly workspaceProjectDirectories: ReadonlyArray<string>;
   readonly baselineRef: string | null;
@@ -153,7 +155,7 @@ const buildProjectInspectOptions = ({
       context.workspaceDeadCodeOwner === null
         ? context.scanOptions.deadCode
         : ownsWorkspaceDeadCode,
-    precomputedSourceFileCount: context.precomputedSourceFileCounts?.get(scanDirectory),
+    precomputedSourceFiles: context.precomputedSourceFiles?.get(scanDirectory),
     deadlineEpochMs: context.scanDeadlineEpochMs,
     includePaths: projectScanPlan.includePaths,
     configOverride: projectScan.config,
@@ -343,7 +345,8 @@ export const inspectAction = async (
     }
 
     const scanOptions: CliInspectOptions = resolveCliInspectOptions(flags, userConfig);
-    const inspectProject = createInvocationInspect(scanOptions.concurrency);
+    const oxlintConcurrency = resolveInvocationOxlintConcurrency(scanOptions.concurrency);
+    const inspectProject = createInvocationInspect(oxlintConcurrency);
     // One `--max-duration` budget per invocation, shared by every project of a
     // workspace scan: fix the absolute deadline once here and hand it to each
     // project's `inspect()` (rather than restarting the budget per project).
@@ -539,9 +542,9 @@ export const inspectAction = async (
         projectCount: projectScans.length,
       });
     }
-    const precomputedSourceFileCounts =
+    const precomputedSourceFiles =
       isMultiProject && !isDiffMode
-        ? await collectProjectSourceFileCounts(
+        ? await collectProjectSourceFiles(
             resolvedDirectory,
             projectScans.map((projectScan) => projectScan.directory),
           )
@@ -558,7 +561,7 @@ export const inspectAction = async (
       isQuiet,
       isMultiProject,
       workspaceDeadCodeOwner,
-      precomputedSourceFileCounts,
+      precomputedSourceFiles,
       projectScans,
       workspaceProjectDirectories,
       baselineRef,
@@ -570,6 +573,7 @@ export const inspectAction = async (
       projects: projectScans,
       isQuiet,
       isSilent: scanOptions.silent === true,
+      oxlintConcurrency,
       scanProject: (projectScan) =>
         runConfiguredProjectScan({ context: projectScanExecutionContext, projectScan }),
     });

@@ -3,7 +3,9 @@ import {
   MILLISECONDS_PER_SECOND,
   MIN_SCAN_CONCURRENCY,
   OXLINT_OOM_RESCUE_BUDGET_MS,
+  OXLINT_OUTPUT_MAX_BYTES,
   OXLINT_PARTIAL_FAILURE_PREVIEW_COUNT,
+  OXLINT_SPAWN_TIMEOUT_MS,
   OXLINT_SPLIT_MAX_DEPTH,
   OXLINT_SPLIT_TOTAL_BUDGET_MS,
   PROGRESS_TICK_INTERVAL_MS,
@@ -15,9 +17,9 @@ import { dedupeDiagnostics } from "../../utils/dedupe-diagnostics.js";
 import { mapWithConcurrency } from "../../utils/map-with-concurrency.js";
 import { remainingDeadlineBudgetMs } from "../../utils/remaining-deadline-budget-ms.js";
 import { resolveScanConcurrency } from "../../utils/resolve-scan-concurrency.js";
-import type { WorkerSlots } from "../../utils/create-worker-slots.js";
+import type { OxlintSpawnSlotsHandle } from "../../utils/create-oxlint-spawn-slots.js";
 import { parseOxlintOutput } from "./parse-output.js";
-import { spawnOxlint } from "./spawn-oxlint.js";
+import { runOxlintJob } from "./run-oxlint-job.js";
 
 // OS-level `spawn` failures that mean "the system can't accommodate ANOTHER
 // concurrent subprocess right now": fork ran out of process slots (EAGAIN),
@@ -93,7 +95,7 @@ export interface SpawnLintBatchesInput {
    * resource error replays once with a single worker.
    */
   readonly concurrency?: number;
-  readonly spawnSlots?: WorkerSlots;
+  readonly spawnSlots?: OxlintSpawnSlotsHandle;
 }
 
 interface BatchPassOutcome {
@@ -256,19 +258,21 @@ export const spawnLintBatches = async (input: SpawnLintBatchesInput): Promise<Di
             batchState.deadlineSkippedFileCount += batch.length;
             return Promise.resolve(null);
           }
-          return spawnOxlint(
-            batchArgs,
+          return runOxlintJob({
+            argumentsList: batchArgs,
             rootDirectory,
             nodeBinaryPath,
-            effectiveSpawnTimeoutMs,
-            outputMaxBytes,
-            signal,
-            () => {
+            spawnTimeoutMs: effectiveSpawnTimeoutMs ?? OXLINT_SPAWN_TIMEOUT_MS,
+            outputMaxBytes: outputMaxBytes ?? OXLINT_OUTPUT_MAX_BYTES,
+            maxWorkers: requestedConcurrency,
+            filesystemCacheEpoch: input.spawnSlots?.filesystemCacheEpoch ?? null,
+            abortSignal: signal,
+            onStart: () => {
               if (batchState.didStart) return;
               batchState.didStart = true;
               startedFileCount += batchState.initialFileCount;
             },
-          );
+          });
         };
         const stdout =
           input.spawnSlots === undefined

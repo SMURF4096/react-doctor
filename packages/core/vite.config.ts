@@ -2,6 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite-plus";
+import { requireTypescriptPlugin } from "../../scripts/require-typescript-plugin.js";
 
 const packageRoot = path.dirname(fileURLToPath(import.meta.url));
 
@@ -15,9 +16,12 @@ export default defineConfig({
       entry: {
         index: "./src/index.ts",
         "project-analysis-worker": "./src/project-analysis-worker.ts",
+        "oxlint-worker": "./src/oxlint-worker.ts",
+        "duplicate-jsx-worker": "./src/duplicate-jsx-worker.ts",
         schemas: "./src/schemas.ts",
       },
       deps: {
+        alwaysBundle: ["typescript"],
         neverBundle: [
           "@astrojs/compiler",
           "@effect/platform-node-shared",
@@ -26,9 +30,9 @@ export default defineConfig({
           "oxc-resolver",
           "oxlint",
           "oxlint-plugin-react-doctor",
-          "typescript",
         ],
       },
+      plugins: [requireTypescriptPlugin()],
       dts: true,
       target: "node20",
       platform: "node",
